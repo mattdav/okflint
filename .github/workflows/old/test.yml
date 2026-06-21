@@ -1,0 +1,18 @@
+name: Tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Run tests with coverage
+        run: |
+          pip install uv
+          uv sync --all-extras
+          uv run pytest --cov=src/okf_converter \
+                 --cov-report=term-missing \
+                 --cov-report=xml \
+                 --cov-fail-under=80

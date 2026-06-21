@@ -1,0 +1,43 @@
+# Nom de notre workflow
+name: "Build and deploy Github pages"
+on: [push]
+jobs:
+  # Notre job
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    # Tâches à effectuer, comme expliquées ci-dessus
+    steps:
+
+      # 1. On récupère le contenu du dépôt
+
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # 2. Partie spécifique à Sphinx (installation des
+      #    dépendances et génération de la doc)
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: "Install Python dependencies"
+        run: |
+          pip3 install uv setuptools
+          uv sync --all-extras
+
+      - name: "Build Sphinx Doc"
+        run: |
+          uv run make html
+        working-directory: docs
+
+      # 3. Déploiement sur les Github Pages
+
+      - name: "Deploy Github Pages"
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages     # <- Branche sur laquelle seront commités les fichiers
+          folder: docs/build/html/  # <- Dossier contenant notre documentation générée

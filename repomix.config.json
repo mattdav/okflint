@@ -1,0 +1,18 @@
+{
+  "output": {
+    "filePath": "outputs/repomix.xml",
+    "style": "xml",
+    "compress": false,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": false,
+    "topFilesLength": 5,
+    "includeEmptyDirectories": false
+  },
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  }
+}

@@ -1,0 +1,17 @@
+name: Lint
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: "Install Python dependencies and run ruff lint check"
+        run: | 
+          pip install uv
+          uv sync --all-extras
+          uv run ruff check --fix src/okf_converter/.
+          uv run ruff format --check src/okf_converter/.
+          uv run mypy src/okf_converter/.
