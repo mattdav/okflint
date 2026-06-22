@@ -1,6 +1,7 @@
 # okf_converter
 
-A short description of the project.
+Outillage Python d'OKF-ification d'une vault Obsidian selon la spec
+[Open Knowledge Format v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
 
 ## Auteur
 
@@ -13,7 +14,8 @@ A short description of the project.
 
 ## Présentation
 
-<!-- Décrivez ici l'objectif du projet, le problème qu'il résout et son contexte. -->
+Outillage pour auditer et migrer un bundle Obsidian vers le format OKF v0.1.
+Bundle cible : `Home Lab/` dans la vault Nextcloud.
 
 ---
 
@@ -60,12 +62,20 @@ cp .env.example .env
 ## Utilisation
 
 ```bash
-# Lancer le programme principal
-uv run python -m okf_converter
-
 # Lister les tâches disponibles
 uv run inv --list
+
+# Auditer le bundle Home Lab (dry-run : affiche les stats dans le terminal)
+uv run inv audit
+
+# Auditer et écrire le rapport JSON dans outputs/
+uv run inv audit --apply
+
+# Auditer un bundle différent
+uv run inv audit --bundle /chemin/bundle --vault /chemin/vault --apply
 ```
+
+Le rapport est écrit dans `outputs/YYYY-MM-DD_audit_vN.json` (auto-incrémenté).
 
 ---
 

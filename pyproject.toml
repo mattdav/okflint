@@ -15,6 +15,7 @@ requires-python = ">=3.10"
 dependencies = [
     "beartype>=0.22.9",
     "pydantic-settings>=2.0",
+    "pyyaml>=6.0.3",
 ]
 
 [project.scripts]
@@ -89,3 +90,9 @@ packages = ["src/okf_converter"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/okf_converter/py.typed" = "okf_converter/py.typed"
+
+[dependency-groups]
+dev = [
+    "invoke>=3.0.3",
+    "types-pyyaml>=6.0.12.20260518",
+]

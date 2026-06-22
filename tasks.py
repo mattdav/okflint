@@ -1,9 +1,14 @@
+import json
 import shutil
 import subprocess
 from datetime import date
 from pathlib import Path
 
 from invoke import Context, task
+
+# Chemins par défaut pour l'audit OKF
+_DEFAULT_BUNDLE = Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault\Home Lab")
+_DEFAULT_VAULT = Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault")
 
 
 # ================ Helper Functions ================= #
@@ -96,3 +101,55 @@ def repomix(c: Context, output: str | None = None) -> None:
         print(f"✅ Repomix output saved to {output_path}")
     else:
         print("❌ Repomix failed!")
+
+
+@task
+def audit(
+    c: Context,
+    bundle: str | None = None,
+    vault: str | None = None,
+    apply: bool = False,
+) -> None:
+    """Audite un bundle OKF Obsidian et produit un rapport JSON horodaté.
+
+    En mode dry-run (défaut), affiche les statistiques dans le terminal.
+    Avec --apply, écrit le rapport complet dans outputs/YYYY-MM-DD_audit_vN.json.
+    """
+    from okf_converter.bin.audit import run_audit
+
+    bundle_path = Path(bundle) if bundle else _DEFAULT_BUNDLE
+    vault_path = Path(vault) if vault else _DEFAULT_VAULT
+
+    print(f"🔎 Bundle : {bundle_path}")
+    print(f"🔎 Vault  : {vault_path}")
+
+    report = run_audit(bundle_path, vault_path)
+    stats = report["stats"]
+
+    # 📦 Résumé dans le terminal
+    print("\n📊 Résumé :")
+    print(f"   Fichiers analysés : {stats['total_files']} ({stats['total_concept_files']} concepts, {stats['total_reserved_files']} réservés)")
+    print(f"   Statut OKF        : {stats['by_okf_status']}")
+    print(f"   Wikilinks         : {stats['total_wikilinks']} dont {stats['broken_wikilinks']} cassés, {stats['ambiguous_wikilinks']} ambigus")
+    print(f"   Liens markdown    : {stats['total_markdown_links']} dont {stats['broken_markdown_links']} cassés")
+    print(f"   Candidats découpe : {stats['split_candidates']} fichiers > {100} lignes")
+
+    if not apply:
+        print("\n⚠️  Mode dry-run — relancer avec --apply pour écrire le rapport JSON.")
+        return
+
+    # 🗑 Écriture du rapport JSON horodaté
+    outputs_dir: Path = Path("outputs")
+    outputs_dir.mkdir(exist_ok=True)
+
+    today: str = date.today().strftime("%Y-%m-%d")
+    v: int = 1
+    while (outputs_dir / f"{today}_audit_v{v}.json").exists():
+        v += 1
+    output_path: Path = outputs_dir / f"{today}_audit_v{v}.json"
+
+    output_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"\n✅ Rapport sauvegardé : {output_path}")
