@@ -132,7 +132,7 @@ def audit(
     print(f"   Statut OKF        : {stats['by_okf_status']}")
     print(f"   Wikilinks         : {stats['total_wikilinks']} dont {stats['broken_wikilinks']} cassés, {stats['ambiguous_wikilinks']} ambigus")
     print(f"   Liens markdown    : {stats['total_markdown_links']} dont {stats['broken_markdown_links']} cassés")
-    print(f"   Candidats découpe : {stats['split_candidates']} fichiers > {100} lignes")
+    print(f"   Candidats découpe : {stats['split_candidates']} fichiers")
 
     if not apply:
         print("\n⚠️  Mode dry-run — relancer avec --apply pour écrire le rapport JSON.")
