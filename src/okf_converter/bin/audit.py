@@ -5,6 +5,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import re
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -21,58 +22,6 @@ _WIKILINK_RE = re.compile(r"\[\[([^\[\]#|]+?)(?:#([^\[\]|]*?))?(?:\|([^\[\]]*?))
 _MD_LINK_RE = re.compile(r"\[([^\[\]]*)\]\(([^()]+)\)")
 _HEADER_RE = re.compile(r"^(#{1,2})\s+(.+)$")
 _FRONTMATTER_RE = re.compile(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n?", re.DOTALL)
-
-# Mots-clés de sections structurelles (ADR, Runbook, Journal)
-# Un H2 contenant l'un de ces mots est une section d'un concept unique
-_STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset({
-    "contexte", "options", "considérées",
-    "décision", "conséquences", "alternatives", "annexes",
-    "prérequis", "dépendances", "architecture", "installation", "configuration",
-    "utilisation", "références", "résultats", "actions", "réalisées",
-    "pièges", "rencontrés", "reste", "suite", "leçons", "bilan", "diagnostic",
-    "symptômes", "liens",
-})
-
-
-def _is_structural_h2(text: str) -> bool:
-    """Indique si un titre H2 est une section structurelle (pas une entité listable).
-
-    Args:
-        text: Texte du titre H2.
-
-    Returns:
-        True si le H2 est une section de document (ADR, runbook, journal).
-    """
-    lower = text.lower()
-    return any(kw in lower for kw in _STRUCTURAL_H2_KEYWORDS)
-
-
-def _evaluate_split(headers: list[Header]) -> tuple[bool, str | None, int | None]:
-    """Détermine si un fichier est candidat au découpage selon des critères sémantiques.
-
-    Critères (dans l'ordre de priorité) :
-    - multiple_h1 : ≥ 2 titres H1 (plusieurs concepts racine)
-    - homogeneous_h2_list : ≥ 4 titres H2 dont < 2 sont des sections structurelles
-
-    Args:
-        headers: Liste des headers extraits du fichier.
-
-    Returns:
-        Tuple (split_candidate, split_reason, split_entity_count).
-    """
-    h1s = [h for h in headers if h.level == 1]
-    h2s = [h for h in headers if h.level == 2]
-
-    if len(h1s) >= 2:
-        return True, "multiple_h1", len(h1s)
-
-    if len(h2s) >= 4:
-        structural_count = sum(1 for h in h2s if _is_structural_h2(h.text))
-        if structural_count < 2:
-            return True, "homogeneous_h2_list", len(h2s)
-
-    return False, None, None
-
 
 @dataclass
 class WikiLink:
@@ -123,6 +72,59 @@ class FileReport:
     split_reason: str | None  # "multiple_h1" | "homogeneous_h2_list"
     split_entity_count: int | None
     headers: list[Header]
+
+
+# Mots-clés de sections structurelles (ADR, Runbook, Journal)
+# Un H2 contenant l'un de ces mots est une section d'un concept unique, pas une entité listable
+_STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset({
+    "contexte", "options", "considérées",
+    "décision", "conséquences", "alternatives", "annexes",
+    "prérequis", "dépendances", "architecture", "installation", "configuration",
+    "utilisation", "références", "résultats", "actions", "réalisées",
+    "pièges", "rencontrés", "reste", "suite", "leçons", "bilan", "diagnostic",
+    "symptômes", "liens",
+})
+
+
+def _is_structural_h2(text: str) -> bool:
+    """Indique si un titre H2 est une section structurelle (pas une entité listable).
+
+    Args:
+        text: Texte du titre H2.
+
+    Returns:
+        True si le H2 est une section de document (ADR, runbook, journal).
+    """
+    # NFC pour neutraliser les variantes d'encodage des accents
+    lower = unicodedata.normalize("NFC", text).lower()
+    return any(kw in lower for kw in _STRUCTURAL_H2_KEYWORDS)
+
+
+def _evaluate_split(headers: list[Header]) -> tuple[bool, str | None, int | None]:
+    """Détermine si un fichier est candidat au découpage selon des critères sémantiques.
+
+    Critères (dans l'ordre de priorité) :
+    - multiple_h1 : ≥ 2 titres H1 (plusieurs concepts racine)
+    - homogeneous_h2_list : ≥ 4 titres H2 dont < 2 sont des sections structurelles
+
+    Args:
+        headers: Liste des headers extraits du fichier.
+
+    Returns:
+        Tuple (split_candidate, split_reason, split_entity_count).
+    """
+    h1s = [h for h in headers if h.level == 1]
+    h2s = [h for h in headers if h.level == 2]
+
+    if len(h1s) >= 2:
+        return True, "multiple_h1", len(h1s)
+
+    if len(h2s) >= 4:
+        structural_count = sum(1 for h in h2s if _is_structural_h2(h.text))
+        if structural_count < 2:
+            return True, "homogeneous_h2_list", len(h2s)
+
+    return False, None, None
 
 
 def _to_json_safe(obj: Any) -> Any:
@@ -298,8 +300,9 @@ def extract_headers(content: str) -> list[Header]:
     in_fence = False
     for i, line in enumerate(content.splitlines(), start=1):
         stripped = line.strip()
-        # Ouverture ou fermeture d'un fenced code block
-        if stripped.startswith("```") or stripped.startswith("~~~"):
+        # Ouverture/fermeture d'un fenced code block (indentation < 4 espaces, CommonMark)
+        indent = len(line) - len(line.lstrip())
+        if indent < 4 and (stripped.startswith("```") or stripped.startswith("~~~")):
             in_fence = not in_fence
             continue
         if in_fence:
