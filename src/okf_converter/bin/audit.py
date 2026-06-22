@@ -126,7 +126,7 @@ _STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset({
 
 # Pattern de H2 séquentiels (procédures numérotées, étapes)
 _SEQUENTIAL_H2_RE = re.compile(
-    r"^(?:\d+[\s.\-—]|[ÉE]tape\s|Step\s|Partie\s|Part\s|Phase\s)",
+    r"^(?:\d+[\s.\-—]|[Éé]tape\s|Step\s|Partie\s|Part\s|Phase\s)",
     re.IGNORECASE,
 )
 
@@ -236,7 +236,7 @@ def _evaluate_split(
     if len(h2s) >= 4:
         structural_count = sum(1 for h in h2s if _is_structural_h2(h.text))
         sequential_count = sum(1 for h in h2s if _is_sequential_h2(h.text))
-        if structural_count < 2 and sequential_count < len(h2s) // 2:
+        if structural_count < 2 and sequential_count * 2 < len(h2s):
             return True, "homogeneous_h2_list", len(h2s)
 
     return False, None, None
