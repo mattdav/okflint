@@ -10,7 +10,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
+from okf_converter.bin.scanner import (
+    MarkdownLink,
+    WikiLink,
+    blank_code_spans,
+    build_file_index,
+    extract_markdown_links,
+    extract_wikilinks,
+    parse_frontmatter,
+)
 
 OkfStatus = Literal["conformant", "partial", "non_conformant"]
 
@@ -18,64 +26,7 @@ OkfStatus = Literal["conformant", "partial", "non_conformant"]
 RESERVED_NAMES: set[str] = {"index.md", "log.md"}
 
 
-_WIKILINK_RE = re.compile(r"\[\[([^\[\]#|]+?)(?:#([^\[\]|]*?))?(?:\|([^\[\]]*?))?\]\]")
-_MD_LINK_RE = re.compile(r"\[([^\[\]]*)\]\(([^()]+)\)")
 _HEADER_RE = re.compile(r"^(#{1,2})\s+(.+)$")
-_FRONTMATTER_RE = re.compile(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n?", re.DOTALL)
-_INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
-
-
-def _blank_code_spans(content: str) -> str:
-    """Neutralise les blocs de code fencés et les spans inline pour l'extraction de liens.
-
-    Remplace le contenu des zones de code par des espaces en préservant les
-    positions de caractères (numéros de ligne inchangés). Une fence non fermée
-    en fin de fichier est traitée comme ouverte jusqu'à l'EOF.
-
-    Args:
-        content: Corps brut du fichier markdown (après frontmatter).
-
-    Returns:
-        Contenu avec blocs de code masqués par des espaces.
-    """
-    lines = content.split("\n")
-    result: list[str] = []
-    in_fence = False
-    for line in lines:
-        stripped = line.strip()
-        indent = len(line) - len(line.lstrip())
-        if indent < 4 and (stripped.startswith("```") or stripped.startswith("~~~")):
-            in_fence = not in_fence
-            result.append(" " * len(line))
-            continue
-        if in_fence:
-            result.append(" " * len(line))
-        else:
-            result.append(_INLINE_CODE_RE.sub(lambda m: " " * len(m.group()), line))
-    return "\n".join(result)
-
-
-@dataclass
-class WikiLink:
-    """Représente un wikilink Obsidian [[...]] dans un fichier."""
-
-    raw: str
-    target: str
-    alias: str | None
-    section: str | None
-    resolved_path: str | None
-    broken: bool
-    ambiguous: bool
-
-
-@dataclass
-class MarkdownLink:
-    """Représente un lien markdown [text](url) dans un fichier."""
-
-    text: str
-    target: str
-    is_external: bool
-    broken: bool
 
 
 @dataclass
@@ -108,21 +59,53 @@ class FileReport:
 
 # Mots-clés de sections structurelles (ADR, Runbook, Journal, meta-docs)
 # Un H2 contenant l'un de ces mots/phrases est une section d'un concept unique
-_STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset({
-    # ADR / décision
-    "contexte", "options", "considérées", "décision", "conséquences",
-    "alternatives", "annexes",
-    # Runbook / procédure
-    "prérequis", "dépendances", "installation", "configuration",
-    "utilisation", "références", "résultats", "actions", "réalisées",
-    "pièges", "rencontrés", "reste", "suite", "leçons", "bilan", "diagnostic",
-    "symptômes", "liens", "troubleshooting", "rollback", "vérification",
-    "historique", "maintenance",
-    # Architecture / meta-document
-    "architecture", "navigation", "objectifs", "inventaire",
-    # Statuts de projet (kanban, TODO)
-    "en cours", "en attente", "à venir", "résolu", "idées",
-})
+_STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset(
+    {
+        # ADR / décision
+        "contexte",
+        "options",
+        "considérées",
+        "décision",
+        "conséquences",
+        "alternatives",
+        "annexes",
+        # Runbook / procédure
+        "prérequis",
+        "dépendances",
+        "installation",
+        "configuration",
+        "utilisation",
+        "références",
+        "résultats",
+        "actions",
+        "réalisées",
+        "pièges",
+        "rencontrés",
+        "reste",
+        "suite",
+        "leçons",
+        "bilan",
+        "diagnostic",
+        "symptômes",
+        "liens",
+        "troubleshooting",
+        "rollback",
+        "vérification",
+        "historique",
+        "maintenance",
+        # Architecture / meta-document
+        "architecture",
+        "navigation",
+        "objectifs",
+        "inventaire",
+        # Statuts de projet (kanban, TODO)
+        "en cours",
+        "en attente",
+        "à venir",
+        "résolu",
+        "idées",
+    }
+)
 
 # Pattern de H2 séquentiels (procédures numérotées, étapes)
 _SEQUENTIAL_H2_RE = re.compile(
@@ -131,9 +114,14 @@ _SEQUENTIAL_H2_RE = re.compile(
 )
 
 # Types frontmatter qui indiquent un document non-découpable
-_NONSPLIT_TYPES: frozenset[str] = frozenset({
-    "journal", "journalentry", "runbook", "procedure",
-})
+_NONSPLIT_TYPES: frozenset[str] = frozenset(
+    {
+        "journal",
+        "journalentry",
+        "runbook",
+        "procedure",
+    }
+)
 
 # H1 commençant par une date → journal de session (même sans type frontmatter)
 _DATE_H1_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
@@ -242,65 +230,6 @@ def _evaluate_split(
     return False, None, None
 
 
-def _to_json_safe(obj: Any) -> Any:
-    """Convertit les types non-JSON-sérialisables issus du parsing YAML.
-
-    Args:
-        obj: Valeur arbitraire retournée par yaml.safe_load.
-
-    Returns:
-        Valeur JSON-sérialisable équivalente.
-    """
-    if isinstance(obj, (datetime.date, datetime.datetime)):
-        return obj.isoformat()
-    if isinstance(obj, dict):
-        return {str(k): _to_json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_to_json_safe(v) for v in obj]
-    return obj
-
-
-def build_vault_index(vault_path: Path) -> dict[str, list[str]]:
-    """Indexe tous les .md de la vault entière pour la résolution des wikilinks.
-
-    Args:
-        vault_path: Racine de la vault Obsidian.
-
-    Returns:
-        Dictionnaire nom_sans_extension → liste de chemins relatifs à vault_path.
-    """
-    index: dict[str, list[str]] = {}
-    for md_file in vault_path.rglob("*.md"):
-        name = md_file.stem
-        rel = md_file.relative_to(vault_path).as_posix()
-        if name not in index:
-            index[name] = []
-        index[name].append(rel)
-    return index
-
-
-def parse_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
-    """Extrait le frontmatter YAML d'un fichier markdown.
-
-    Args:
-        content: Contenu complet du fichier.
-
-    Returns:
-        Tuple (frontmatter_dict, body) ou (None, content) si absent ou invalide.
-    """
-    match = _FRONTMATTER_RE.match(content)
-    if not match:
-        return None, content
-    try:
-        fm = yaml.safe_load(match.group(1))
-        if not isinstance(fm, dict):
-            return None, content
-        body = content[match.end() :]
-        return _to_json_safe(fm), body
-    except yaml.YAMLError:
-        return None, content
-
-
 def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
     """Détermine le statut OKF d'un concept selon son frontmatter.
 
@@ -317,93 +246,10 @@ def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
     return "partial"
 
 
-def extract_wikilinks(
-    content: str,
-    vault_index: dict[str, list[str]],
-) -> list[WikiLink]:
-    """Extrait et résout les wikilinks [[...]] dans le contenu.
-
-    Args:
-        content: Corps du fichier markdown.
-        vault_index: Index vault (nom_sans_extension → chemins relatifs).
-
-    Returns:
-        Liste de WikiLink avec statut broken/ambiguous.
-    """
-    results: list[WikiLink] = []
-    for m in _WIKILINK_RE.finditer(content):
-        target = m.group(1).strip()
-        section = m.group(2).strip() if m.group(2) is not None else None
-        alias = m.group(3).strip() if m.group(3) is not None else None
-
-        candidates = vault_index.get(target, [])
-        broken = len(candidates) == 0
-        ambiguous = len(candidates) > 1
-        resolved_path = candidates[0] if candidates else None
-
-        results.append(
-            WikiLink(
-                raw=m.group(0),
-                target=target,
-                alias=alias,
-                section=section,
-                resolved_path=resolved_path,
-                broken=broken,
-                ambiguous=ambiguous,
-            )
-        )
-    return results
-
-
-def extract_markdown_links(
-    content: str,
-    file_path: Path,
-    bundle_path: Path,
-) -> list[MarkdownLink]:
-    """Extrait les liens markdown [text](target) et vérifie les liens internes.
-
-    Les URLs externes (http:// / https://) ne sont pas vérifiées.
-
-    Args:
-        content: Corps du fichier markdown.
-        file_path: Chemin absolu du fichier courant.
-        bundle_path: Racine du bundle (pour résoudre les chemins absolus).
-
-    Returns:
-        Liste de MarkdownLink.
-    """
-    results: list[MarkdownLink] = []
-    for m in _MD_LINK_RE.finditer(content):
-        text = m.group(1)
-        target = m.group(2).strip()
-        # Ignorer les ancres pures (#section)
-        if target.startswith("#"):
-            continue
-        is_external = target.startswith(("http://", "https://", "ftp://"))
-
-        if is_external:
-            broken = False
-        elif target.startswith("/"):
-            # Chemin absolu relatif au bundle
-            resolved = bundle_path / target.lstrip("/")
-            broken = not resolved.exists()
-        else:
-            # Chemin relatif au fichier courant
-            resolved = file_path.parent / target
-            broken = not resolved.exists()
-
-        results.append(
-            MarkdownLink(
-                text=text, target=target, is_external=is_external, broken=broken
-            )
-        )
-    return results
-
-
 def extract_headers(content: str) -> list[Header]:
     """Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.
 
-    Doit recevoir un contenu pré-blanqué via _blank_code_spans pour ignorer
+    Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer
     les `#` dans les blocs de code.
 
     Args:
@@ -448,12 +294,14 @@ def analyze_file(
     frontmatter, body = parse_frontmatter(content)
     okf_status = get_okf_status(frontmatter)
 
-    safe_body = _blank_code_spans(body)
+    safe_body = blank_code_spans(body)
     wikilinks = extract_wikilinks(safe_body, vault_index)
     markdown_links = extract_markdown_links(safe_body, file_path, bundle_path)
 
     all_headers = extract_headers(safe_body)
-    split_candidate, split_reason, split_entity_count = _evaluate_split(all_headers, frontmatter)
+    split_candidate, split_reason, split_entity_count = _evaluate_split(
+        all_headers, frontmatter
+    )
     headers = all_headers if split_candidate else []
 
     return FileReport(
@@ -528,7 +376,7 @@ def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
         Rapport d'audit complet sérialisable en JSON.
     """
     print(f"🔎 Indexation de la vault : {vault_path}")
-    vault_index = build_vault_index(vault_path)
+    vault_index = build_file_index([vault_path])
     vault_total = sum(len(v) for v in vault_index.values())
     print(f"   {vault_total} fichiers .md indexés")
 
@@ -552,3 +400,57 @@ def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
         "stats": stats,
         "files": [dataclasses.asdict(f) for f in files],
     }
+
+
+def main() -> None:
+    """Point d'entrée CLI : okf-audit."""
+    import argparse
+    import json
+    import sys
+
+    parser = argparse.ArgumentParser(description="Audit OKF d'une base documentaire.")
+    parser.add_argument(
+        "--bundle",
+        default=str(Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault\Home Lab")),
+    )
+    parser.add_argument(
+        "--vault",
+        default=str(Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault")),
+    )
+    parser.add_argument(
+        "--apply", action="store_true", help="Écrit le rapport JSON dans outputs/"
+    )
+    args = parser.parse_args()
+    bundle_path = Path(args.bundle)
+    vault_path = Path(args.vault)
+    report = run_audit(bundle_path, vault_path)
+    stats = report["stats"]
+    n_concepts = stats["total_concept_files"]
+    print(f"Fichiers : {stats['total_files']} ({n_concepts} concepts)")
+    print(f"Statut OKF : {stats['by_okf_status']}")
+    wikilinks_broken = stats["broken_wikilinks"]
+    print(f"Wikilinks  : {stats['total_wikilinks']} dont {wikilinks_broken} cassés")
+    md_broken = stats["broken_markdown_links"]
+    print(f"Liens MD   : {stats['total_markdown_links']} dont {md_broken} cassés")
+    print(f"Candidats découpe : {stats['split_candidates']}")
+    if args.apply:
+        from datetime import date
+
+        outputs_dir = Path("outputs")
+        outputs_dir.mkdir(exist_ok=True)
+        today = date.today().strftime("%Y-%m-%d")
+        v = 1
+        while (outputs_dir / f"{today}_audit_v{v}.json").exists():
+            v += 1
+        out = outputs_dir / f"{today}_audit_v{v}.json"
+        out.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        print(f"Rapport : {out}")
+    else:
+        print("(dry-run — relancer avec --apply pour écrire le rapport JSON)")
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

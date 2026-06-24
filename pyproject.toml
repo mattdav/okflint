@@ -19,7 +19,8 @@ dependencies = [
 ]
 
 [project.scripts]
-okf_converter = "okf_converter.__main__:main"
+okf-audit    = "okf_converter.bin.audit:main"
+okf-validate = "okf_converter.bin.validate:main"
 
 [project.optional-dependencies]
 dev = [

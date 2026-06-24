@@ -61,21 +61,36 @@ cp .env.example .env
 
 ## Utilisation
 
+### Audit d'un bundle
+
 ```bash
-# Lister les tâches disponibles
-uv run inv --list
+# Dry-run : affiche les stats dans le terminal
+uv run okf-audit
 
-# Auditer le bundle Home Lab (dry-run : affiche les stats dans le terminal)
-uv run inv audit
+# Écrire le rapport JSON dans outputs/
+uv run okf-audit --apply
 
-# Auditer et écrire le rapport JSON dans outputs/
-uv run inv audit --apply
-
-# Auditer un bundle différent
-uv run inv audit --bundle /chemin/bundle --vault /chemin/vault --apply
+# Bundle et vault personnalisés
+uv run okf-audit --bundle /chemin/bundle --vault /chemin/vault --apply
 ```
 
 Le rapport est écrit dans `outputs/YYYY-MM-DD_audit_vN.json` (auto-incrémenté).
+
+### Validation normative
+
+```bash
+# Valider un dossier (exit 0 si conforme, exit 1 sinon)
+uv run okf-validate chemin/vers/dossier/
+
+# Valider des fichiers spécifiques
+uv run okf-validate fichier1.md fichier2.md
+
+# Sortie JSON des erreurs
+uv run okf-validate --json chemin/vers/dossier/
+
+# Manifeste personnalisé (défaut : okf-base.yaml)
+uv run okf-validate --manifest mon-manifeste.yaml chemin/
+```
 
 ---
 
@@ -102,18 +117,15 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour les conventions de contribution.
 okf_converter/
 ├── src/
 │   └── okf_converter/
-│       ├── bin/             ← scripts exécutables
+│       ├── bin/
+│       │   ├── audit.py     ← okf-audit CLI
+│       │   ├── scanner.py   ← primitives partagées de scan Markdown
+│       │   └── validate.py  ← okf-validate CLI
 │       ├── config/          ← configuration (pydantic-settings)
-│       ├── data/            ← accès et traitement des données
 │       ├── log/             ← configuration du logging
-│       ├── __init__.py
-│       └── __main__.py      ← point d'entrée
-├── tests/
-│   ├── unit/
-│   └── conftest.py
-├── docs/                    ← documentation Sphinx
-├── .env.example             ← template des variables d'environnement
-├── tasks.py                 ← tâches invoke
+│       └── __init__.py
+├── okf-base.yaml            ← manifeste OKF du bundle Home Lab
+├── tasks.py                 ← tâches invoke (lint, clean, repomix)
 └── pyproject.toml
 ```
 
