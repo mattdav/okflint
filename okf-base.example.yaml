@@ -1,0 +1,51 @@
+# okf-base.example.yaml — manifeste d'exemple pour okflint
+#
+# Copiez ce fichier sous le nom `okf-base.yaml` à la racine de votre base
+# documentaire, puis adaptez-le à votre taxonomie.
+#
+# okflint est un MOTEUR GÉNÉRIQUE : il ne connaît aucun vocabulaire de types
+# en dur. C'est CE manifeste qui définit votre standard de conformité.
+
+base:
+  # Nom logique de la base documentaire.
+  name: "Ma base documentaire"
+
+  # Racines physiques de la base. Plusieurs racines possibles : les liens sont
+  # résolus contre l'index de la base entière, pas contre un dossier isolé.
+  roots:
+    - path: "."
+
+  # Fichiers réservés OKF (ne sont pas des concepts, exemptés de validation type).
+  reserved_files:
+    index: "index.md"
+    log: "log.md"
+
+  # Résolution des liens.
+  link_resolution:
+    scope: base          # les liens résolvent contre toute la base
+    external_refs: []    # noms de fichiers hors-base assumés (jamais "cassés")
+
+# Vocabulaire type-aware. Chaque type déclare :
+#   - required : champs frontmatter obligatoires
+#   - optional : champs frontmatter autorisés (facultatifs)
+#   - statut_values :
+#       [liste]  → champ `statut` REQUIS, valeur contrainte à la liste
+#       false    → champ `statut` INTERDIT pour ce type
+#       null     → champ `statut` optionnel, valeur libre (ou clé absente)
+types:
+  Decision:
+    required: [type, statut, created]
+    optional: [updated, tags]
+    statut_values: [Proposé, Accepté, Déprécié, Remplacé]
+  Procedure:
+    required: [type, statut, created]
+    optional: [updated, tags]
+    statut_values: [draft, prod, obsolète]
+  Note:
+    required: [type, created]
+    optional: [updated, tags]
+    statut_values: false
+  Reference:
+    required: [type]
+    optional: [updated, tags]
+    statut_values: false

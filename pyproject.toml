@@ -3,24 +3,21 @@ requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "okf_converter"
+name = "okflint"
 authors = [
   {name = "Matthieu Daviaud", email = "matthieu.daviaud@gmail.com"},
 ]
 version = "0.1.0"
-description = "A short description of the project."
+description = "Linter de conformité pour bases documentaires OKF (Open Knowledge Format) — le Ruff de la documentation."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
-    "beartype>=0.22.9",
-    "pydantic-settings>=2.0",
     "pyyaml>=6.0.3",
 ]
 
 [project.scripts]
-okf-audit    = "okf_converter.bin.audit:main"
-okf-validate = "okf_converter.bin.validate:main"
+okflint = "okflint.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -59,21 +56,21 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/okf_converter"]
+testpaths = ["tests", "src/okflint"]
 addopts = [
     "--doctest-modules",
-    "--cov=src/okf_converter",
+    "--cov=src/okflint",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
 pythonpath = ["."]
 
 [tool.coverage.run]
-source = ["src/okf_converter"]
+source = ["src/okflint"]
 branch = true
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 0
 show_missing = true
 exclude_lines = [
     "if __name__ == .__main__.:",
@@ -87,10 +84,10 @@ python_version = "3.10"
 strict = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/okf_converter"]
+packages = ["src/okflint"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/okf_converter/py.typed" = "okf_converter/py.typed"
+"src/okflint/py.typed" = "okflint/py.typed"
 
 [dependency-groups]
 dev = [

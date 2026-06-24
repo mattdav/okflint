@@ -1,5 +1,0 @@
-__project_name__ = """okf_converter"""
-__author__ = """Matthieu Daviaud"""
-__email__ = """matthieu.daviaud@gmail.com"""
-__version__ = """0.1.0"""
-description = """A short description of the project."""

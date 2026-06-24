@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from okf_converter.bin.scanner import (
+from okflint.scanner import (
     MarkdownLink,
     WikiLink,
     blank_code_spans,
@@ -400,57 +400,3 @@ def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
         "stats": stats,
         "files": [dataclasses.asdict(f) for f in files],
     }
-
-
-def main() -> None:
-    """Point d'entrée CLI : okf-audit."""
-    import argparse
-    import json
-    import sys
-
-    parser = argparse.ArgumentParser(description="Audit OKF d'une base documentaire.")
-    parser.add_argument(
-        "--bundle",
-        default=str(Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault\Home Lab")),
-    )
-    parser.add_argument(
-        "--vault",
-        default=str(Path(r"C:\Users\matth\Nextcloud\Obsidian-Vault")),
-    )
-    parser.add_argument(
-        "--apply", action="store_true", help="Écrit le rapport JSON dans outputs/"
-    )
-    args = parser.parse_args()
-    bundle_path = Path(args.bundle)
-    vault_path = Path(args.vault)
-    report = run_audit(bundle_path, vault_path)
-    stats = report["stats"]
-    n_concepts = stats["total_concept_files"]
-    print(f"Fichiers : {stats['total_files']} ({n_concepts} concepts)")
-    print(f"Statut OKF : {stats['by_okf_status']}")
-    wikilinks_broken = stats["broken_wikilinks"]
-    print(f"Wikilinks  : {stats['total_wikilinks']} dont {wikilinks_broken} cassés")
-    md_broken = stats["broken_markdown_links"]
-    print(f"Liens MD   : {stats['total_markdown_links']} dont {md_broken} cassés")
-    print(f"Candidats découpe : {stats['split_candidates']}")
-    if args.apply:
-        from datetime import date
-
-        outputs_dir = Path("outputs")
-        outputs_dir.mkdir(exist_ok=True)
-        today = date.today().strftime("%Y-%m-%d")
-        v = 1
-        while (outputs_dir / f"{today}_audit_v{v}.json").exists():
-            v += 1
-        out = outputs_dir / f"{today}_audit_v{v}.json"
-        out.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
-        print(f"Rapport : {out}")
-    else:
-        print("(dry-run — relancer avec --apply pour écrire le rapport JSON)")
-    sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

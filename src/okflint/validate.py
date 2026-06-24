@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from okf_converter.bin.scanner import (
+from okflint.scanner import (
     MarkdownLink,
     WikiLink,
     blank_code_spans,
@@ -336,37 +335,3 @@ def run_validate(
 
     code = 0 if not any(e.severity == "error" for e in all_errors) else 1
     return all_errors, code
-
-
-def main() -> None:
-    """Point d'entrée CLI : okf-validate."""
-    import argparse
-    import json
-    import sys
-
-    parser = argparse.ArgumentParser(description="Validation OKF de documents.")
-    parser.add_argument("--manifest", default="okf-base.yaml")
-    parser.add_argument("--json", dest="json_output", action="store_true")
-    parser.add_argument("targets", nargs="+", help="Fichiers ou dossiers à valider")
-    args = parser.parse_args()
-    manifest_path = Path(args.manifest)
-    targets = [Path(t) for t in args.targets]
-    errors, code = run_validate(manifest_path, targets)
-    if args.json_output:
-        payload = [dataclasses.asdict(e) for e in errors]
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-    else:
-        for e in errors:
-            icon = "❌" if e.severity == "error" else "⚠️"
-            print(f"{icon} [{e.family}] {e.file} — {e.message}")
-        if not errors:
-            print("✅ Tous les fichiers sont conformes OKF.")
-        else:
-            errs = sum(1 for e in errors if e.severity == "error")
-            warns = sum(1 for e in errors if e.severity == "warning")
-            print(f"\n{errs} erreur(s), {warns} avertissement(s).")
-    sys.exit(code)
-
-
-if __name__ == "__main__":
-    main()

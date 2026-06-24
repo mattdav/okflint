@@ -137,9 +137,6 @@ cython_debug/
 uv.lock
 
 # Utility files
-src/okf_converter/data/
-src/okf_converter/log/
-src/okf_converter/config/
 .claude/
 
 # Outputs (Repomix, exports, rapports — toujours régénérables)
