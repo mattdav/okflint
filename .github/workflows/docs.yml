@@ -1,43 +1,41 @@
-# Nom de notre workflow
-name: "Build and deploy Github pages"
-on: [push]
+name: Docs
+
+on:
+  push:
+    branches: ["main"]
+
 jobs:
-  # Notre job
   build-and-deploy:
+    name: Build Sphinx + Deploy GitHub Pages
     runs-on: ubuntu-latest
 
-    # Tâches à effectuer, comme expliquées ci-dessus
+    permissions:
+      contents: write  # nécessaire pour pousser sur gh-pages
+
     steps:
-
-      # 1. On récupère le contenu du dépôt
-
-      - name: "Checkout"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      # 2. Partie spécifique à Sphinx (installation des
-      #    dépendances et génération de la doc)
-
-      - name: "Set up Python"
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
-      - name: "Install Python dependencies"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (with docs extras)
+        run: uv sync --extra docs
+
+      - name: Build Sphinx documentation
         run: |
-          pip3 install uv setuptools
-          uv sync --all-extras
+          uv run sphinx-build -b html docs/sphinx docs/sphinx/_build/html
 
-      - name: "Build Sphinx Doc"
-        run: |
-          uv run make html
-        working-directory: docs
-
-      # 3. Déploiement sur les Github Pages
-
-      - name: "Deploy Github Pages"
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages     # <- Branche sur laquelle seront commités les fichiers
-          folder: docs/build/html/  # <- Dossier contenant notre documentation générée
+          branch: gh-pages
+          folder: docs/sphinx/_build/html/

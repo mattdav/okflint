@@ -5,6 +5,13 @@
 #
 # okflint est un MOTEUR GÉNÉRIQUE : il ne connaît aucun vocabulaire de types
 # en dur. C'est CE manifeste qui définit votre standard de conformité.
+#
+# Trois étages de contrôle (voir docs/RULES.md) :
+#   - Cœur OKF   : codé en dur, toujours actif (F001, F002, R001, R002)
+#   - Profil     : vos règles, déclarées dans `profile` ci-dessous
+#   - Hygiène    : checks plus stricts qu'OKF, opt-in via `hygiene`
+
+okf_version: "0.1"
 
 base:
   # Nom logique de la base documentaire.
@@ -15,37 +22,62 @@ base:
   roots:
     - path: "."
 
-  # Fichiers réservés OKF (ne sont pas des concepts, exemptés de validation type).
+  # Fichiers réservés OKF (exemptés de la validation de type).
   reserved_files:
     index: "index.md"
     log: "log.md"
+
+  # Nom du champ de statut DANS cette base. C'est une CLÉ anglaise (status_field)
+  # dont la VALEUR est votre convention : ici "status", mais libre (ex. "statut").
+  status_field: "status"
 
   # Résolution des liens.
   link_resolution:
     scope: base          # les liens résolvent contre toute la base
     external_refs: []    # noms de fichiers hors-base assumés (jamais "cassés")
 
-# Vocabulaire type-aware. Chaque type déclare :
-#   - required : champs frontmatter obligatoires
-#   - optional : champs frontmatter autorisés (facultatifs)
-#   - statut_values :
-#       [liste]  → champ `statut` REQUIS, valeur contrainte à la liste
-#       false    → champ `statut` INTERDIT pour ce type
-#       null     → champ `statut` optionnel, valeur libre (ou clé absente)
-types:
-  Decision:
-    required: [type, statut, created]
-    optional: [updated, tags]
-    statut_values: [Proposé, Accepté, Déprécié, Remplacé]
-  Procedure:
-    required: [type, statut, created]
-    optional: [updated, tags]
-    statut_values: [draft, prod, obsolète]
-  Note:
-    required: [type, created]
-    optional: [updated, tags]
-    statut_values: false
-  Reference:
-    required: [type]
-    optional: [updated, tags]
-    statut_values: false
+# ---------------------------------------------------------------------------
+# PROFIL (optionnel) — votre affinement contractuel au-dessus du cœur OKF.
+# Si ce bloc est absent, seul le cœur OKF s'applique.
+# ---------------------------------------------------------------------------
+profile:
+  # Champs devant être au format ISO YYYY-MM-DD s'ils sont présents (règle S102).
+  date_fields: [created, updated]
+
+  # Vocabulaire type-aware. Chaque type déclare :
+  #   - required      : champs frontmatter obligatoires
+  #   - optional      : champs frontmatter autorisés (facultatifs)
+  #   - aliases       : graphies tolérées du type, normalisées vers le nom canonique
+  #   - status_values :
+  #       [liste]  → champ de statut REQUIS, valeur contrainte à la liste
+  #       false    → champ de statut INTERDIT pour ce type
+  #       null     → champ de statut optionnel, valeur libre (ou clé absente)
+  types:
+    Decision:
+      aliases: [adr, ADR]
+      required: [type, status, created]
+      optional: [updated, tags]
+      status_values: [Proposed, Accepted, Deprecated, Superseded]
+    Procedure:
+      aliases: [runbook]
+      required: [type, status, created]
+      optional: [updated, tags]
+      status_values: [draft, prod, obsolete]
+    Note:
+      required: [type, created]
+      optional: [updated, tags]
+      status_values: false
+    Reference:
+      required: [type]
+      optional: [updated, tags]
+      status_values: false
+
+# ---------------------------------------------------------------------------
+# HYGIÈNE (optionnel) — checks plus stricts qu'OKF. Chaque clé : off | warn | error.
+# OKF demande de tolérer ces cas : par défaut donc `off` ou `warn`, jamais imposé.
+# ---------------------------------------------------------------------------
+hygiene:
+  broken_links: warn       # L001, L002, L003 — liens cassés / ambigus
+  split_candidates: warn   # S201 — fichiers multi-concepts
+  reserved_files: off      # R201 — présence de index.md / log.md
+  unknown_fields: off      # F201 — champs hors du schéma déclaré

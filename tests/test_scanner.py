@@ -1,0 +1,249 @@
+"""Tests des primitives de scan de fichiers Markdown."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from okflint.scanner import (
+    Header,
+    MarkdownLink,
+    WikiLink,
+    blank_code_spans,
+    build_file_index,
+    evaluate_split,
+    extract_headers,
+    extract_markdown_links,
+    extract_wikilinks,
+    parse_frontmatter,
+)
+
+
+# ---------------------------------------------------------------------------
+# parse_frontmatter
+# ---------------------------------------------------------------------------
+
+
+class TestParseFrontmatter:
+    def test_valid_frontmatter_returns_dict_and_body(self) -> None:
+        content = "---\ntype: Reference\n---\n# Body\n"
+        fm, body = parse_frontmatter(content)
+        assert fm == {"type": "Reference"}
+        assert "# Body" in body
+
+    def test_no_frontmatter_returns_none(self) -> None:
+        content = "# No frontmatter\n"
+        fm, body = parse_frontmatter(content)
+        assert fm is None
+        assert body == content
+
+    def test_invalid_yaml_returns_none(self) -> None:
+        # colons inside a plain scalar can confuse PyYAML
+        content = "---\nkey: [unclosed\n---\n# Body\n"
+        fm, _ = parse_frontmatter(content)
+        assert fm is None
+
+    def test_non_dict_yaml_returns_none(self) -> None:
+        content = "---\n- item1\n- item2\n---\n# Body\n"
+        fm, _ = parse_frontmatter(content)
+        assert fm is None
+
+    def test_date_coerced_to_iso_string(self) -> None:
+        content = "---\ntype: JournalEntry\ncreated: 2026-05-01\n---\n"
+        fm, _ = parse_frontmatter(content)
+        assert fm is not None
+        assert fm["created"] == "2026-05-01"
+
+
+# ---------------------------------------------------------------------------
+# blank_code_spans
+# ---------------------------------------------------------------------------
+
+
+class TestBlankCodeSpans:
+    def test_inline_code_masked(self) -> None:
+        content = "Voir `[[wikilink]]` ici"
+        result = blank_code_spans(content)
+        assert "[[wikilink]]" not in result
+
+    def test_fenced_code_block_masked(self) -> None:
+        content = "```\n[[NotALink]]\n```\n# Real"
+        result = blank_code_spans(content)
+        assert "[[NotALink]]" not in result
+        assert "# Real" in result
+
+    def test_unclosed_fence_masked_to_eof(self) -> None:
+        content = "Before\n```\n[[Link]]\nmore content"
+        result = blank_code_spans(content)
+        assert "[[Link]]" not in result
+
+    def test_tilde_fence_masked(self) -> None:
+        content = "~~~\n[[TildeLink]]\n~~~\nOutside"
+        result = blank_code_spans(content)
+        assert "[[TildeLink]]" not in result
+        assert "Outside" in result
+
+    def test_regular_content_preserved(self) -> None:
+        content = "Normal [[wikilink]] here"
+        result = blank_code_spans(content)
+        assert "[[wikilink]]" in result
+
+
+# ---------------------------------------------------------------------------
+# extract_wikilinks
+# ---------------------------------------------------------------------------
+
+
+class TestExtractWikilinks:
+    def test_simple_wikilink_resolved(self) -> None:
+        index = {"Note": ["Note.md"]}
+        links = extract_wikilinks("See [[Note]] here", index)
+        assert len(links) == 1
+        assert links[0].target == "Note"
+        assert not links[0].broken
+        assert not links[0].ambiguous
+
+    def test_broken_wikilink(self) -> None:
+        links = extract_wikilinks("[[Missing]]", {})
+        assert links[0].broken
+
+    def test_ambiguous_wikilink(self) -> None:
+        index = {"Note": ["a/Note.md", "b/Note.md"]}
+        links = extract_wikilinks("[[Note]]", index)
+        assert links[0].ambiguous
+
+    def test_wikilink_with_alias(self) -> None:
+        index = {"Target": ["Target.md"]}
+        links = extract_wikilinks("[[Target|Alias]]", index)
+        assert links[0].alias == "Alias"
+        assert links[0].target == "Target"
+
+    def test_wikilink_with_section(self) -> None:
+        index = {"Doc": ["Doc.md"]}
+        links = extract_wikilinks("[[Doc#Section]]", index)
+        assert links[0].section == "Section"
+
+
+# ---------------------------------------------------------------------------
+# extract_markdown_links
+# ---------------------------------------------------------------------------
+
+
+class TestExtractMarkdownLinks:
+    def test_external_link_not_broken(self, tmp_path: Path) -> None:
+        file = tmp_path / "doc.md"
+        file.touch()
+        links = extract_markdown_links(
+            "[Google](https://google.com)", file, tmp_path
+        )
+        assert len(links) == 1
+        assert links[0].is_external
+        assert not links[0].broken
+
+    def test_relative_link_existing(self, tmp_path: Path) -> None:
+        target = tmp_path / "other.md"
+        target.touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Other](other.md)", src, tmp_path)
+        assert not links[0].broken
+
+    def test_relative_link_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Missing](missing.md)", src, tmp_path)
+        assert links[0].broken
+
+    def test_anchor_link_ignored(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Section](#my-section)", src, tmp_path)
+        assert len(links) == 0
+
+
+# ---------------------------------------------------------------------------
+# build_file_index
+# ---------------------------------------------------------------------------
+
+
+class TestBuildFileIndex:
+    def test_indexes_md_files(self, tmp_path: Path) -> None:
+        (tmp_path / "Note.md").write_text("# Note", encoding="utf-8")
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "sub" / "Other.md").write_text("# Other", encoding="utf-8")
+        index = build_file_index([tmp_path])
+        assert "Note" in index
+        assert "Other" in index
+
+    def test_duplicate_names_lists_multiple(self, tmp_path: Path) -> None:
+        (tmp_path / "a").mkdir()
+        (tmp_path / "b").mkdir()
+        (tmp_path / "a" / "Note.md").write_text("# Note", encoding="utf-8")
+        (tmp_path / "b" / "Note.md").write_text("# Note", encoding="utf-8")
+        index = build_file_index([tmp_path])
+        assert len(index["Note"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# extract_headers
+# ---------------------------------------------------------------------------
+
+
+class TestExtractHeaders:
+    def test_extracts_h1_and_h2(self) -> None:
+        content = "# Title\n## Section\n### Ignored\n"
+        blanked = blank_code_spans(content)
+        headers = extract_headers(blanked)
+        assert len(headers) == 2
+        assert headers[0].level == 1
+        assert headers[1].level == 2
+
+    def test_header_in_code_not_extracted(self) -> None:
+        content = "```\n# NotAHeader\n```\n# RealHeader"
+        blanked = blank_code_spans(content)
+        headers = extract_headers(blanked)
+        assert len(headers) == 1
+        assert headers[0].text == "RealHeader"
+
+
+# ---------------------------------------------------------------------------
+# evaluate_split
+# ---------------------------------------------------------------------------
+
+
+class TestEvaluateSplit:
+    def test_multiple_h1_triggers_split(self) -> None:
+        headers = [Header(1, "Alpha", 1), Header(1, "Beta", 2)]
+        split, reason, count = evaluate_split(headers, None)
+        assert split
+        assert reason == "multiple_h1"
+        assert count == 2
+
+    def test_duplicate_h1_no_split(self) -> None:
+        headers = [Header(1, "Same", 1), Header(1, "Same", 2)]
+        split, _, _ = evaluate_split(headers, None)
+        assert not split
+
+    def test_homogeneous_h2_triggers_split(self) -> None:
+        headers = [
+            Header(2, "Alpha", 1),
+            Header(2, "Beta", 2),
+            Header(2, "Gamma", 3),
+            Header(2, "Delta", 4),
+        ]
+        split, reason, _ = evaluate_split(headers, None)
+        assert split
+        assert reason == "homogeneous_h2_list"
+
+    def test_procedure_type_excluded(self) -> None:
+        headers = [Header(1, "A", 1), Header(1, "B", 2)]
+        fm = {"type": "Procedure"}
+        split, _, _ = evaluate_split(headers, fm)
+        assert not split
+
+    def test_dated_h1_excluded_as_journal(self) -> None:
+        headers = [
+            Header(1, "2026-05-01 Session", 1),
+            Header(1, "2026-05-02 Session", 2),
+        ]
+        split, _, _ = evaluate_split(headers, None)
+        assert not split

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from beartype import beartype
 import yaml
+from beartype import beartype
 
 
 class ManifestError(Exception):

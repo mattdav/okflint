@@ -13,14 +13,14 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../../src/okf_converter"))
+sys.path.insert(0, os.path.abspath("../../src/okflint"))
 sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "okf_converter"
-copyright = "2025, Matthieu Daviaud"
+project = "okflint"
+copyright = "2026, Matthieu Daviaud"
 author = "Matthieu Daviaud"
 release = "0.1.0"
 

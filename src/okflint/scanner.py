@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from beartype import beartype
 import yaml
+from beartype import beartype
 
 _WIKILINK_RE = re.compile(r"\[\[([^\[\]#|]+?)(?:#([^\[\]|]*?))?(?:\|([^\[\]]*?))?\]\]")
 _MD_LINK_RE = re.compile(r"\[([^\[\]]*)\]\(([^()]+)\)")

@@ -25,8 +25,8 @@ uv pip install -e .
 Vérifier que tout fonctionne :
 
 ```bash
-uv run inv lint        # doit passer à zéro
-uv run inv test        # tous les tests doivent passer
+inv lint        # doit passer à zéro
+inv test        # tous les tests doivent passer
 uv run okflint --help
 ```
 
@@ -49,7 +49,7 @@ src/okflint/
 okflint est un **moteur générique** : aucun vocabulaire de types n'est codé en dur.
 Tout le standard d'une base (types, champs, statuts) est déclaré dans son manifeste
 `okf-base.yaml`. Le catalogue des règles de validation est documenté dans
-[`docs/RULES.md`](docs/RULES.md) — c'est la spec de référence. Toute nouvelle règle
+[`config/RULES.md`](config/RULES.md) — c'est la spec de référence. Toute nouvelle règle
 doit y être documentée avec son code, son étage et sa sévérité.
 
 ### Doctrine
@@ -114,7 +114,7 @@ inv test
 
 ### Règle fondamentale
 
-Chaque règle du catalogue (`docs/RULES.md`) doit être couverte par au moins un test
+Chaque règle du catalogue (`config/RULES.md`) doit être couverte par au moins un test
 qui vérifie qu'elle se déclenche sur un cas non conforme et ne se déclenche pas sur
 un cas conforme. Les tests ne doivent jamais être supprimés pour faire passer la CI.
 
@@ -152,11 +152,73 @@ inv test   # tous les tests doivent passer
 
 ---
 
+## Process de release
+
+### Prérequis
+
+- Être sur la branche `main` avec un working tree propre
+- Avoir les droits de push sur le repo
+- Avoir configuré le **Trusted Publisher** sur pypi.org (Settings du repo GitHub)
+
+### Format des messages de commit
+
+okflint utilise [commitizen](https://commitizen-tools.github.io/commitizen/) pour
+valider les messages et générer automatiquement le CHANGELOG.
+
+**Format obligatoire** :
+```
+<type>(<scope optionnel>): <description>
+```
+
+Types acceptés : `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`, `ci`, `build`, `style`.
+
+Exemples valides :
+```
+feat: ajouter la règle S202 de cohésion sémantique
+fix(manifest): corriger la distinction False/None pour status_values
+docs: mettre à jour le README
+chore: mettre à jour les dépendances
+```
+
+### Déclencher une release
+
+Une seule commande lance tout le processus :
+
+```bash
+inv release               # patch (0.1.0 → 0.1.1) — corrections de bugs
+inv release --part=minor  # minor (0.1.0 → 0.2.0) — nouvelles fonctionnalités
+inv release --part=major  # major (0.1.0 → 1.0.0) — breaking changes
+inv release --dry-run     # simulation sans rien modifier
+```
+
+**Ce que fait `inv release` :**
+1. Vérifie que vous êtes sur `main` avec un tree propre
+2. Lance lint + tests (sécurité avant publication)
+3. Bumpe la version via commitizen + met à jour `CHANGELOG.md`
+4. Crée un commit de release + un tag `vX.Y.Z`
+5. Pousse le commit ET le tag vers `origin/main`
+6. Le tag déclenche automatiquement le workflow `release.yml` qui :
+   - Build sdist + wheel
+   - Publie sur PyPI via Trusted Publisher
+   - Crée la GitHub Release avec notes auto-générées
+
+### Trusted Publisher PyPI (configuration une fois)
+
+Pour que `release.yml` puisse publier sans token :
+1. Aller sur https://pypi.org/manage/account/publishing/
+2. Ajouter un Trusted Publisher :
+   - Owner : `mattdav`
+   - Repository : `okflint`
+   - Workflow : `release.yml`
+   - Environment : `pypi`
+
+---
+
 ## Checklist avant une Pull Request
 
 - [ ] `uv run inv lint` passe à zéro
 - [ ] `uv run inv test` passe à zéro
-- [ ] Toute nouvelle règle est documentée dans `docs/RULES.md` (code, étage, sévérité)
+- [ ] Toute nouvelle règle est documentée dans `config/RULES.md` (code, étage, sévérité)
 - [ ] Toute nouvelle règle est couverte par un test (cas conforme + cas non conforme)
 - [ ] Les nouvelles fonctions publiques ont des type hints et une docstring Google
 - [ ] Aucune valeur spécifique à un environnement n'est hardcodée dans le package

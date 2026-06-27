@@ -123,7 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument(
         "--apply",
         action="store_true",
-        help="Écrit le rapport JSON dans outputs/.",
+        help="Écrit le rapport JSON dans .okflint/ (rapport daté auto-incrémenté).",
     )
     p_audit.set_defaults(func=_cmd_audit)
 

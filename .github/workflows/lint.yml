@@ -1,17 +1,37 @@
 name: Lint
-on: [push]
+
+on:
+  push:
+    branches: ["main", "feat/**", "fix/**", "chore/**"]
+  pull_request:
+    branches: ["main"]
+
 jobs:
   lint:
+    name: Ruff + mypy
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-      - name: "Install Python dependencies and run ruff lint check"
-        run: | 
-          pip install uv
-          uv sync --all-extras
-          uv run ruff check --fix src/okf_converter/.
-          uv run ruff format --check src/okf_converter/.
-          uv run mypy src/okf_converter/.
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Ruff check
+        run: uv run ruff check src/
+
+      - name: Ruff format
+        run: uv run ruff format --check src/
+
+      - name: mypy
+        run: uv run python -m mypy src/

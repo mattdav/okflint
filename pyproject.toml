@@ -35,21 +35,17 @@ Homepage = "https://github.com/mattdav/okflint"
 Repository = "https://github.com/mattdav/okflint"
 Issues = "https://github.com/mattdav/okflint/issues"
 Documentation = "https://okflint.readthedocs.io"
+Rules = "https://github.com/mattdav/okflint/blob/main/config/RULES.md"
 
 [project.scripts]
 okflint = "okflint.cli:main"
 
 [project.optional-dependencies]
-# Extras installables par les utilisateurs du package (pip install okflint[docs])
+# Seul extra utile pour les utilisateurs : builder la doc Sphinx
 docs = [
     "sphinx>=8.1.3",
     "sphinx-rtd-theme>=3.1.0",
     "sphinx-autodoc-typehints>=2.0.0",
-]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-cov>=7.1.0",
-    "beartype>=0.19.0",
 ]
 
 [tool.ruff]
@@ -109,6 +105,17 @@ packages = ["src/okflint"]
 [tool.hatch.build.targets.wheel.force-include]
 "src/okflint/py.typed" = "okflint/py.typed"
 
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = [
+    "pyproject.toml:^version",
+    "src/okflint/__init__.py:__version__",
+]
+tag_format = "v$version"
+update_changelog_on_bump = true
+major_version_zero = true
+
 [dependency-groups]
 # Outils de développement local — jamais installés par un utilisateur PyPI
 dev = [
@@ -119,4 +126,5 @@ dev = [
     "pytest>=8.0.0",
     "pytest-cov>=7.1.0",
     "beartype>=0.19.0",
+    "commitizen>=3.29.0",
 ]

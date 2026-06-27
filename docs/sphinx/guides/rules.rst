@@ -1,7 +1,7 @@
 Catalogue des règles
 ====================
 
-Le catalogue complet des règles est maintenu dans :doc:`docs/RULES.md <../../RULES>`.
+Le catalogue complet des règles est maintenu dans ``config/RULES.md`` à la racine du dépôt.
 
 Étages
 ------

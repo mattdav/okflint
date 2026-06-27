@@ -1,0 +1,208 @@
+"""Tests du chargement et de la validation du manifeste OKF."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from okflint.manifest import ManifestError, _coerce_level, load_manifest
+
+
+# ---------------------------------------------------------------------------
+# _coerce_level
+# ---------------------------------------------------------------------------
+
+
+class TestCoerceLevel:
+    def test_false_becomes_off(self) -> None:
+        assert _coerce_level(False, "broken_links") == "off"
+
+    def test_true_becomes_warn(self) -> None:
+        assert _coerce_level(True, "broken_links") == "warn"
+
+    def test_valid_string_off(self) -> None:
+        assert _coerce_level("off", "split_candidates") == "off"
+
+    def test_valid_string_warn(self) -> None:
+        assert _coerce_level("warn", "split_candidates") == "warn"
+
+    def test_valid_string_error(self) -> None:
+        assert _coerce_level("error", "split_candidates") == "error"
+
+    def test_invalid_value_raises(self) -> None:
+        with pytest.raises(ManifestError, match="key"):
+            _coerce_level("invalid", "key")
+
+
+# ---------------------------------------------------------------------------
+# load_manifest — erreurs
+# ---------------------------------------------------------------------------
+
+
+class TestLoadManifestErrors:
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(ManifestError, match="Impossible de lire"):
+            load_manifest(tmp_path / "nonexistent.yaml")
+
+    def test_invalid_yaml_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "bad.yaml"
+        f.write_text("key: [unclosed\n", encoding="utf-8")
+        with pytest.raises(ManifestError, match="YAML invalide"):
+            load_manifest(f)
+
+    def test_missing_base_key_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "m.yaml"
+        f.write_text("okf_version: '0.1'\n", encoding="utf-8")
+        with pytest.raises(ManifestError, match="'base' absente"):
+            load_manifest(f)
+
+    def test_empty_roots_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            "base:\n  roots: []\n  reserved_files:\n    index: index.md\n    log: log.md\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ManifestError, match="roots doit être une liste non vide"):
+            load_manifest(f)
+
+    def test_missing_log_in_reserved_files_raises(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ManifestError, match="'index' et 'log'"):
+            load_manifest(f)
+
+    def test_required_optional_overlap_raises(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "  status_field: statut\n"
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type, statut]\n"
+            "      optional: [statut]\n"
+            "      status_values: [Accepté]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ManifestError, match="required et optional"):
+            load_manifest(f)
+
+    def test_status_values_without_status_field_raises(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        # base has no status_field, but profile type uses status_values list
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type]\n"
+            "      optional: []\n"
+            "      status_values: [Accepté]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ManifestError, match="base.status_field"):
+            load_manifest(f)
+
+    def test_invalid_hygiene_value_raises(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "hygiene:\n  broken_links: maybe\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ManifestError, match="broken_links"):
+            load_manifest(f)
+
+
+# ---------------------------------------------------------------------------
+# load_manifest — succès
+# ---------------------------------------------------------------------------
+
+
+class TestLoadManifestSuccess:
+    def test_minimal_manifest_loads(self, minimal_manifest: tuple[Path, Path]) -> None:
+        manifest_path, root = minimal_manifest
+        m = load_manifest(manifest_path)
+        assert m.base.roots == [root]
+        assert m.profile is None
+        assert m.hygiene is None
+
+    def test_profile_manifest_loads(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        assert "Decision" in m.profile.types
+        assert "JournalEntry" in m.profile.types
+
+    def test_journal_entry_status_values_is_false(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        je = m.profile.types["JournalEntry"]
+        # CRITIQUE : must be exactly False (bool), not None
+        assert je.status_values is False
+
+    def test_decision_aliases_loaded(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        assert "adr" in m.profile.types["Decision"].aliases
+
+    def test_hygiene_manifest_loads(
+        self, hygiene_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = hygiene_manifest
+        m = load_manifest(manifest_path)
+        assert m.hygiene is not None
+        assert m.hygiene.broken_links == "warn"
+
+    def test_yaml_bool_off_coerced(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        # PyYAML parses YAML `off` as Python False; _coerce_level maps it to "off"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "hygiene:\n  broken_links: 'off'\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert m.hygiene is not None
+        assert m.hygiene.broken_links == "off"
+
+    def test_external_refs_loaded(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "  link_resolution:\n    external_refs: [Wikipedia, GitHub]\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert "wikipedia" in m.base.external_refs
+        assert "github" in m.base.external_refs

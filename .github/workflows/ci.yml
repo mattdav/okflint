@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+
+# Annule les runs précédents pour la même PR (économie de minutes CI)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: uv run ruff check src/
+      - run: uv run ruff format --check src/
+      - run: uv run python -m mypy src/
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint  # les tests ne tournent que si lint passe
+
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: |
+          uv run python -m pytest \
+            --cov=src/okflint \
+            --cov-report=term-missing \
+            --cov-fail-under=85
+
+  commitizen:
+    name: Commitizen (format des commits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch tout l'historique pour valider les messages
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: Validate commit messages
+        run: uv run cz check --rev-range origin/main..HEAD
