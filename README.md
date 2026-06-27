@@ -78,6 +78,11 @@ Chaque type déclare ses champs requis/optionnels et sa politique de statut :
 | `false` | champ `statut` **interdit** pour ce type |
 | `null` (ou absent) | champ `statut` **optionnel**, valeur libre |
 
+> **Ressources OKF** —
+> [Spec officielle Google Cloud](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+> · [openknowledgeformat.com](https://openknowledgeformat.com/) (exemples, templates, validateur en ligne)
+> · [okf.md](https://okf.md/spec/) (guide annoté)
+
 ---
 
 ## Concepts clés
