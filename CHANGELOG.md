@@ -10,6 +10,13 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.1.1 (2026-06-27)
+
+### Fix
+
+- **docs**: add .nojekyll for GitHub Pages, fix _static serving
+- fix codebase-memory-mcp index cmd, add docs link to README
+
 ## v0.1.0 (2026-06-27)
 
 ### New features
