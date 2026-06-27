@@ -42,11 +42,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -94,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -126,12 +126,12 @@
   <section id="manifest">
 <h1>manifest<a class="headerlink" href="#manifest" title="Link to this heading"></a></h1>
 <p>Chargement et validation du manifeste OKF YAML.</p>
-<p id="module-okflint.manifest">Chargement et validation du manifeste OKF YAML.</p>
+<p id="module-okflint.manifest">OKF manifest loading and validation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.manifest.BaseConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">BaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external_refs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#BaseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.BaseConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Configuration de la base documentaire.</p>
+<p>Documentary base configuration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.BaseConfig.external_refs">
 <span class="sig-name descname"><span class="pre">external_refs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><span class="pre">set</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.BaseConfig.external_refs" title="Link to this definition"></a></dt>
@@ -163,7 +163,7 @@
 <dt class="sig sig-object py" id="okflint.manifest.HygieneConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">HygieneConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">broken_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#HygieneConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.HygieneConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Configuration des contrôles d’hygiène (opt-in).</p>
+<p>Configuration of hygiene checks (opt-in).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.HygieneConfig.broken_links">
 <span class="sig-name descname"><span class="pre">broken_links</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'off'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'warn'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.HygieneConfig.broken_links" title="Link to this definition"></a></dt>
@@ -190,7 +190,7 @@
 <dt class="sig sig-object py" id="okflint.manifest.Manifest">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">Manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">okf_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hygiene</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#Manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.Manifest" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Manifeste OKF chargé et validé.</p>
+<p>Loaded and validated OKF manifest.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.Manifest.base">
 <span class="sig-name descname"><span class="pre">base</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#okflint.manifest.BaseConfig" title="okflint.manifest.BaseConfig"><span class="pre">BaseConfig</span></a></span><a class="headerlink" href="#okflint.manifest.Manifest.base" title="Link to this definition"></a></dt>
@@ -217,14 +217,14 @@
 <dt class="sig sig-object py" id="okflint.manifest.ManifestError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">ManifestError</span></span><a class="reference internal" href="../_modules/okflint/manifest.html#ManifestError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.ManifestError" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
-<p>Manifeste OKF invalide ou illisible.</p>
+<p>Invalid or unreadable OKF manifest.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.manifest.ProfileConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">ProfileConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#ProfileConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.ProfileConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Configuration du profil de la base documentaire.</p>
+<p>Profile configuration of the documentary base.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.ProfileConfig.date_fields">
 <span class="sig-name descname"><span class="pre">date_fields</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.ProfileConfig.date_fields" title="Link to this definition"></a></dt>
@@ -241,7 +241,7 @@
 <dt class="sig sig-object py" id="okflint.manifest.TypeConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">TypeConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aliases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#TypeConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.TypeConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Configuration d’un type de concept déclaré dans le profil.</p>
+<p>Configuration of a concept type declared in the profile.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.TypeConfig.aliases">
 <span class="sig-name descname"><span class="pre">aliases</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.TypeConfig.aliases" title="Link to this definition"></a></dt>
@@ -267,19 +267,19 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.manifest.load_manifest">
 <span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">load_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#load_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.load_manifest" title="Link to this definition"></a></dt>
-<dd><p>Charge et valide un manifeste OKF YAML.</p>
+<dd><p>Load and validate an OKF YAML manifest.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Chemin vers le fichier YAML.</p>
+<dd class="field-odd"><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Path to the YAML file.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#okflint.manifest.Manifest" title="okflint.manifest.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Manifest typé et validé.</p>
+<dd class="field-odd"><p>Typed and validated Manifest.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#okflint.manifest.ManifestError" title="okflint.manifest.ManifestError"><strong>ManifestError</strong></a> – Si le fichier est illisible, invalide, ou viole les contraintes.</p>
+<dd class="field-even"><p><a class="reference internal" href="#okflint.manifest.ManifestError" title="okflint.manifest.ManifestError"><strong>ManifestError</strong></a> – If the file is unreadable, invalid, or violates constraints.</p>
 </dd>
 </dl>
 </dd></dl>

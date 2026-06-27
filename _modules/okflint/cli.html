@@ -39,11 +39,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -53,7 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -83,11 +83,11 @@
            <div itemprop="articleBody">
              
   <h1>Source code for okflint.cli</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Point d&#39;entrée CLI unifié d&#39;okflint.</span>
+<span></span><span class="sd">&quot;&quot;&quot;Unified CLI entry point for okflint.</span>
 
-<span class="sd">Expose deux sous-commandes façon Ruff :</span>
-<span class="sd">    okflint audit     — inventaire et diagnostic descriptif d&#39;une base</span>
-<span class="sd">    okflint validate  — gate normatif de conformité (exit 0/1)</span>
+<span class="sd">Exposes two sub-commands Ruff-style:</span>
+<span class="sd">    okflint audit     — inventory and descriptive diagnostic of a base</span>
+<span class="sd">    okflint validate  — normative compliance gate (exit 0/1)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -105,26 +105,26 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_audit</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exécute la sous-commande audit.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the audit sub-command.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        args: Namespace argparse (bundle, vault, apply).</span>
+<span class="sd">        args: argparse Namespace (bundle, vault, apply).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Code de sortie (toujours 0 : audit est descriptif).</span>
+<span class="sd">        Exit code (always 0: audit is descriptive).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">bundle_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
     <span class="n">vault_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span><span class="n">bundle_path</span><span class="p">,</span> <span class="n">vault_path</span><span class="p">)</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">]</span>
     <span class="n">n_concepts</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;total_concept_files&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fichiers : </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_files&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_concepts</span><span class="si">}</span><span class="s2"> concepts)&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Statut OKF : </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;by_okf_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_files&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_concepts</span><span class="si">}</span><span class="s2"> concepts)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OKF status: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;by_okf_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">wikilinks_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wikilinks  : </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_wikilinks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> dont </span><span class="si">{</span><span class="n">wikilinks_broken</span><span class="si">}</span><span class="s2"> cassés&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wikilinks: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_wikilinks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">wikilinks_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
     <span class="n">md_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Liens MD   : </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_markdown_links&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> dont </span><span class="si">{</span><span class="n">md_broken</span><span class="si">}</span><span class="s2"> cassés&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Candidats découpe : </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;split_candidates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MD links: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_markdown_links&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">md_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split candidates: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;split_candidates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">apply</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
@@ -139,27 +139,27 @@
         <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rapport : </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Report: </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(dry-run — relancer avec --apply pour écrire le rapport JSON)&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(dry-run — re-run with --apply to write the JSON report)&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_validate</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exécute la sous-commande validate.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the validate sub-command.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        args: Namespace argparse (manifest, json_output, targets).</span>
+<span class="sd">        args: argparse Namespace (manifest, json_output, targets).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Code de sortie (0 si conforme, 1 si au moins une erreur).</span>
+<span class="sd">        Exit code (0 if conformant, 1 if at least one error).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">)</span>
     <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">errors</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">run_validate</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erreur manifeste : </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
@@ -170,11 +170,11 @@
             <span class="n">icon</span> <span class="o">=</span> <span class="s2">&quot;❌&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠️&quot;</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Tous les fichiers sont conformes OKF.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All files are OKF-conformant.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">errs</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
             <span class="n">warns</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">errs</span><span class="si">}</span><span class="s2"> erreur(s), </span><span class="si">{</span><span class="n">warns</span><span class="si">}</span><span class="s2"> avertissement(s).&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">errs</span><span class="si">}</span><span class="s2"> error(s), </span><span class="si">{</span><span class="n">warns</span><span class="si">}</span><span class="s2"> warning(s).&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">code</span>
 
 
@@ -182,57 +182,57 @@
 <a class="viewcode-back" href="../../api/cli.html#okflint.cli.build_parser">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construit le parser argparse avec les sous-commandes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the argparse parser with sub-commands.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Le parser configuré.</span>
+<span class="sd">        The configured parser.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
         <span class="n">prog</span><span class="o">=</span><span class="s2">&quot;okflint&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Linter de conformité pour bases documentaires OKF.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Compliance linter for OKF documentary bases.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">subparsers</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">&quot;command&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># -- audit ----------------------------------------------------------------</span>
     <span class="n">p_audit</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s2">&quot;audit&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Inventaire et diagnostic descriptif d&#39;une base.&quot;</span>
+        <span class="s2">&quot;audit&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Inventory and descriptive diagnostic of a base.&quot;</span>
     <span class="p">)</span>
     <span class="n">p_audit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--bundle&quot;</span><span class="p">,</span>
         <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Racine du bundle à auditer.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Root of the bundle to audit.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_audit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--vault&quot;</span><span class="p">,</span>
         <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Racine de la vault (pour l&#39;index de résolution des wikilinks).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Root of the vault (for the wikilink resolution index).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_audit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--apply&quot;</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Écrit le rapport JSON dans .okflint/ (rapport daté auto-incrémenté).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Write the JSON report to .okflint/ (dated, auto-incremented).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_audit</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_cmd_audit</span><span class="p">)</span>
 
     <span class="c1"># -- validate -------------------------------------------------------------</span>
     <span class="n">p_validate</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Gate de conformité OKF (exit 0 si conforme, 1 sinon).&quot;</span>
+        <span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;OKF compliance gate (exit 0 if conformant, 1 otherwise).&quot;</span>
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--manifest&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;okf-base.yaml&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Chemin du manifeste OKF (défaut : okf-base.yaml).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the OKF manifest (default: okf-base.yaml).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--json&quot;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;json_output&quot;</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Sortie JSON (pour CI).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;JSON output (for CI).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;targets&quot;</span><span class="p">,</span>
         <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Fichiers ou dossiers à valider.&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Files or directories to validate.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_cmd_validate</span><span class="p">)</span>
 
@@ -244,7 +244,7 @@
 <a class="viewcode-back" href="../../api/cli.html#okflint.cli.main">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Point d&#39;entrée console_scripts : okflint &lt;command&gt;.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Console scripts entry point: okflint &lt;command&gt;.&quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">build_parser</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
     <span class="n">code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catalogue des règles &mdash; okflint 0.1.0 documentation</title>
+  <title>Rules catalogue &mdash; okflint 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="scanner" href="../api/scanner.html" />
-    <link rel="prev" title="Format du manifeste" href="manifest.html" /> 
+    <link rel="prev" title="Manifest format" href="manifest.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,13 +42,13 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Catalogue des règles</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#etages">Étages</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#severites">Sévérités</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">Manifest format</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Rules catalogue</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#stages">Stages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#severities">Severities</a></li>
 </ul>
 </li>
 </ul>
@@ -60,7 +60,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -79,7 +79,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Catalogue des règles</li>
+      <li class="breadcrumb-item active">Rules catalogue</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/guides/rules.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,25 +89,25 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="catalogue-des-regles">
-<h1>Catalogue des règles<a class="headerlink" href="#catalogue-des-regles" title="Link to this heading"></a></h1>
-<p>Le catalogue complet des règles est maintenu dans <code class="docutils literal notranslate"><span class="pre">config/RULES.md</span></code> à la racine du dépôt.</p>
-<section id="etages">
-<h2>Étages<a class="headerlink" href="#etages" title="Link to this heading"></a></h2>
+  <section id="rules-catalogue">
+<h1>Rules catalogue<a class="headerlink" href="#rules-catalogue" title="Link to this heading"></a></h1>
+<p>The full rules catalogue is maintained in <code class="docutils literal notranslate"><span class="pre">config/RULES.md</span></code> at the repository root.</p>
+<section id="stages">
+<h2>Stages<a class="headerlink" href="#stages" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><strong>Cœur OKF</strong> (<code class="docutils literal notranslate"><span class="pre">F001</span></code>, <code class="docutils literal notranslate"><span class="pre">F002</span></code>, <code class="docutils literal notranslate"><span class="pre">R001</span></code>, <code class="docutils literal notranslate"><span class="pre">R002</span></code>) — toujours actif, vérifie la
-conformité minimale au standard OKF §9.</p></li>
-<li><p><strong>Profil</strong> (<code class="docutils literal notranslate"><span class="pre">F101</span></code>–<code class="docutils literal notranslate"><span class="pre">F106</span></code>, <code class="docutils literal notranslate"><span class="pre">S101</span></code>, <code class="docutils literal notranslate"><span class="pre">S102</span></code>) — actif si un bloc <code class="docutils literal notranslate"><span class="pre">profile</span></code> est
-déclaré dans le manifeste.</p></li>
-<li><p><strong>Hygiène</strong> (<code class="docutils literal notranslate"><span class="pre">F201</span></code>, <code class="docutils literal notranslate"><span class="pre">L001</span></code>–<code class="docutils literal notranslate"><span class="pre">L003</span></code>, <code class="docutils literal notranslate"><span class="pre">S201</span></code>, <code class="docutils literal notranslate"><span class="pre">R201</span></code>) — opt-in par clé
-<code class="docutils literal notranslate"><span class="pre">hygiene</span></code> dans le manifeste, niveau <code class="docutils literal notranslate"><span class="pre">warn</span></code> ou <code class="docutils literal notranslate"><span class="pre">error</span></code>.</p></li>
+<li><p><strong>OKF core</strong> (<code class="docutils literal notranslate"><span class="pre">F001</span></code>, <code class="docutils literal notranslate"><span class="pre">F002</span></code>, <code class="docutils literal notranslate"><span class="pre">R001</span></code>, <code class="docutils literal notranslate"><span class="pre">R002</span></code>) — always active, checks
+minimal conformance to OKF standard §9.</p></li>
+<li><p><strong>Profile</strong> (<code class="docutils literal notranslate"><span class="pre">F101</span></code>–<code class="docutils literal notranslate"><span class="pre">F106</span></code>, <code class="docutils literal notranslate"><span class="pre">S101</span></code>, <code class="docutils literal notranslate"><span class="pre">S102</span></code>) — active when a <code class="docutils literal notranslate"><span class="pre">profile</span></code>
+block is declared in the manifest.</p></li>
+<li><p><strong>Hygiene</strong> (<code class="docutils literal notranslate"><span class="pre">F201</span></code>, <code class="docutils literal notranslate"><span class="pre">L001</span></code>–<code class="docutils literal notranslate"><span class="pre">L003</span></code>, <code class="docutils literal notranslate"><span class="pre">S201</span></code>, <code class="docutils literal notranslate"><span class="pre">R201</span></code>) — opt-in via the
+<code class="docutils literal notranslate"><span class="pre">hygiene</span></code> key in the manifest, level <code class="docutils literal notranslate"><span class="pre">warn</span></code> or <code class="docutils literal notranslate"><span class="pre">error</span></code>.</p></li>
 </ul>
 </section>
-<section id="severites">
-<h2>Sévérités<a class="headerlink" href="#severites" title="Link to this heading"></a></h2>
+<section id="severities">
+<h2>Severities<a class="headerlink" href="#severities" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code> — fait échouer <code class="docutils literal notranslate"><span class="pre">okflint</span> <span class="pre">validate</span></code> (exit 1)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">warning</span></code> — affiché mais n’échoue pas (exit 0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code> — causes <code class="docutils literal notranslate"><span class="pre">okflint</span> <span class="pre">validate</span></code> to fail (exit 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">warning</span></code> — displayed but does not fail (exit 0)</p></li>
 </ul>
 </section>
 </section>
@@ -116,7 +116,7 @@ déclaré dans le manifeste.</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="manifest.html" class="btn btn-neutral float-left" title="Format du manifeste" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="manifest.html" class="btn btn-neutral float-left" title="Manifest format" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../api/scanner.html" class="btn btn-neutral float-right" title="scanner" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

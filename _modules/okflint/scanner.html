@@ -39,11 +39,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -53,7 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -83,7 +83,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for okflint.scanner</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Primitives partagées de scan de fichiers Markdown OKF.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Shared Markdown file scanning primitives for OKF.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -103,63 +103,63 @@
 <span class="n">_INLINE_CODE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;`[^`\n]+`&quot;</span><span class="p">)</span>
 <span class="n">_HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(#{1,2})\s+(.+)$&quot;</span><span class="p">)</span>
 
-<span class="c1"># Mots-clés de sections structurelles (ADR, Runbook, Journal, meta-docs)</span>
-<span class="c1"># Un H2 contenant l&#39;un de ces mots/phrases est une section d&#39;un concept unique</span>
+<span class="c1"># Structural section keywords (ADR, Runbook, Journal, meta-docs).</span>
+<span class="c1"># An H2 containing one of these words/phrases is a section of a single concept.</span>
 <span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="c1"># ADR / décision</span>
-        <span class="s2">&quot;contexte&quot;</span><span class="p">,</span>
+        <span class="c1"># ADR / decision</span>
+        <span class="s2">&quot;context&quot;</span><span class="p">,</span>
         <span class="s2">&quot;options&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;considérées&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;décision&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;conséquences&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;considered&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;decision&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;consequences&quot;</span><span class="p">,</span>
         <span class="s2">&quot;alternatives&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;annexes&quot;</span><span class="p">,</span>
-        <span class="c1"># Runbook / procédure</span>
-        <span class="s2">&quot;prérequis&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;dépendances&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;appendices&quot;</span><span class="p">,</span>
+        <span class="c1"># Runbook / procedure</span>
+        <span class="s2">&quot;prerequisites&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dependencies&quot;</span><span class="p">,</span>
         <span class="s2">&quot;installation&quot;</span><span class="p">,</span>
         <span class="s2">&quot;configuration&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;utilisation&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;références&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;résultats&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;usage&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;references&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;results&quot;</span><span class="p">,</span>
         <span class="s2">&quot;actions&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;réalisées&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;pièges&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;rencontrés&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;reste&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;suite&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;leçons&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;bilan&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;performed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pitfalls&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;encountered&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;remaining&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;next steps&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lessons&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;summary&quot;</span><span class="p">,</span>
         <span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;symptômes&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;liens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;symptoms&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;links&quot;</span><span class="p">,</span>
         <span class="s2">&quot;troubleshooting&quot;</span><span class="p">,</span>
         <span class="s2">&quot;rollback&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;vérification&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;historique&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;verification&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;history&quot;</span><span class="p">,</span>
         <span class="s2">&quot;maintenance&quot;</span><span class="p">,</span>
         <span class="c1"># Architecture / meta-document</span>
         <span class="s2">&quot;architecture&quot;</span><span class="p">,</span>
         <span class="s2">&quot;navigation&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;objectifs&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;inventaire&quot;</span><span class="p">,</span>
-        <span class="c1"># Statuts de projet (kanban, TODO)</span>
-        <span class="s2">&quot;en cours&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;en attente&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;à venir&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;résolu&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;idées&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;objectives&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;inventory&quot;</span><span class="p">,</span>
+        <span class="c1"># Project statuses (kanban, TODO)</span>
+        <span class="s2">&quot;in progress&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;on hold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;upcoming&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;resolved&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ideas&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="c1"># Pattern de H2 séquentiels (procédures numérotées, étapes)</span>
+<span class="c1"># Pattern for sequential H2s (numbered procedures, steps)</span>
 <span class="n">_SEQUENTIAL_H2_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
     <span class="sa">r</span><span class="s2">&quot;^(?:\d+[\s.\-—]|[Éé]tape\s|Step\s|Partie\s|Part\s|Phase\s)&quot;</span><span class="p">,</span>
     <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Types frontmatter qui indiquent un document non-découpable</span>
+<span class="c1"># Frontmatter types that indicate a non-splittable document</span>
 <span class="n">_NONSPLIT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
         <span class="s2">&quot;journal&quot;</span><span class="p">,</span>
@@ -169,7 +169,7 @@
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="c1"># H1 commençant par une date → journal de session (même sans type frontmatter)</span>
+<span class="c1"># H1 starting with a date → session journal (even without frontmatter type)</span>
 <span class="n">_DATE_H1_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
@@ -177,7 +177,7 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.Header">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un titre H1 ou H2 dans un fichier.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an H1 or H2 heading in a file.&quot;&quot;&quot;</span>
 
     <span class="n">level</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
@@ -189,7 +189,7 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.WikiLink">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WikiLink</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un wikilink Obsidian [[...]] dans un fichier.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an Obsidian wikilink [[...]] in a file.&quot;&quot;&quot;</span>
 
     <span class="n">raw</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
@@ -205,7 +205,7 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.MarkdownLink">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MarkdownLink</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un lien markdown [text](url) dans un fichier.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a markdown link [text](url) in a file.&quot;&quot;&quot;</span>
 
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
@@ -218,18 +218,18 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.blank_code_spans">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">blank_code_spans</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neutralise les blocs de code fencés et les spans inline.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Blank out fenced code blocks and inline code spans.</span>
 
-<span class="sd">    Permet l&#39;extraction de liens sans faux positifs dans les zones de code.</span>
-<span class="sd">    Remplace le contenu des zones de code par des espaces en préservant les</span>
-<span class="sd">    positions de caractères (numéros de ligne inchangés). Une fence non fermée</span>
-<span class="sd">    en fin de fichier est traitée comme ouverte jusqu&#39;à l&#39;EOF.</span>
+<span class="sd">    Allows link extraction without false positives inside code zones.</span>
+<span class="sd">    Replaces code zone content with spaces while preserving character</span>
+<span class="sd">    positions (line numbers unchanged). An unclosed fence at end of file</span>
+<span class="sd">    is treated as open until EOF.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        content: Corps brut du fichier markdown (après frontmatter).</span>
+<span class="sd">        content: Raw file body (after frontmatter).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Contenu avec blocs de code masqués par des espaces.</span>
+<span class="sd">        Content with code blocks masked by spaces.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -250,13 +250,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_json_safe</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convertit les types non-JSON-sérialisables issus du parsing YAML.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert non-JSON-serialisable types from YAML parsing.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        obj: Valeur arbitraire retournée par yaml.safe_load.</span>
+<span class="sd">        obj: Arbitrary value returned by yaml.safe_load.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Valeur JSON-sérialisable équivalente.</span>
+<span class="sd">        Equivalent JSON-serialisable value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
@@ -271,13 +271,13 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.parse_frontmatter">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait le frontmatter YAML d&#39;un fichier markdown.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the YAML frontmatter from a markdown file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        content: Contenu complet du fichier.</span>
+<span class="sd">        content: Full file content.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple (frontmatter_dict, body) ou (None, content) si absent ou invalide.</span>
+<span class="sd">        Tuple (frontmatter_dict, body) or (None, content) if absent or invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">_FRONTMATTER_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
@@ -297,13 +297,13 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.build_file_index">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_file_index</span><span class="p">(</span><span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indexe tous les .md d&#39;une liste de racines pour la résolution des wikilinks.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Index all .md files under a list of roots for wikilink resolution.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        roots: Liste de racines à indexer.</span>
+<span class="sd">        roots: List of roots to index.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Dictionnaire nom_sans_extension → liste de chemins relatifs à la première root.</span>
+<span class="sd">        Dictionary stem → list of paths relative to the first root.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
@@ -324,14 +324,14 @@
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">WikiLink</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait et résout les wikilinks [[...]] dans le contenu.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract and resolve [[...]] wikilinks in the content.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        content: Corps du fichier markdown.</span>
-<span class="sd">        vault_index: Index vault (nom_sans_extension → chemins relatifs).</span>
+<span class="sd">        content: Markdown file body.</span>
+<span class="sd">        vault_index: Vault index (stem → relative paths).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de WikiLink avec statut broken/ambiguous.</span>
+<span class="sd">        List of WikiLink with broken/ambiguous status.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WikiLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_WIKILINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
@@ -367,23 +367,23 @@
     <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">bundle_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait les liens markdown [text](target) et vérifie les liens internes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract [text](target) markdown links and verify internal links.</span>
 
-<span class="sd">    Les URLs externes (http:// / https://) ne sont pas vérifiées.</span>
+<span class="sd">    External URLs (http:// / https://) are not checked.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        content: Corps du fichier markdown.</span>
-<span class="sd">        file_path: Chemin absolu du fichier courant.</span>
-<span class="sd">        bundle_path: Racine du bundle (pour résoudre les chemins absolus).</span>
+<span class="sd">        content: Markdown file body.</span>
+<span class="sd">        file_path: Absolute path of the current file.</span>
+<span class="sd">        bundle_path: Bundle root (for resolving absolute paths).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de MarkdownLink.</span>
+<span class="sd">        List of MarkdownLink.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_MD_LINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="c1"># Ignorer les ancres pures (#section)</span>
+        <span class="c1"># Ignore pure anchors (#section)</span>
         <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">is_external</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;http://&quot;</span><span class="p">,</span> <span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="s2">&quot;ftp://&quot;</span><span class="p">))</span>
@@ -391,11 +391,11 @@
         <span class="k">if</span> <span class="n">is_external</span><span class="p">:</span>
             <span class="n">broken</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
-            <span class="c1"># Chemin absolu relatif au bundle</span>
+            <span class="c1"># Absolute path relative to the bundle</span>
             <span class="n">resolved</span> <span class="o">=</span> <span class="n">bundle_path</span> <span class="o">/</span> <span class="n">target</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
             <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Chemin relatif au fichier courant</span>
+            <span class="c1"># Path relative to the current file</span>
             <span class="n">resolved</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">target</span>
             <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
@@ -412,16 +412,16 @@
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_headers">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_headers</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract H1 and H2 headings with their line number in the body.</span>
 
-<span class="sd">    Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer</span>
-<span class="sd">    les `#` dans les blocs de code.</span>
+<span class="sd">    Must receive content pre-blanked via blank_code_spans to ignore</span>
+<span class="sd">    `#` characters inside code blocks.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        content: Corps du fichier avec blocs de code masqués.</span>
+<span class="sd">        content: File body with code blocks masked.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Header (niveaux 1 et 2 uniquement).</span>
+<span class="sd">        List of Header (levels 1 and 2 only).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
@@ -435,27 +435,27 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_structural_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si un titre H2 est une section structurelle (pas une entité listable).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether an H2 heading is a structural section (not a listable entity).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        text: Texte du titre H2.</span>
+<span class="sd">        text: H2 heading text.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        True si le H2 est une section de document (ADR, runbook, journal).</span>
+<span class="sd">        True if the H2 is a document section (ADR, runbook, journal).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># NFC pour neutraliser les variantes d&#39;encodage des accents</span>
+    <span class="c1"># NFC to neutralise accent encoding variants</span>
     <span class="n">lower</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_nonsplit_type</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si le type frontmatter exclut le fichier du découpage.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether the frontmatter type excludes the file from splitting.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        frontmatter: Frontmatter parsé, ou None si absent.</span>
+<span class="sd">        frontmatter: Parsed frontmatter, or None if absent.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        True si le type indique un document séquentiel non-découpable.</span>
+<span class="sd">        True if the type indicates a sequential non-splittable document.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">frontmatter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -464,28 +464,28 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_sequential_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si un titre H2 est un élément de liste séquentielle (étape, partie).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether an H2 heading is a sequential list element (step, part).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        text: Texte du titre H2.</span>
+<span class="sd">        text: H2 heading text.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        True si le H2 est une étape numérotée ou nommée séquentiellement.</span>
+<span class="sd">        True if the H2 is a numbered or sequentially named step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SEQUENTIAL_H2_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">normalized</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_session_journal</span><span class="p">(</span><span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si le fichier est un journal de session (H1 commence par une date).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether the file is a session journal (H1 starts with a date).</span>
 
-<span class="sd">    Détecte les journaux sans type frontmatter via leur H1 daté (YYYY-MM-DD...).</span>
+<span class="sd">    Detects journals without a frontmatter type via their dated H1 (YYYY-MM-DD...).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        headers: Liste de headers extraits du fichier.</span>
+<span class="sd">        headers: List of headers extracted from the file.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        True si le fichier est un journal de session.</span>
+<span class="sd">        True if the file is a session journal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">h1s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_DATE_H1_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">)</span>
@@ -498,20 +498,20 @@
     <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">],</span>
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Détermine si un fichier est candidat au découpage selon des critères sémantiques.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine whether a file is a split candidate based on semantic criteria.</span>
 
-<span class="sd">    Critères de déclenchement (dans l&#39;ordre) :</span>
-<span class="sd">    - multiple_h1 : ≥ 2 H1 avec des textes distincts</span>
-<span class="sd">    - homogeneous_h2_list : ≥ 4 H2 dont &lt; 2 sont structurels et &lt; 50% séquentiels</span>
+<span class="sd">    Trigger criteria (in order):</span>
+<span class="sd">    - multiple_h1: ≥ 2 H1 with distinct texts</span>
+<span class="sd">    - homogeneous_h2_list: ≥ 4 H2 of which &lt; 2 are structural and &lt; 50% sequential</span>
 
-<span class="sd">    Exclusions préalables :</span>
-<span class="sd">    - Type frontmatter journal/runbook/procedure</span>
-<span class="sd">    - Journal de session détecté par H1 daté</span>
-<span class="sd">    - H1 dupliqués (même texte, anomalie de copier-coller)</span>
+<span class="sd">    Pre-exclusions:</span>
+<span class="sd">    - journal/runbook/procedure frontmatter type</span>
+<span class="sd">    - Session journal detected by dated H1</span>
+<span class="sd">    - Duplicate H1s (same text, copy-paste anomaly)</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        headers: Liste des headers extraits du fichier.</span>
-<span class="sd">        frontmatter: Frontmatter parsé, ou None si absent.</span>
+<span class="sd">        headers: List of headers extracted from the file.</span>
+<span class="sd">        frontmatter: Parsed frontmatter, or None if absent.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple (split_candidate, split_reason, split_entity_count).</span>
@@ -527,7 +527,7 @@
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">({</span><span class="n">h</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">})</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># H1 identiques : anomalie de copier-coller, pas un découpage</span>
+            <span class="c1"># Identical H1s: copy-paste anomaly, not a split</span>
             <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;multiple_h1&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span>
 

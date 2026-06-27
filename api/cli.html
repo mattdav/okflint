@@ -41,11 +41,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -59,7 +59,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -91,22 +91,22 @@
   <section id="cli">
 <h1>cli<a class="headerlink" href="#cli" title="Link to this heading"></a></h1>
 <p>Point d’entrée CLI unifié — sous-commandes <code class="docutils literal notranslate"><span class="pre">audit</span></code> et <code class="docutils literal notranslate"><span class="pre">validate</span></code>.</p>
-<p id="module-okflint.cli">Point d’entrée CLI unifié d’okflint.</p>
+<p id="module-okflint.cli">Unified CLI entry point for okflint.</p>
 <dl class="simple">
-<dt>Expose deux sous-commandes façon Ruff :</dt><dd><p>okflint audit     — inventaire et diagnostic descriptif d’une base
-okflint validate  — gate normatif de conformité (exit 0/1)</p>
+<dt>Exposes two sub-commands Ruff-style:</dt><dd><p>okflint audit     — inventory and descriptive diagnostic of a base
+okflint validate  — normative compliance gate (exit 0/1)</p>
 </dd>
 </dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.cli.build_parser">
 <span class="sig-prename descclassname"><span class="pre">okflint.cli.</span></span><span class="sig-name descname"><span class="pre">build_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/cli.html#build_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.cli.build_parser" title="Link to this definition"></a></dt>
-<dd><p>Construit le parser argparse avec les sous-commandes.</p>
+<dd><p>Build the argparse parser with sub-commands.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArgumentParser</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Le parser configuré.</p>
+<dd class="field-even"><p>The configured parser.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -114,7 +114,7 @@ okflint validate  — gate normatif de conformité (exit 0/1)</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.cli.main">
 <span class="sig-prename descclassname"><span class="pre">okflint.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.cli.main" title="Link to this definition"></a></dt>
-<dd><p>Point d’entrée console_scripts : okflint &lt;command&gt;.</p>
+<dd><p>Console scripts entry point: okflint &lt;command&gt;.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

@@ -42,11 +42,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -85,7 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -117,12 +117,12 @@
   <section id="audit">
 <h1>audit<a class="headerlink" href="#audit" title="Link to this heading"></a></h1>
 <p>Audit descriptif d’un bundle OKF — inventaire et diagnostic de conformité.</p>
-<p id="module-okflint.audit">Audit d’un bundle OKF Obsidian — inventaire et diagnostic de conformité.</p>
+<p id="module-okflint.audit">OKF bundle audit — inventory and conformance diagnostic.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.audit.FileReport">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">FileReport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reserved</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">okf_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wikilinks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markdown_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_candidate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_entity_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#FileReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.FileReport" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Rapport d’analyse d’un fichier .md du bundle.</p>
+<p>Analysis report for a .md file in the bundle.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.chars">
 <span class="sig-name descname"><span class="pre">chars</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#okflint.audit.FileReport.chars" title="Link to this definition"></a></dt>
@@ -194,7 +194,7 @@
 <dt class="sig sig-object py" id="okflint.audit.Header">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">Header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#Header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.Header" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Représente un titre H1 ou H2 dans un fichier.</p>
+<p>Represents an H1 or H2 heading in a file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.Header.level">
 <span class="sig-name descname"><span class="pre">level</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#okflint.audit.Header.level" title="Link to this definition"></a></dt>
@@ -215,20 +215,20 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.analyze_file">
 <span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.analyze_file" title="Link to this definition"></a></dt>
-<dd><p>Analyse complète d’un fichier .md du bundle.</p>
+<dd><p>Full analysis of a .md file in the bundle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Chemin absolu du fichier.</p></li>
-<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Racine du bundle.</p></li>
-<li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Index vault pour résolution des wikilinks.</p></li>
+<li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the file.</p></li>
+<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root.</p></li>
+<li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Vault index for wikilink resolution.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#okflint.audit.FileReport" title="okflint.audit.FileReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileReport</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>FileReport avec tous les champs remplis.</p>
+<dd class="field-odd"><p>FileReport with all fields populated.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -236,20 +236,20 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.compute_stats">
 <span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">compute_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_total</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#compute_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.compute_stats" title="Link to this definition"></a></dt>
-<dd><p>Agrège les statistiques globales du rapport.</p>
-<p>Seuls les fichiers non réservés sont comptés dans by_okf_status.</p>
+<dd><p>Aggregate global statistics for the report.</p>
+<p>Only non-reserved files are counted in by_okf_status.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>files</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.audit.FileReport" title="okflint.audit.FileReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileReport</span></code></a>]</span>) – Liste des rapports individuels.</p></li>
-<li><p><strong>vault_total</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – Nombre total de fichiers .md dans la vault entière.</p></li>
+<li><p><strong>files</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.audit.FileReport" title="okflint.audit.FileReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileReport</span></code></a>]</span>) – List of individual file reports.</p></li>
+<li><p><strong>vault_total</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – Total number of .md files in the entire vault.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dictionnaire de statistiques.</p>
+<dd class="field-odd"><p>Statistics dictionary.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -257,18 +257,18 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.extract_headers">
 <span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">extract_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#extract_headers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.extract_headers" title="Link to this definition"></a></dt>
-<dd><p>Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.</p>
-<p>Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer
-les <cite>#</cite> dans les blocs de code.</p>
+<dd><p>Extract H1 and H2 headings with their line number in the body.</p>
+<p>Must receive content pre-blanked via blank_code_spans to ignore
+<cite>#</cite> characters inside code blocks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Corps du fichier avec blocs de code masqués.</p>
+<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – File body with code blocks masked.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.audit.Header" title="okflint.audit.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Liste de Header (niveaux 1 et 2 uniquement).</p>
+<dd class="field-odd"><p>List of Header (levels 1 and 2 only).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -276,10 +276,10 @@ les <cite>#</cite> dans les blocs de code.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.get_okf_status">
 <span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">get_okf_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#get_okf_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.get_okf_status" title="Link to this definition"></a></dt>
-<dd><p>Détermine le statut OKF d’un concept selon son frontmatter.</p>
+<dd><p>Determine the OKF status of a concept from its frontmatter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frontmatter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Frontmatter parsé, ou None si absent.</p>
+<dd class="field-odd"><p><strong>frontmatter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Parsed frontmatter, or None if absent.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[<code class="docutils literal notranslate"><span class="pre">'conformant'</span></code>, <code class="docutils literal notranslate"><span class="pre">'partial'</span></code>, <code class="docutils literal notranslate"><span class="pre">'non_conformant'</span></code>]</span></p>
@@ -293,19 +293,19 @@ les <cite>#</cite> dans les blocs de code.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.run_audit">
 <span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">run_audit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#run_audit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.run_audit" title="Link to this definition"></a></dt>
-<dd><p>Orchestre l’audit complet d’un bundle OKF.</p>
+<dd><p>Orchestrate the full audit of an OKF bundle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Racine du bundle à auditer.</p></li>
-<li><p><strong>vault_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Racine de la vault Obsidian (pour l’index wikilinks).</p></li>
+<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root of the bundle to audit.</p></li>
+<li><p><strong>vault_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root of the Obsidian vault (for the wikilinks index).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Rapport d’audit complet sérialisable en JSON.</p>
+<dd class="field-odd"><p>Full audit report serialisable as JSON.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -39,11 +39,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -53,7 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -83,7 +83,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for okflint.validate</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Validation normative de fichiers Markdown OKF — exit 0 si conforme, exit 1 sinon.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Normative validation of OKF Markdown files — exit 0 if conformant, exit 1 otherwise.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -115,10 +115,10 @@
     <span class="n">parse_frontmatter</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Pattern ISO date YYYY-MM-DD</span>
+<span class="c1"># ISO date pattern YYYY-MM-DD</span>
 <span class="n">_ISO_DATE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">)</span>
 
-<span class="c1"># Re-export pour les importeurs (cli.py)</span>
+<span class="c1"># Re-export for importers (cli.py)</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Diagnostic&quot;</span><span class="p">,</span> <span class="s2">&quot;ManifestError&quot;</span><span class="p">,</span> <span class="s2">&quot;run_validate&quot;</span><span class="p">]</span>
 
 
@@ -126,7 +126,7 @@
 <a class="viewcode-back" href="../../api/validate.html#okflint.validate.Diagnostic">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Diagnostic</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Erreur ou avertissement de validation OKF.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;OKF validation error or warning.&quot;&quot;&quot;</span>
 
     <span class="n">code</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;core&quot; | &quot;profile&quot; | &quot;hygiene&quot;</span>
@@ -137,7 +137,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Étage 1 — Cœur OKF (toujours actif)</span>
+<span class="c1"># Stage 1 — OKF core (always active)</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
@@ -146,18 +146,18 @@
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie les règles cœur OKF sur un fichier concept.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check OKF core rules on a concept file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier (pour les messages).</span>
-<span class="sd">        frontmatter: Frontmatter parsé, ou None si absent/invalide.</span>
+<span class="sd">        path: Relative file path (for messages).</span>
+<span class="sd">        frontmatter: Parsed frontmatter, or None if absent/invalid.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (F001, F002).</span>
+<span class="sd">        List of Diagnostic (F001, F002).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="c1"># F001 : frontmatter absent ou non parsable</span>
+    <span class="c1"># F001: frontmatter absent or unparsable</span>
     <span class="k">if</span> <span class="n">frontmatter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Diagnostic</span><span class="p">(</span>
@@ -165,12 +165,12 @@
                 <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
                 <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;frontmatter absent ou non parsable&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;frontmatter absent or unparsable&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># F002 impossible sans frontmatter</span>
+        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># F002 impossible without frontmatter</span>
 
-    <span class="c1"># F002 : champ type absent ou vide</span>
+    <span class="c1"># F002: type field absent or empty</span>
     <span class="k">if</span> <span class="s2">&quot;type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
         <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Diagnostic</span><span class="p">(</span>
@@ -178,7 +178,7 @@
                 <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
                 <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;champ `type` absent ou vide&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;`type` field absent or empty&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -191,23 +191,23 @@
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">is_root_index</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie la règle R001 sur un fichier index.md.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check R001 rule on an index.md file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        content: Contenu brut du fichier.</span>
-<span class="sd">        is_root_index: True si le fichier est à la racine d&#39;un root.</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        content: Raw file content.</span>
+<span class="sd">        is_root_index: True if the file is at a root&#39;s directory level.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (R001).</span>
+<span class="sd">        List of Diagnostic (R001).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">fm</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">fm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># pas de frontmatter → conforme</span>
+        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># no frontmatter → conformant</span>
 
-    <span class="c1"># Frontmatter présent : autorisé seulement si root ET uniquement okf_version</span>
+    <span class="c1"># Frontmatter present: only allowed at root AND with only okf_version</span>
     <span class="n">allowed_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;okf_version&quot;</span><span class="p">}</span>
     <span class="n">has_extra_keys</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">allowed_keys</span><span class="p">)</span>
 
@@ -219,8 +219,8 @@
                 <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;frontmatter interdit dans index.md &quot;</span>
-                    <span class="s2">&quot;(seul `okf_version` autorisé à la racine)&quot;</span>
+                    <span class="s2">&quot;frontmatter forbidden in index.md &quot;</span>
+                    <span class="s2">&quot;(only `okf_version` allowed at root)&quot;</span>
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -233,14 +233,14 @@
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie la règle R002 sur un fichier log.md.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check R002 rule on a log.md file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        content: Contenu brut du fichier.</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        content: Raw file content.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (R002).</span>
+<span class="sd">        List of Diagnostic (R002).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
@@ -255,7 +255,7 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;heading de date non ISO dans log.md : `</span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;non-ISO date heading in log.md: `</span><span class="si">{</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -263,7 +263,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Étage 2 — Profil</span>
+<span class="c1"># Stage 2 — Profile</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
@@ -271,32 +271,32 @@
     <span class="n">val_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Résout le type déclaré vers une clé canonique du profil.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a declared type to a canonical profile key.</span>
 
-<span class="sd">    Priorité : exact match → case-insensitive → aliases (case-insensitive).</span>
+<span class="sd">    Priority: exact match → case-insensitive → aliases (case-insensitive).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        val_type: Valeur du champ type dans le frontmatter.</span>
-<span class="sd">        profile: Configuration du profil.</span>
+<span class="sd">        val_type: Value of the type field in the frontmatter.</span>
+<span class="sd">        profile: Profile configuration.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple (type_key, f106_message) où type_key est None si non trouvé.</span>
+<span class="sd">        Tuple (type_key, f106_message) where type_key is None if not found.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># 1. Correspondance exacte</span>
+    <span class="c1"># 1. Exact match</span>
     <span class="k">if</span> <span class="n">val_type</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">val_type</span><span class="p">,</span> <span class="kc">None</span>
 
-    <span class="c1"># 2. Correspondance case-insensitive sur les clés</span>
+    <span class="c1"># 2. Case-insensitive match on keys</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">val_type</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">k</span><span class="p">,</span> <span class="kc">None</span>
 
-    <span class="c1"># 3. Recherche dans les aliases (case-insensitive)</span>
+    <span class="c1"># 3. Search in aliases (case-insensitive)</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">aliases</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">alias</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">val_type</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;graphie de `type` non normalisée : `</span><span class="si">{</span><span class="n">val_type</span><span class="si">}</span><span class="s2">` → utiliser `</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">`&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;non-normalised `type` spelling: `</span><span class="si">{</span><span class="n">val_type</span><span class="si">}</span><span class="s2">` → use `</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">`&quot;</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">k</span><span class="p">,</span> <span class="n">msg</span>
 
@@ -310,16 +310,16 @@
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span><span class="p">,</span>
     <span class="n">status_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie les règles de profil sur un fichier concept.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check profile rules on a concept file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        frontmatter: Frontmatter parsé (non None).</span>
-<span class="sd">        profile: Configuration du profil.</span>
-<span class="sd">        status_field: Nom du champ de statut déclaré dans base (peut être None).</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
+<span class="sd">        profile: Profile configuration.</span>
+<span class="sd">        status_field: Name of the status field declared in base (may be None).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (F101-F106, S101, S102).</span>
+<span class="sd">        List of Diagnostic (F101-F106, S101, S102).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">val_type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
@@ -333,10 +333,10 @@
                 <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
                 <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;valeur `type` hors des types déclarés : `</span><span class="si">{</span><span class="n">val_type</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`type` value not in declared types: `</span><span class="si">{</span><span class="n">val_type</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># pas de checks suivants sans type résolu</span>
+        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># no further checks without a resolved type</span>
 
     <span class="k">if</span> <span class="n">f106_msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -351,7 +351,7 @@
 
     <span class="n">type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="p">[</span><span class="n">type_key</span><span class="p">]</span>
 
-    <span class="c1"># F102 — champs requis manquants (sauf &quot;type&quot; déjà vérifié)</span>
+    <span class="c1"># F102 — missing required fields (except &quot;type&quot; already checked)</span>
     <span class="k">for</span> <span class="n">req_field</span> <span class="ow">in</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">req_field</span> <span class="o">==</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -362,17 +362,17 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;champ requis manquant : `</span><span class="si">{</span><span class="n">req_field</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;missing required field: `</span><span class="si">{</span><span class="n">req_field</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># F103/F104/F105 — statut</span>
-    <span class="c1"># CRITIQUE : distinguer is False de is None</span>
+    <span class="c1"># F103/F104/F105 — status</span>
+    <span class="c1"># CRITICAL: distinguish is False from is None</span>
     <span class="n">sv</span> <span class="o">=</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">status_values</span>
-    <span class="n">sf</span> <span class="o">=</span> <span class="n">status_field</span> <span class="ow">or</span> <span class="s2">&quot;statut&quot;</span>  <span class="c1"># nom du champ de statut</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">status_field</span> <span class="ow">or</span> <span class="s2">&quot;status&quot;</span>  <span class="c1"># name of the status field</span>
 
     <span class="k">if</span> <span class="n">sv</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="c1"># statut interdit pour ce type</span>
+        <span class="c1"># status forbidden for this type</span>
         <span class="k">if</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
@@ -381,13 +381,13 @@
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;champ de statut `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` présent mais interdit &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;pour le type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;status field `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` present but forbidden &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;for type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sv</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="c1"># statut obligatoire et à valeur contrainte</span>
+        <span class="c1"># status required and value constrained</span>
         <span class="k">if</span> <span class="n">sf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
@@ -395,7 +395,7 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;champ de statut `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` requis pour le type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status field `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` required for type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">sf</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sv</span><span class="p">:</span>
@@ -406,16 +406,16 @@
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;valeur de statut hors vocabulaire : &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">sf</span><span class="p">]</span><span class="si">}</span><span class="s2">` (valeurs : </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2">)&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;status value outside vocabulary: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">sf</span><span class="p">]</span><span class="si">}</span><span class="s2">` (allowed: </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2">)&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-    <span class="c1"># sv is None → optionnel, aucune vérification</span>
+    <span class="c1"># sv is None → optional, no check</span>
 
-    <span class="c1"># S101 — champ de statut mal nommé</span>
+    <span class="c1"># S101 — incorrectly named status field</span>
     <span class="k">if</span> <span class="n">status_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Vérifier &quot;status&quot; (anglais) si status_field != &quot;status&quot;</span>
+        <span class="c1"># Check &quot;status&quot; (English) if status_field != &quot;status&quot;</span>
         <span class="k">if</span> <span class="n">status_field</span> <span class="o">!=</span> <span class="s2">&quot;status&quot;</span> <span class="ow">and</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
@@ -424,12 +424,12 @@
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;champ de statut mal nommé : `status`&quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot; → utiliser `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;incorrectly named status field: `status`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; → use `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-        <span class="c1"># Vérifier &quot;statut&quot; (français) si status_field != &quot;statut&quot;</span>
+        <span class="c1"># Check &quot;statut&quot; (French) if status_field != &quot;statut&quot;</span>
         <span class="k">if</span> <span class="n">status_field</span> <span class="o">!=</span> <span class="s2">&quot;statut&quot;</span> <span class="ow">and</span> <span class="s2">&quot;statut&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
@@ -438,13 +438,13 @@
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;champ de statut mal nommé : `statut`&quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot; → utiliser `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;incorrectly named status field: `statut`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; → use `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># S102 — dates mal formatées</span>
+    <span class="c1"># S102 — incorrectly formatted dates</span>
     <span class="k">for</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">date_fields</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">]:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">])</span>
@@ -456,8 +456,8 @@
                         <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                         <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                         <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;date mal formatée : `</span><span class="si">{</span><span class="n">date_field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
-                            <span class="sa">f</span><span class="s2">&quot;(attendu YYYY-MM-DD)&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;incorrectly formatted date: `</span><span class="si">{</span><span class="n">date_field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;(expected YYYY-MM-DD)&quot;</span>
                         <span class="p">),</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
@@ -466,7 +466,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Étage 3 — Hygiène</span>
+<span class="c1"># Stage 3 — Hygiene</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
@@ -477,16 +477,16 @@
     <span class="n">type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span><span class="p">,</span>
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie les champs frontmatter inconnus (F201).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for unknown frontmatter fields (F201).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        frontmatter: Frontmatter parsé.</span>
-<span class="sd">        type_cfg: Configuration du type résolu.</span>
-<span class="sd">        level: Niveau de contrôle (off | warn | error).</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter.</span>
+<span class="sd">        type_cfg: Configuration of the resolved type.</span>
+<span class="sd">        level: Control level (off | warn | error).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (F201).</span>
+<span class="sd">        List of Diagnostic (F201).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -501,7 +501,7 @@
             <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
             <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
             <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;champ inconnu dans le frontmatter : `</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;unknown field in frontmatter: `</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span>
     <span class="p">]</span>
@@ -515,17 +515,17 @@
     <span class="n">external_refs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie les liens cassés ou ambigus (L001, L002, L003).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for broken or ambiguous links (L001, L002, L003).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        wikilinks: Liste de WikiLink extraits.</span>
-<span class="sd">        md_links: Liste de MarkdownLink extraits.</span>
-<span class="sd">        external_refs: Noms de fichiers hors-base autorisés (lowercased).</span>
-<span class="sd">        level: Niveau de contrôle (off | warn | error).</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        wikilinks: List of extracted WikiLinks.</span>
+<span class="sd">        md_links: List of extracted MarkdownLinks.</span>
+<span class="sd">        external_refs: Allowed out-of-base file names (lowercased).</span>
+<span class="sd">        level: Control level (off | warn | error).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (L001, L002, L003).</span>
+<span class="sd">        List of Diagnostic (L001, L002, L003).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -541,7 +541,7 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;wikilink cassé : [[</span><span class="si">{</span><span class="n">wl</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">]]&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;broken wikilink: [[</span><span class="si">{</span><span class="n">wl</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">]]&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">wl</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">:</span>
@@ -551,7 +551,7 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;wikilink ambigu : [[</span><span class="si">{</span><span class="n">wl</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">]]&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;ambiguous wikilink: [[</span><span class="si">{</span><span class="n">wl</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">]]&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -563,7 +563,7 @@
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;lien markdown cassé : </span><span class="si">{</span><span class="n">ml</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;broken markdown link: </span><span class="si">{</span><span class="n">ml</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -577,16 +577,16 @@
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie si le fichier est candidat au découpage (S201).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the file is a split candidate (S201).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin relatif du fichier.</span>
-<span class="sd">        headers: Liste des headers extraits.</span>
-<span class="sd">        frontmatter: Frontmatter parsé ou None.</span>
-<span class="sd">        level: Niveau de contrôle (off | warn | error).</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        headers: List of extracted headers.</span>
+<span class="sd">        frontmatter: Parsed frontmatter or None.</span>
+<span class="sd">        level: Control level (off | warn | error).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (S201).</span>
+<span class="sd">        List of Diagnostic (S201).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -601,7 +601,7 @@
                 <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                 <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;candidat au découpage (</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> sections)&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;split candidate (</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> sections)&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
 
@@ -614,15 +614,15 @@
     <span class="n">reserved_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vérifie la présence des fichiers réservés dans chaque root (R201).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for the presence of reserved files in each root (R201).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        roots: Liste des racines de la base.</span>
-<span class="sd">        reserved_config: Mapping nom_logique → nom_fichier.</span>
-<span class="sd">        level: Niveau de contrôle (off | warn | error).</span>
+<span class="sd">        roots: List of base roots.</span>
+<span class="sd">        reserved_config: Mapping logical_name → filename.</span>
+<span class="sd">        level: Control level (off | warn | error).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (R201).</span>
+<span class="sd">        List of Diagnostic (R201).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -639,7 +639,7 @@
                         <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                         <span class="n">file</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
-                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;fichier réservé absent dans </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;reserved file missing in </span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -647,7 +647,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Orchestrateurs</span>
+<span class="c1"># Orchestrators</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
@@ -657,19 +657,19 @@
     <span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">,</span>
     <span class="n">base_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestre la validation complète d&#39;un fichier markdown.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate the full validation of a markdown file.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        file_path: Chemin absolu du fichier à valider.</span>
-<span class="sd">        manifest: Manifeste OKF chargé et validé.</span>
-<span class="sd">        base_index: Index des fichiers de la base (nom → chemins).</span>
+<span class="sd">        file_path: Absolute path of the file to validate.</span>
+<span class="sd">        manifest: Loaded and validated OKF manifest.</span>
+<span class="sd">        base_index: Base file index (name → paths).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Liste de Diagnostic (vide si conforme).</span>
+<span class="sd">        List of Diagnostic (empty if conformant).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">content</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Détermination de la root applicable</span>
+    <span class="c1"># Determine the applicable root</span>
     <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -684,7 +684,7 @@
     <span class="n">reserved_idx</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;index.md&quot;</span><span class="p">)</span>
     <span class="n">reserved_log</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;log.md&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Fichiers réservés : traitements spécifiques, pas de check concept</span>
+    <span class="c1"># Reserved files: specific handling, no concept check</span>
     <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_idx</span><span class="p">:</span>
         <span class="n">is_root</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">check_core_reserved_index</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">is_root</span><span class="p">)</span>
@@ -692,19 +692,19 @@
     <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_log</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">check_core_reserved_log</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
 
-    <span class="c1"># Fichier concept</span>
+    <span class="c1"># Concept file</span>
     <span class="n">fm</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
     <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="c1"># Cœur OKF</span>
+    <span class="c1"># OKF core</span>
     <span class="n">core_diags</span> <span class="o">=</span> <span class="n">check_core_concept</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">)</span>
     <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">core_diags</span><span class="p">)</span>
 
-    <span class="c1"># Si F001 ou F002 → skip les étages suivants</span>
+    <span class="c1"># If F001 or F002 → skip subsequent stages</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">code</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;F001&quot;</span><span class="p">,</span> <span class="s2">&quot;F002&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">core_diags</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">diagnostics</span>
 
-    <span class="c1"># fm est forcément non-None ici (F001 n&#39;a pas déclenché)</span>
+    <span class="c1"># fm is necessarily non-None here (F001 did not fire)</span>
     <span class="k">assert</span> <span class="n">fm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
     <span class="n">safe_body</span> <span class="o">=</span> <span class="n">blank_code_spans</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
@@ -712,23 +712,23 @@
     <span class="n">md_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
 
-    <span class="c1"># Profil</span>
+    <span class="c1"># Profile</span>
     <span class="n">resolved_type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">profile_diags</span> <span class="o">=</span> <span class="n">check_profile</span><span class="p">(</span>
             <span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">status_field</span>
         <span class="p">)</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">profile_diags</span><span class="p">)</span>
-        <span class="c1"># Résoudre le type_cfg pour F201 (hygiene unknown fields)</span>
+        <span class="c1"># Resolve type_cfg for F201 (hygiene unknown fields)</span>
         <span class="n">type_key</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_resolve_type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">type_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">resolved_type_cfg</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="p">[</span><span class="n">type_key</span><span class="p">]</span>
 
-    <span class="c1"># Hygiène</span>
+    <span class="c1"># Hygiene</span>
     <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">hygiene</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">hygiene</span><span class="p">:</span> <span class="n">HygieneConfig</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">hygiene</span>
 
-        <span class="c1"># Liens</span>
+        <span class="c1"># Links</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="n">check_hygiene_links</span><span class="p">(</span>
                 <span class="n">rel</span><span class="p">,</span>
@@ -744,7 +744,7 @@
             <span class="n">check_hygiene_structure</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">hygiene</span><span class="o">.</span><span class="n">split_candidates</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># Champs inconnus (seulement si profil ET type résolu)</span>
+        <span class="c1"># Unknown fields (only if profile AND resolved type)</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">resolved_type_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                 <span class="n">check_hygiene_unknown_fields</span><span class="p">(</span>
@@ -762,17 +762,17 @@
     <span class="n">manifest_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">targets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestre la validation OKF d&#39;une liste de cibles.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate OKF validation over a list of targets.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        manifest_path: Chemin vers le manifeste OKF YAML.</span>
-<span class="sd">        targets: Fichiers ou dossiers à valider.</span>
+<span class="sd">        manifest_path: Path to the OKF YAML manifest.</span>
+<span class="sd">        targets: Files or directories to validate.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple (liste de diagnostics, code de sortie 0 ou 1).</span>
+<span class="sd">        Tuple (list of diagnostics, exit code 0 or 1).</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si le manifeste est invalide ou illisible.</span>
+<span class="sd">        ManifestError: If the manifest is invalid or unreadable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
     <span class="n">base_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
@@ -788,7 +788,7 @@
         <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="n">md_files</span><span class="p">:</span>
             <span class="n">all_diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">validate_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">base_index</span><span class="p">))</span>
 
-    <span class="c1"># Hygiène réservée (contrôle global sur les roots)</span>
+    <span class="c1"># Reserved hygiene (global check on roots)</span>
     <span class="n">reserved_level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">manifest</span><span class="o">.</span><span class="n">hygiene</span><span class="o">.</span><span class="n">reserved_files</span> <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">hygiene</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;off&quot;</span>
     <span class="p">)</span>

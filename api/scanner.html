@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="manifest" href="manifest.html" />
-    <link rel="prev" title="Catalogue des règles" href="../guides/rules.html" /> 
+    <link rel="prev" title="Rules catalogue" href="../guides/rules.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,11 +42,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -88,7 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -120,12 +120,12 @@
   <section id="scanner">
 <h1>scanner<a class="headerlink" href="#scanner" title="Link to this heading"></a></h1>
 <p>Primitives partagées de scan de fichiers Markdown OKF.</p>
-<p id="module-okflint.scanner">Primitives partagées de scan de fichiers Markdown OKF.</p>
+<p id="module-okflint.scanner">Shared Markdown file scanning primitives for OKF.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.scanner.Header">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">Header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#Header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.Header" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Représente un titre H1 ou H2 dans un fichier.</p>
+<p>Represents an H1 or H2 heading in a file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.scanner.Header.level">
 <span class="sig-name descname"><span class="pre">level</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#okflint.scanner.Header.level" title="Link to this definition"></a></dt>
@@ -147,7 +147,7 @@
 <dt class="sig sig-object py" id="okflint.scanner.MarkdownLink">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">MarkdownLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_external</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broken</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#MarkdownLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.MarkdownLink" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Représente un lien markdown [text](url) dans un fichier.</p>
+<p>Represents a markdown link [text](url) in a file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.scanner.MarkdownLink.broken">
 <span class="sig-name descname"><span class="pre">broken</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="headerlink" href="#okflint.scanner.MarkdownLink.broken" title="Link to this definition"></a></dt>
@@ -174,7 +174,7 @@
 <dt class="sig sig-object py" id="okflint.scanner.WikiLink">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">WikiLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolved_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broken</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ambiguous</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#WikiLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.WikiLink" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Représente un wikilink Obsidian [[…]] dans un fichier.</p>
+<p>Represents an Obsidian wikilink [[…]] in a file.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.scanner.WikiLink.alias">
 <span class="sig-name descname"><span class="pre">alias</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.scanner.WikiLink.alias" title="Link to this definition"></a></dt>
@@ -215,20 +215,20 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.blank_code_spans">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">blank_code_spans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#blank_code_spans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.blank_code_spans" title="Link to this definition"></a></dt>
-<dd><p>Neutralise les blocs de code fencés et les spans inline.</p>
-<p>Permet l’extraction de liens sans faux positifs dans les zones de code.
-Remplace le contenu des zones de code par des espaces en préservant les
-positions de caractères (numéros de ligne inchangés). Une fence non fermée
-en fin de fichier est traitée comme ouverte jusqu’à l’EOF.</p>
+<dd><p>Blank out fenced code blocks and inline code spans.</p>
+<p>Allows link extraction without false positives inside code zones.
+Replaces code zone content with spaces while preserving character
+positions (line numbers unchanged). An unclosed fence at end of file
+is treated as open until EOF.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Corps brut du fichier markdown (après frontmatter).</p>
+<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Raw file body (after frontmatter).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Contenu avec blocs de code masqués par des espaces.</p>
+<dd class="field-odd"><p>Content with code blocks masked by spaces.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -236,16 +236,16 @@ en fin de fichier est traitée comme ouverte jusqu’à l’EOF.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.build_file_index">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">build_file_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roots</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#build_file_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.build_file_index" title="Link to this definition"></a></dt>
-<dd><p>Indexe tous les .md d’une liste de racines pour la résolution des wikilinks.</p>
+<dd><p>Index all .md files under a list of roots for wikilink resolution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>roots</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</span>) – Liste de racines à indexer.</p>
+<dd class="field-odd"><p><strong>roots</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</span>) – List of roots to index.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dictionnaire nom_sans_extension → liste de chemins relatifs à la première root.</p>
+<dd class="field-odd"><p>Dictionary stem → list of paths relative to the first root.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -253,19 +253,19 @@ en fin de fichier est traitée comme ouverte jusqu’à l’EOF.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.evaluate_split">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">evaluate_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#evaluate_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.evaluate_split" title="Link to this definition"></a></dt>
-<dd><p>Détermine si un fichier est candidat au découpage selon des critères sémantiques.</p>
-<p>Critères de déclenchement (dans l’ordre) :
-- multiple_h1 : ≥ 2 H1 avec des textes distincts
-- homogeneous_h2_list : ≥ 4 H2 dont &lt; 2 sont structurels et &lt; 50% séquentiels</p>
-<p>Exclusions préalables :
-- Type frontmatter journal/runbook/procedure
-- Journal de session détecté par H1 daté
-- H1 dupliqués (même texte, anomalie de copier-coller)</p>
+<dd><p>Determine whether a file is a split candidate based on semantic criteria.</p>
+<p>Trigger criteria (in order):
+- multiple_h1: ≥ 2 H1 with distinct texts
+- homogeneous_h2_list: ≥ 4 H2 of which &lt; 2 are structural and &lt; 50% sequential</p>
+<p>Pre-exclusions:
+- journal/runbook/procedure frontmatter type
+- Session journal detected by dated H1
+- Duplicate H1s (same text, copy-paste anomaly)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>headers</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.Header" title="okflint.scanner.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span>) – Liste des headers extraits du fichier.</p></li>
-<li><p><strong>frontmatter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Frontmatter parsé, ou None si absent.</p></li>
+<li><p><strong>headers</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.Header" title="okflint.scanner.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span>) – List of headers extracted from the file.</p></li>
+<li><p><strong>frontmatter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Parsed frontmatter, or None if absent.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -280,18 +280,18 @@ en fin de fichier est traitée comme ouverte jusqu’à l’EOF.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.extract_headers">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">extract_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#extract_headers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.extract_headers" title="Link to this definition"></a></dt>
-<dd><p>Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.</p>
-<p>Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer
-les <cite>#</cite> dans les blocs de code.</p>
+<dd><p>Extract H1 and H2 headings with their line number in the body.</p>
+<p>Must receive content pre-blanked via blank_code_spans to ignore
+<cite>#</cite> characters inside code blocks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Corps du fichier avec blocs de code masqués.</p>
+<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – File body with code blocks masked.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.Header" title="okflint.scanner.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Liste de Header (niveaux 1 et 2 uniquement).</p>
+<dd class="field-odd"><p>List of Header (levels 1 and 2 only).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -299,21 +299,21 @@ les <cite>#</cite> dans les blocs de code.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.extract_markdown_links">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">extract_markdown_links</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#extract_markdown_links"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.extract_markdown_links" title="Link to this definition"></a></dt>
-<dd><p>Extrait les liens markdown [text](target) et vérifie les liens internes.</p>
-<p>Les URLs externes (<a class="reference external" href="http://">http://</a> / <a class="reference external" href="https://">https://</a>) ne sont pas vérifiées.</p>
+<dd><p>Extract [text](target) markdown links and verify internal links.</p>
+<p>External URLs (<a class="reference external" href="http://">http://</a> / <a class="reference external" href="https://">https://</a>) are not checked.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Corps du fichier markdown.</p></li>
-<li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Chemin absolu du fichier courant.</p></li>
-<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Racine du bundle (pour résoudre les chemins absolus).</p></li>
+<li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Markdown file body.</p></li>
+<li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the current file.</p></li>
+<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root (for resolving absolute paths).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.MarkdownLink" title="okflint.scanner.MarkdownLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">MarkdownLink</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Liste de MarkdownLink.</p>
+<dd class="field-odd"><p>List of MarkdownLink.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -321,19 +321,19 @@ les <cite>#</cite> dans les blocs de code.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.extract_wikilinks">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">extract_wikilinks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#extract_wikilinks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.extract_wikilinks" title="Link to this definition"></a></dt>
-<dd><p>Extrait et résout les wikilinks [[…]] dans le contenu.</p>
+<dd><p>Extract and resolve [[…]] wikilinks in the content.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Corps du fichier markdown.</p></li>
-<li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Index vault (nom_sans_extension → chemins relatifs).</p></li>
+<li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Markdown file body.</p></li>
+<li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Vault index (stem → relative paths).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.WikiLink" title="okflint.scanner.WikiLink"><code class="xref py py-class docutils literal notranslate"><span class="pre">WikiLink</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Liste de WikiLink avec statut broken/ambiguous.</p>
+<dd class="field-odd"><p>List of WikiLink with broken/ambiguous status.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -341,16 +341,16 @@ les <cite>#</cite> dans les blocs de code.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.parse_frontmatter">
 <span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">parse_frontmatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#parse_frontmatter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.parse_frontmatter" title="Link to this definition"></a></dt>
-<dd><p>Extrait le frontmatter YAML d’un fichier markdown.</p>
+<dd><p>Extract the YAML frontmatter from a markdown file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Contenu complet du fichier.</p>
+<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Full file content.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple (frontmatter_dict, body) ou (None, content) si absent ou invalide.</p>
+<dd class="field-odd"><p>Tuple (frontmatter_dict, body) or (None, content) if absent or invalid.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -361,7 +361,7 @@ les <cite>#</cite> dans les blocs de code.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../guides/rules.html" class="btn btn-neutral float-left" title="Catalogue des règles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../guides/rules.html" class="btn btn-neutral float-left" title="Rules catalogue" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="manifest.html" class="btn btn-neutral float-right" title="manifest" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

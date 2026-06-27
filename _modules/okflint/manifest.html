@@ -39,11 +39,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Démarrage rapide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -53,7 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -83,7 +83,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for okflint.manifest</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Chargement et validation du manifeste OKF YAML.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;OKF manifest loading and validation.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -99,7 +99,7 @@
 <div class="viewcode-block" id="ManifestError">
 <a class="viewcode-back" href="../../api/validate.html#okflint.manifest.ManifestError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ManifestError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manifeste OKF invalide ou illisible.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invalid or unreadable OKF manifest.&quot;&quot;&quot;</span></div>
 
 
 
@@ -107,7 +107,7 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.TypeConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TypeConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration d&#39;un type de concept déclaré dans le profil.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration of a concept type declared in the profile.&quot;&quot;&quot;</span>
 
     <span class="n">required</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">optional</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -120,7 +120,7 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.ProfileConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProfileConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration du profil de la base documentaire.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Profile configuration of the documentary base.&quot;&quot;&quot;</span>
 
     <span class="n">types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TypeConfig</span><span class="p">]</span>
     <span class="n">date_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
@@ -131,7 +131,7 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.HygieneConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HygieneConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration des contrôles d&#39;hygiène (opt-in).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration of hygiene checks (opt-in).&quot;&quot;&quot;</span>
 
     <span class="n">broken_links</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">split_candidates</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
@@ -144,7 +144,7 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.BaseConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration de la base documentaire.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Documentary base configuration.&quot;&quot;&quot;</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
@@ -158,7 +158,7 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.Manifest">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Manifest</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manifeste OKF chargé et validé.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Loaded and validated OKF manifest.&quot;&quot;&quot;</span>
 
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">base</span><span class="p">:</span> <span class="n">BaseConfig</span>
@@ -167,13 +167,13 @@
 
 
 
-<span class="c1"># Valeurs d&#39;hygiène valides</span>
+<span class="c1"># Valid hygiene values</span>
 <span class="n">_HYGIENE_VALUES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">})</span>
 
-<span class="c1"># Version OKF connue</span>
+<span class="c1"># Known OKF version</span>
 <span class="n">_KNOWN_OKF_VERSION</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
 
-<span class="c1"># Valeurs par défaut de HygieneConfig quand la clé est absente</span>
+<span class="c1"># Default HygieneConfig values when the key is absent</span>
 <span class="n">_DEFAULT_HYGIENE</span> <span class="o">=</span> <span class="n">HygieneConfig</span><span class="p">(</span>
     <span class="n">broken_links</span><span class="o">=</span><span class="s2">&quot;warn&quot;</span><span class="p">,</span>
     <span class="n">split_candidates</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
@@ -183,21 +183,21 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_level</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise une valeur YAML vers un niveau d&#39;hygiène.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a YAML value to a hygiene level.</span>
 
-<span class="sd">    YAML 1.1 (PyYAML) interprète off/no/false comme bool False,</span>
-<span class="sd">    et on/yes/true comme bool True. On absorbe ces deux cas pour ne</span>
-<span class="sd">    pas piéger l&#39;utilisateur sur cette subtilité.</span>
+<span class="sd">    YAML 1.1 (PyYAML) interprets off/no/false as Python bool False,</span>
+<span class="sd">    and on/yes/true as Python bool True. Both cases are absorbed here</span>
+<span class="sd">    to avoid trapping the user on this subtlety.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        value: Valeur brute issue de yaml.safe_load.</span>
-<span class="sd">        key: Clé hygiene (pour le message d&#39;erreur).</span>
+<span class="sd">        value: Raw value returned by yaml.safe_load.</span>
+<span class="sd">        key: Hygiene key (for the error message).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Niveau normalisé parmi off | warn | error.</span>
+<span class="sd">        Normalised level among off | warn | error.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si la valeur n&#39;est pas normalisable.</span>
+<span class="sd">        ManifestError: If the value cannot be normalised.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;off&quot;</span>
@@ -206,48 +206,48 @@
     <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_HYGIENE_VALUES</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;hygiene.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> doit être off | warn | error (reçu : </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">).&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;hygiene.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be off | warn | error (received: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">).&quot;</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_type_config</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse la configuration d&#39;un type depuis le YAML brut.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the configuration of a type from raw YAML.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        name: Nom canonique du type (pour les messages d&#39;erreur).</span>
-<span class="sd">        raw: Valeur brute depuis le YAML.</span>
+<span class="sd">        name: Canonical name of the type (for error messages).</span>
+<span class="sd">        raw: Raw value from the YAML.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        TypeConfig validé.</span>
+<span class="sd">        Validated TypeConfig.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si la configuration est invalide.</span>
+<span class="sd">        ManifestError: If the configuration is invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be a mapping.&quot;</span><span class="p">)</span>
 
     <span class="n">required</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">required</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">required</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.required doit être une liste de strings.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.required must be a list of strings.&quot;</span>
         <span class="p">)</span>
 
     <span class="n">optional</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;optional&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optional</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">optional</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.optional doit être une liste de strings.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.optional must be a list of strings.&quot;</span>
         <span class="p">)</span>
 
-    <span class="c1"># Vérification intersection required ∩ optional = ∅</span>
+    <span class="c1"># Check required ∩ optional = ∅</span>
     <span class="n">overlap</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">required</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">optional</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">overlap</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> : champs à la fois dans required et optional : &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: fields present in both required and optional: &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">overlap</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
 
-    <span class="c1"># status_values : liste, False (bool), None/absent — rien d&#39;autre</span>
-    <span class="c1"># CRITIQUE : distinguer is False de is None</span>
+    <span class="c1"># status_values: list, False (bool), None/absent — nothing else</span>
+    <span class="c1"># CRITICAL: distinguish is False from is None</span>
     <span class="k">if</span> <span class="s2">&quot;status_values&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">:</span>
         <span class="n">status_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
@@ -261,19 +261,19 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sv_raw</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.status_values&quot;</span>
-                    <span class="s2">&quot; doit être une liste de strings.&quot;</span>
+                    <span class="s2">&quot; must be a list of strings.&quot;</span>
                 <span class="p">)</span>
             <span class="n">status_values</span> <span class="o">=</span> <span class="n">sv_raw</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.status_values&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot; doit être une liste, false ou null (reçu : </span><span class="si">{</span><span class="n">sv_raw</span><span class="si">!r}</span><span class="s2">).&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; must be a list, false or null (received: </span><span class="si">{</span><span class="n">sv_raw</span><span class="si">!r}</span><span class="s2">).&quot;</span>
             <span class="p">)</span>
 
     <span class="n">aliases</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;aliases&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aliases</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">aliases</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.aliases doit être une liste de strings.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;profile.types.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.aliases must be a list of strings.&quot;</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">TypeConfig</span><span class="p">(</span>
@@ -285,47 +285,47 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_profile</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">status_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProfileConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse la configuration du profil depuis le YAML brut.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the profile configuration from raw YAML.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        raw: Valeur brute du bloc profile depuis le YAML.</span>
-<span class="sd">        status_field: Champ de statut déclaré dans base (peut être None).</span>
+<span class="sd">        raw: Raw value of the profile block from the YAML.</span>
+<span class="sd">        status_field: Status field declared in base (may be None).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ProfileConfig validé.</span>
+<span class="sd">        Validated ProfileConfig.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si la configuration est invalide.</span>
+<span class="sd">        ManifestError: If the configuration is invalid.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile must be a mapping.&quot;</span><span class="p">)</span>
 
     <span class="n">raw_types</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;types&quot;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_types</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile.types doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile.types must be a mapping.&quot;</span><span class="p">)</span>
 
     <span class="n">types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TypeConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="c1"># Vrai si au moins un type nécessite status_field déclaré</span>
+    <span class="c1"># True if at least one type requires status_field to be declared</span>
     <span class="n">needs_status_field</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">for</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">type_raw</span> <span class="ow">in</span> <span class="n">raw_types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">_parse_type_config</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">type_name</span><span class="p">),</span> <span class="n">type_raw</span><span class="p">)</span>
         <span class="n">types</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">type_name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">cfg</span>
-        <span class="c1"># status_field requis si au moins un type a status_values liste ou False</span>
+        <span class="c1"># status_field required if at least one type has status_values list or False</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">status_values</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">status_values</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="n">needs_status_field</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">if</span> <span class="n">needs_status_field</span> <span class="ow">and</span> <span class="n">status_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="s2">&quot;base.status_field doit être déclaré quand au moins un type &quot;</span>
-            <span class="s2">&quot;utilise status_values (liste ou false).&quot;</span>
+            <span class="s2">&quot;base.status_field must be declared when at least one type &quot;</span>
+            <span class="s2">&quot;uses status_values (list or false).&quot;</span>
         <span class="p">)</span>
 
     <span class="n">date_fields_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;date_fields&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date_fields_raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
         <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">date_fields_raw</span>
     <span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile.date_fields doit être une liste de strings.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;profile.date_fields must be a list of strings.&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ProfileConfig</span><span class="p">(</span>
         <span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">,</span>
@@ -334,19 +334,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_hygiene</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HygieneConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse la configuration d&#39;hygiène depuis le YAML brut.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the hygiene configuration from raw YAML.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        raw: Valeur brute du bloc hygiene depuis le YAML.</span>
+<span class="sd">        raw: Raw value of the hygiene block from the YAML.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        HygieneConfig validé.</span>
+<span class="sd">        Validated HygieneConfig.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si une valeur n&#39;est pas dans {off, warn, error}.</span>
+<span class="sd">        ManifestError: If a value is not in {off, warn, error}.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene must be a mapping.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_level</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;off&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">_coerce_level</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
@@ -363,69 +363,69 @@
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.load_manifest">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Charge et valide un manifeste OKF YAML.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load and validate an OKF YAML manifest.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        path: Chemin vers le fichier YAML.</span>
+<span class="sd">        path: Path to the YAML file.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Manifest typé et validé.</span>
+<span class="sd">        Typed and validated Manifest.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ManifestError: Si le fichier est illisible, invalide, ou viole les contraintes.</span>
+<span class="sd">        ManifestError: If the file is unreadable, invalid, or violates constraints.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">raw_text</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Impossible de lire </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot read </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;YAML invalide dans </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid YAML in </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> n&#39;est pas un mapping YAML au niveau racine.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> is not a YAML mapping at root level.&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Clé base obligatoire</span>
+    <span class="c1"># Mandatory base key</span>
     <span class="k">if</span> <span class="s2">&quot;base&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Clé &#39;base&#39; absente dans </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key &#39;base&#39; absent in </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
     <span class="n">raw_base</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;base&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_base</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base must be a mapping.&quot;</span><span class="p">)</span>
 
     <span class="c1"># base.roots</span>
     <span class="n">raw_roots</span> <span class="o">=</span> <span class="n">raw_base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roots&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_roots</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_roots</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.roots doit être une liste non vide.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.roots must be a non-empty list.&quot;</span><span class="p">)</span>
     <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">raw_roots</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;path&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-                <span class="s2">&quot;Chaque entrée de base.roots doit avoir une clé &#39;path&#39; de type string.&quot;</span>
+                <span class="s2">&quot;Each entry in base.roots must have a &#39;path&#39; key of type string.&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.roots[].path doit être un string.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.roots[].path must be a string.&quot;</span><span class="p">)</span>
         <span class="n">roots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]))</span>
 
     <span class="c1"># base.reserved_files</span>
     <span class="n">raw_reserved</span> <span class="o">=</span> <span class="n">raw_base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reserved_files&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_reserved</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.reserved_files doit être un mapping.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;base.reserved_files must be a mapping.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_reserved</span> <span class="ow">or</span> <span class="s2">&quot;log&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_reserved</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
-            <span class="s2">&quot;base.reserved_files doit contenir les clés &#39;index&#39; et &#39;log&#39;.&quot;</span>
+            <span class="s2">&quot;base.reserved_files must contain keys &#39;index&#39; and &#39;log&#39;.&quot;</span>
         <span class="p">)</span>
     <span class="n">reserved_files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">raw_reserved</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-    <span class="c1"># base.status_field (optionnel)</span>
+    <span class="c1"># base.status_field (optional)</span>
     <span class="n">status_field_raw</span> <span class="o">=</span> <span class="n">raw_base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status_field&quot;</span><span class="p">)</span>
     <span class="n">status_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">status_field_raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">status_field_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
 
-    <span class="c1"># base.external_refs (depuis link_resolution)</span>
+    <span class="c1"># base.external_refs (from link_resolution)</span>
     <span class="n">link_res</span> <span class="o">=</span> <span class="n">raw_base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;link_resolution&quot;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">external_refs_raw</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">link_res</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;external_refs&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">link_res</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
@@ -445,23 +445,23 @@
         <span class="n">external_refs</span><span class="o">=</span><span class="n">external_refs</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># okf_version (optionnel, warning si inconnu)</span>
+    <span class="c1"># okf_version (optional, warning if unknown)</span>
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="s2">&quot;okf_version&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">okf_version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;okf_version&quot;</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="n">_KNOWN_OKF_VERSION</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Warning : version okf_version=</span><span class="si">{</span><span class="n">okf_version</span><span class="si">!r}</span><span class="s2"> inconnue &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(attendu : </span><span class="si">{</span><span class="n">_KNOWN_OKF_VERSION</span><span class="si">!r}</span><span class="s2">).&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Warning: unknown okf_version=</span><span class="si">{</span><span class="n">okf_version</span><span class="si">!r}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(expected: </span><span class="si">{</span><span class="n">_KNOWN_OKF_VERSION</span><span class="si">!r}</span><span class="s2">).&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="c1"># profile (optionnel)</span>
+    <span class="c1"># profile (optional)</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="s2">&quot;profile&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">_parse_profile</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;profile&quot;</span><span class="p">],</span> <span class="n">status_field</span><span class="p">)</span>
 
-    <span class="c1"># hygiene (optionnel)</span>
+    <span class="c1"># hygiene (optional)</span>
     <span class="n">hygiene</span><span class="p">:</span> <span class="n">HygieneConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="s2">&quot;hygiene&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">hygiene</span> <span class="o">=</span> <span class="n">_parse_hygiene</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;hygiene&quot;</span><span class="p">])</span>

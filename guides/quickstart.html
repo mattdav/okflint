@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Démarrage rapide &mdash; okflint 0.1.0 documentation</title>
+  <title>Quick start &mdash; okflint 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Format du manifeste" href="manifest.html" />
+    <link rel="next" title="Manifest format" href="manifest.html" />
     <link rel="prev" title="okflint" href="../index.html" /> 
 </head>
 
@@ -42,16 +42,16 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Démarrage rapide</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#audit-d-une-base">Audit d’une base</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#validation-gate-ci">Validation (gate CI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#auditing-a-base">Auditing a base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation-ci-gate">Validation (CI gate)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="manifest.html">Format du manifeste</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rules.html">Catalogue des règles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules catalogue</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -61,7 +61,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/validate.html">validate</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/cli.html">cli</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
 </ul>
@@ -80,7 +80,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Démarrage rapide</li>
+      <li class="breadcrumb-item active">Quick start</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/guides/quickstart.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -90,31 +90,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="demarrage-rapide">
-<h1>Démarrage rapide<a class="headerlink" href="#demarrage-rapide" title="Link to this heading"></a></h1>
+  <section id="quick-start">
+<h1>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>okflint
-<span class="c1"># ou avec uv :</span>
+<span class="c1"># or with uv:</span>
 uv<span class="w"> </span>add<span class="w"> </span>okflint
 </pre></div>
 </div>
 </section>
-<section id="audit-d-une-base">
-<h2>Audit d’une base<a class="headerlink" href="#audit-d-une-base" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>okflint<span class="w"> </span>audit<span class="w"> </span>--bundle<span class="w"> </span>/chemin/base<span class="w"> </span>--vault<span class="w"> </span>/chemin/vault
+<section id="auditing-a-base">
+<h2>Auditing a base<a class="headerlink" href="#auditing-a-base" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>okflint<span class="w"> </span>audit<span class="w"> </span>--bundle<span class="w"> </span>/path/to/base<span class="w"> </span>--vault<span class="w"> </span>/path/to/vault
 </pre></div>
 </div>
-<p>Affiche un résumé : nombre de fichiers, statut OKF, liens cassés, candidats au découpage.
-Ajouter <code class="docutils literal notranslate"><span class="pre">--apply</span></code> pour écrire le rapport JSON dans <code class="docutils literal notranslate"><span class="pre">.okflint/</span></code>.</p>
+<p>Displays a summary: file count, OKF status, broken links, split candidates.
+Add <code class="docutils literal notranslate"><span class="pre">--apply</span></code> to write the JSON report to <code class="docutils literal notranslate"><span class="pre">.okflint/</span></code>.</p>
 </section>
-<section id="validation-gate-ci">
-<h2>Validation (gate CI)<a class="headerlink" href="#validation-gate-ci" title="Link to this heading"></a></h2>
+<section id="validation-ci-gate">
+<h2>Validation (CI gate)<a class="headerlink" href="#validation-ci-gate" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>okflint<span class="w"> </span>validate<span class="w"> </span>--manifest<span class="w"> </span>okf-base.yaml<span class="w"> </span>docs/
 </pre></div>
 </div>
-<p>Retourne exit 0 si tous les fichiers sont conformes, exit 1 sinon.
-Ajouter <code class="docutils literal notranslate"><span class="pre">--json</span></code> pour une sortie JSON exploitable en CI.</p>
+<p>Returns exit 0 if all files are conformant, exit 1 otherwise.
+Add <code class="docutils literal notranslate"><span class="pre">--json</span></code> for machine-readable JSON output suitable for CI.</p>
 </section>
 </section>
 
@@ -123,7 +123,7 @@ Ajouter <code class="docutils literal notranslate"><span class="pre">--json</spa
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../index.html" class="btn btn-neutral float-left" title="okflint" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="manifest.html" class="btn btn-neutral float-right" title="Format du manifeste" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="manifest.html" class="btn btn-neutral float-right" title="Manifest format" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
