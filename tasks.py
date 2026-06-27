@@ -8,13 +8,14 @@ from invoke import Context, task
 # ================ Config ================= #
 RELEASE_BRANCH = "main"  # branche de référence pour les releases
 CLEAN_DIRS: list[str] = [
-    "build",  # Artéfacts de build
-    "dist",  # Distributions packagées
+    "build",          # Artéfacts de build
+    "dist",           # Distributions packagées
     ".pytest_cache",  # Cache de pytest
-    ".ruff_cache",  # Cache de Ruff
-    ".mypy_cache",  # Cache de mypy
-    "htmlcov",  # Rapport de couverture HTML
-    "__pycache__",  # Cache Python (racine)
+    ".ruff_cache",    # Cache de Ruff
+    ".mypy_cache",    # Cache de mypy
+    ".okflint",       # Rapports d'audit JSON (régénérables)
+    "htmlcov",        # Rapport de couverture HTML
+    "__pycache__",    # Cache Python (racine)
 ]
 
 CLEAN_FILES: list[str] = [
@@ -60,8 +61,8 @@ def clean(c: Context) -> None:
 def repomix(c: Context, output: str | None = None) -> None:
     """Pack la codebase en un fichier XML pour consommation LLM.
 
-    Output par défaut : .okflint/YYYY-MM-DD_repomix_v<N>.xml (auto-incrémenté).
-    Utiliser --output pour forcer un nom de fichier dans .okflint/.
+    Output par défaut : .repomix/YYYY-MM-DD_repomix_v<N>.xml (auto-incrémenté).
+    Utiliser --output pour forcer un nom de fichier dans .repomix/.
     """
     outputs_dir: Path = Path(".repomix")
     outputs_dir.mkdir(exist_ok=True)
@@ -87,6 +88,35 @@ def repomix(c: Context, output: str | None = None) -> None:
 
 
 # ================ Quality test ================= #
+@task
+def index(c: Context) -> None:
+    """Indexe la codebase dans codebase-memory-mcp pour améliorer le contexte Claude Code.
+
+    Lance l'indexation via le binaire codebase-memory-mcp installé localement.
+    L'index est stocké dans la base vectorielle locale de l'outil et permet
+    à Claude Code de faire des recherches sémantiques dans le code.
+
+    À relancer après chaque modification significative de la codebase.
+    """
+    binary = Path(
+        r"C:\Users\matth\AppData\Local\Programs\codebase-memory-mcp\codebase-memory-mcp.exe"
+    )
+    if not binary.exists():
+        print(f"❌ Binaire codebase-memory-mcp introuvable : {binary}")
+        print("   Installer depuis : https://github.com/DeusData/codebase-memory-mcp")
+        return
+
+    print("🧠 Indexation de la codebase dans codebase-memory-mcp...")
+    result = subprocess.run(
+        f'"{binary}" index "{Path.cwd()}"',
+        shell=True,
+    )
+    if result.returncode == 0:
+        print("✅ Index mis à jour. Claude Code peut maintenant rechercher sémantiquement dans le code.")
+    else:
+        print("❌ Indexation échouée.")
+
+
 @task
 def lint(c: Context) -> None:
     """Run linting checks."""

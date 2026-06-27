@@ -22,7 +22,8 @@ src/okflint/
 
 - `inv lint` — ruff check --fix + ruff format + mypy. Doit passer à zéro.
 - `inv test` — pytest avec couverture.
-- `inv repomix` — pack la codebase en XML daté dans `.okflint/` pour un LLM.
+- `inv repomix` — pack la codebase en XML daté dans `.repomix/` pour un LLM.
+- `inv index` — indexe la codebase dans codebase-memory-mcp (améliore le contexte Claude Code).
 - `inv release [--part=patch|minor|major] [--dry-run]` — bump version + push + déclenche la CI/CD.
 - `uv build` — construit sdist + wheel dans `dist/`.
 - `okflint audit --bundle <dir> --vault <dir> [--apply]` — audit descriptif.

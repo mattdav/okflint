@@ -137,5 +137,8 @@ cython_debug/
 # Utility files
 .claude/
 
-# Outputs okflint (rapports d'audit — toujours régénérables)
+# Outputs okflint (rapports d'audit JSON — toujours régénérables)
 .okflint/
+
+# Outputs repomix (pack codebase pour LLM — toujours régénérables)
+.repomix/
