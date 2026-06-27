@@ -125,15 +125,11 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
 
     required = raw.get("required", [])
     if not isinstance(required, list) or not all(isinstance(s, str) for s in required):
-        raise ManifestError(
-            f"profile.types.{name}.required must be a list of strings."
-        )
+        raise ManifestError(f"profile.types.{name}.required must be a list of strings.")
 
     optional = raw.get("optional", [])
     if not isinstance(optional, list) or not all(isinstance(s, str) for s in optional):
-        raise ManifestError(
-            f"profile.types.{name}.optional must be a list of strings."
-        )
+        raise ManifestError(f"profile.types.{name}.optional must be a list of strings.")
 
     # Check required ∩ optional = ∅
     overlap = set(required) & set(optional)
@@ -157,8 +153,7 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
         elif isinstance(sv_raw, list):
             if not all(isinstance(s, str) for s in sv_raw):
                 raise ManifestError(
-                    f"profile.types.{name}.status_values"
-                    " must be a list of strings."
+                    f"profile.types.{name}.status_values must be a list of strings."
                 )
             status_values = sv_raw
         else:
@@ -169,9 +164,7 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
 
     aliases = raw.get("aliases", [])
     if not isinstance(aliases, list) or not all(isinstance(s, str) for s in aliases):
-        raise ManifestError(
-            f"profile.types.{name}.aliases must be a list of strings."
-        )
+        raise ManifestError(f"profile.types.{name}.aliases must be a list of strings.")
 
     return TypeConfig(
         required=list(required),
@@ -309,9 +302,7 @@ def load_manifest(path: Path) -> Manifest:
     if not isinstance(raw_reserved, dict):
         raise ManifestError("base.reserved_files must be a mapping.")
     if "index" not in raw_reserved or "log" not in raw_reserved:
-        raise ManifestError(
-            "base.reserved_files must contain keys 'index' and 'log'."
-        )
+        raise ManifestError("base.reserved_files must contain keys 'index' and 'log'.")
     reserved_files: dict[str, str] = {str(k): str(v) for k, v in raw_reserved.items()}
 
     # base.status_field (optional)

@@ -1,4 +1,4 @@
-"""Normative validation of OKF Markdown files — exit 0 if conformant, exit 1 otherwise."""
+"""Normative validation of OKF Markdown files — exit 0 if conformant, 1 otherwise."""
 
 from __future__ import annotations
 
@@ -207,9 +207,7 @@ def _resolve_type(
     for k, cfg in profile.types.items():
         for alias in cfg.aliases:
             if alias.lower() == val_type.lower():
-                msg = (
-                    f"non-normalised `type` spelling: `{val_type}` → use `{k}`"
-                )
+                msg = f"non-normalised `type` spelling: `{val_type}` → use `{k}`"
                 return k, msg
 
     return None, None
