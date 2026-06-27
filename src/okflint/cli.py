@@ -13,8 +13,10 @@ import json
 import sys
 from pathlib import Path
 
+from beartype import beartype
+
 from okflint.audit import run_audit
-from okflint.validate import run_validate
+from okflint.validate import ManifestError, run_validate
 
 
 def _cmd_audit(args: argparse.Namespace) -> int:
@@ -42,7 +44,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     if args.apply:
         from datetime import date
 
-        outputs_dir = Path("outputs")
+        outputs_dir = Path(".okflint")
         outputs_dir.mkdir(exist_ok=True)
         today = date.today().strftime("%Y-%m-%d")
         v = 1
@@ -69,7 +71,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     """
     manifest_path = Path(args.manifest)
     targets = [Path(t) for t in args.targets]
-    errors, code = run_validate(manifest_path, targets)
+    try:
+        errors, code = run_validate(manifest_path, targets)
+    except ManifestError as exc:
+        print(f"Erreur manifeste : {exc}", file=sys.stderr)
+        return 2
 
     if args.json_output:
         payload = [dataclasses.asdict(e) for e in errors]
@@ -77,7 +83,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     else:
         for e in errors:
             icon = "❌" if e.severity == "error" else "⚠️"
-            print(f"{icon} [{e.family}] {e.file} — {e.message}")
+            print(f"{icon} [{e.code}] {e.file} — {e.message}")
         if not errors:
             print("✅ Tous les fichiers sont conformes OKF.")
         else:
@@ -87,6 +93,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return code
 
 
+@beartype
 def build_parser() -> argparse.ArgumentParser:
     """Construit le parser argparse avec les sous-commandes.
 
@@ -145,6 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+@beartype
 def main() -> None:
     """Point d'entrée console_scripts : okflint <command>."""
     parser = build_parser()

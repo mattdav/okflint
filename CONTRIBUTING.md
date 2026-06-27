@@ -1,7 +1,7 @@
-# Guide de contribution — okf_converter
+# Guide de contribution — okflint
 
->**Merci de contribuer à ce projet. Ce document décrit les conventions et
-processus à respecter pour maintenir une base de code cohérente et de qualité.**
+> **Merci de contribuer à okflint. Ce document décrit les conventions et processus
+> à respecter pour maintenir une base de code cohérente et de qualité.**
 
 ---
 
@@ -9,65 +9,58 @@ processus à respecter pour maintenir une base de code cohérente et de qualité
 
 ### Prérequis
 
-- Python 3.10
+- Python ≥ 3.10
 - [uv](https://docs.astral.sh/uv/) — gestionnaire de paquets
-- [invoke](https://www.pyinvoke.org/) — runner de tâches
+- [invoke](https://www.pyinvoke.org/) — runner de tâches (installé via les dev deps)
 
 ### Installation
 
 ```bash
-git clone <url-du-repo>
-cd okf_converter
-uv sync
-cp .env.example .env
+git clone https://github.com/mattdav/okflint
+cd okflint
+uv sync --all-extras
+uv pip install -e .
+```
+
+Vérifier que tout fonctionne :
+
+```bash
+uv run inv lint        # doit passer à zéro
+uv run inv test        # tous les tests doivent passer
+uv run okflint --help
 ```
 
 ---
 
-## Configuration et variables d'environnement
+## Architecture du projet
 
-**Toute valeur susceptible de changer selon l'environnement doit être externalisée.**
-Ce projet utilise [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
-pour charger et valider la configuration.
-
-### Règles
-
-- Les secrets et valeurs locales vont dans `.env` (jamais commité, dans `.gitignore`)
-- La configuration structurée va dans `config/settings.yaml`
-- Les valeurs par défaut non sensibles vont dans `config/settings.default.yaml` (commité)
-- `.env.example` liste toutes les variables attendues, sans valeurs sensibles (commité)
-
-### Ce qui doit être variabilisé
-
-- Credentials et secrets (API keys, mots de passe, tokens)
-- URLs et endpoints (base URLs, hosts, ports)
-- Paramètres d'environnement (timeouts, chemins, feature flags)
-
-### Ce qui ne doit jamais apparaître dans le code
-
-```python
-# ❌ Interdit
-API_KEY = "sk-1234abcd"
-BASE_URL = "https://api.monservice.com"
-TIMEOUT = 30
-
-# ✅ Correct
-from src.okf_converter.config import settings
-response = client.get(settings.base_url, timeout=settings.timeout)
+```
+src/okflint/
+├── cli.py        ← dispatcher CLI : okflint audit | validate
+├── scanner.py    ← primitives partagées (scan, frontmatter, code-fence, liens)
+├── audit.py      ← commande audit (descriptive)
+├── validate.py   ← commande validate (gate normatif)
+├── manifest.py   ← chargement + validation du manifeste
+├── __init__.py
+├── __main__.py   ← python -m okflint
+└── py.typed
 ```
 
-### Mise à jour de .env.example
+okflint est un **moteur générique** : aucun vocabulaire de types n'est codé en dur.
+Tout le standard d'une base (types, champs, statuts) est déclaré dans son manifeste
+`okf-base.yaml`. Le catalogue des règles de validation est documenté dans
+[`docs/RULES.md`](docs/RULES.md) — c'est la spec de référence. Toute nouvelle règle
+doit y être documentée avec son code, son étage et sa sévérité.
 
-Toute nouvelle variable d'environnement doit être ajoutée dans `.env.example`
-avec une description en commentaire :
+### Doctrine
 
-```bash
-# URL de l'API externe (obligatoire)
-API_BASE_URL=
-
-# Timeout des requêtes en secondes (défaut : 30)
-REQUEST_TIMEOUT=30
-```
+- **Déterministe d'abord.** Le moteur ne contient aucun appel LLM. Une règle qui
+  exigerait du jugement n'a pas sa place dans le cœur ou le profil.
+- **Honnêteté OKF.** okflint distingue ce qui est *vraiment* OKF (cœur, §9 de la
+  spec) de ce qui est une convention de la base (profil) ou un choix plus strict
+  (hygiène). Ne jamais présenter une convention locale comme une exigence OKF.
+- Voir [`ROADMAP.md`](ROADMAP.md) pour la frontière entre okflint (validation
+  statique) et le harness d'un agent (orchestration runtime).
 
 ---
 
@@ -78,12 +71,12 @@ REQUEST_TIMEOUT=30
 | Outil | Rôle |
 |---|---|
 | [ruff](https://docs.astral.sh/ruff/) | Linting et formatting |
-| [mypy](https://mypy.readthedocs.io/) | Vérification des types statiques |
+| [mypy](https://mypy.readthedocs.io/) | Vérification des types statiques (mode strict) |
 
 ### Commande unique
 
 ```bash
-uv run inv lint
+inv lint        # doit passer à zéro
 ```
 
 Lance en séquence : `ruff check --fix`, `ruff format`, `mypy`.
@@ -91,30 +84,39 @@ Lance en séquence : `ruff check --fix`, `ruff format`, `mypy`.
 
 ### Règles strictes
 
-- Aucun `# noqa` sans commentaire justificatif sur la même ligne
-- Aucun `# type: ignore` sans commentaire justificatif sur la même ligne
-- Type hints obligatoires sur toutes les fonctions et méthodes publiques
-- Éviter `Any` sauf cas justifié
+- Aucun `# noqa` sans commentaire justificatif sur la même ligne.
+- Aucun `# type: ignore` sans commentaire justificatif sur la même ligne.
+- Type hints obligatoires sur toutes les fonctions et méthodes publiques.
+- Éviter `Any` sauf cas justifié.
+- Commentaires en français, code (noms, identifiants) en anglais.
+
+### beartype
+
+**Toutes les fonctions publiques** (non préfixées par `_`) doivent être décorées avec `@beartype`.
+Ce décorateur valide les types à l'exécution en complément de mypy (statique).
+Ne pas décorer les fonctions privées ni les tasks invoke (signature incompatible).
 
 ---
 
 ## Tests
 
 ```bash
-uv run inv test
+inv test
 ```
 
 ### Conventions
 
-- Un fichier de test par module : `tests/unit/test_<module>.py`
-- Les fixtures partagées vont dans `tests/conftest.py`
-- Nommer les tests de façon explicite : `test_<fonction>_<scenario>_<resultat_attendu>`
-- Couvrir les cas limites : `None`, liste vide, valeurs invalides, erreurs
+- Un fichier de test par module : `tests/test_<module>.py`.
+- Les fixtures partagées vont dans `tests/conftest.py`.
+- Nommer les tests explicitement : `test_<fonction>_<scenario>_<resultat_attendu>`.
+- Couvrir les cas limites : absence de frontmatter, YAML invalide, manifeste
+  malformé, valeurs de statut interdites, liens cassés vs références externes.
 
 ### Règle fondamentale
 
-Les tests ne doivent jamais être supprimés pour faire passer la CI.
-Un test qui échoue signale un vrai problème à corriger.
+Chaque règle du catalogue (`docs/RULES.md`) doit être couverte par au moins un test
+qui vérifie qu'elle se déclenche sur un cas non conforme et ne se déclenche pas sur
+un cas conforme. Les tests ne doivent jamais être supprimés pour faire passer la CI.
 
 ---
 
@@ -124,7 +126,7 @@ Un test qui échoue signale un vrai problème à corriger.
 
 | Branche | Usage |
 |---|---|
-| `main` | Code stable, prêt pour la production |
+| `main` | Code stable, prêt pour publication |
 | `feat/<nom>` | Nouvelle fonctionnalité |
 | `fix/<nom>` | Correction de bug |
 | `chore/<nom>` | Maintenance, refactoring, CI |
@@ -132,48 +134,21 @@ Un test qui échoue signale un vrai problème à corriger.
 ### Format des commits
 
 ```
-feat: ajouter le chargement de configuration depuis yaml
-fix: corriger le timeout des requêtes HTTP
+feat: ajouter la règle S202 de cohésion sémantique
+fix: corriger la distinction False/None pour status_values
 chore: mettre à jour les dépendances
-docs: compléter la section installation du README
+docs: compléter le catalogue de règles
+test: couvrir les cas limites du parsing de manifeste
 ```
 
-Types acceptés : `feat`, `fix`, `chore`, `docs`, `test`, `refactor`
+Types acceptés : `feat`, `fix`, `chore`, `docs`, `test`, `refactor`.
 
 ### Avant de committer
 
 ```bash
-uv run inv lint   # doit passer à zéro
-uv run inv test   # tous les tests doivent passer
+inv lint   # doit passer à zéro
+inv test   # tous les tests doivent passer
 ```
-
----
-
-## Structure du projet
-
-```
-src/okf_converter/
-├── bin/        ← scripts exécutables et points d'entrée CLI
-├── config/     ← classe Settings (pydantic-settings) et fichiers yaml
-├── data/       ← accès, chargement et transformation des données
-├── log/        ← configuration du logging
-├── __init__.py
-└── __main__.py ← point d'entrée principal
-```
-
-Chaque sous-module a sa propre responsabilité. Ne pas mélanger logique métier
-et configuration dans le même fichier.
-
----
-
-## Documentation
-
-```bash
-# Générer la documentation Sphinx
-cd docs && make html
-```
-
-Les docstrings suivent le format [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
 
 ---
 
@@ -181,7 +156,7 @@ Les docstrings suivent le format [Google style](https://google.github.io/stylegu
 
 - [ ] `uv run inv lint` passe à zéro
 - [ ] `uv run inv test` passe à zéro
-- [ ] Les nouvelles fonctions publiques ont des type hints et une docstring
-- [ ] Aucune valeur hardcodée (URL, clé, chemin absolu)
-- [ ] `.env.example` mis à jour si de nouvelles variables ont été ajoutées
-- [ ] Le CHANGELOG ou les notes de commit reflètent les changements
+- [ ] Toute nouvelle règle est documentée dans `docs/RULES.md` (code, étage, sévérité)
+- [ ] Toute nouvelle règle est couverte par un test (cas conforme + cas non conforme)
+- [ ] Les nouvelles fonctions publiques ont des type hints et une docstring Google
+- [ ] Aucune valeur spécifique à un environnement n'est hardcodée dans le package

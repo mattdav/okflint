@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from beartype import beartype
+
 from okflint.scanner import (
     MarkdownLink,
     WikiLink,
@@ -230,6 +232,7 @@ def _evaluate_split(
     return False, None, None
 
 
+@beartype
 def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
     """Détermine le statut OKF d'un concept selon son frontmatter.
 
@@ -246,6 +249,7 @@ def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
     return "partial"
 
 
+@beartype
 def extract_headers(content: str) -> list[Header]:
     """Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.
 
@@ -268,6 +272,7 @@ def extract_headers(content: str) -> list[Header]:
     return headers
 
 
+@beartype
 def analyze_file(
     file_path: Path,
     bundle_path: Path,
@@ -321,6 +326,7 @@ def analyze_file(
     )
 
 
+@beartype
 def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
     """Agrège les statistiques globales du rapport.
 
@@ -365,6 +371,7 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
     }
 
 
+@beartype
 def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
     """Orchestre l'audit complet d'un bundle OKF.
 
@@ -392,7 +399,7 @@ def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
     stats = compute_stats(files, vault_total)
 
     return {
-        "generated_at": datetime.datetime.now(datetime.timezone.utc).strftime(
+        "generated_at": datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%S"
         ),
         "bundle_path": bundle_path.as_posix(),

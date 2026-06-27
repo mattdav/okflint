@@ -76,6 +76,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/sphinx/_build/
 
 # PyBuilder
 .pybuilder/
@@ -139,5 +140,5 @@ uv.lock
 # Utility files
 .claude/
 
-# Outputs (Repomix, exports, rapports — toujours régénérables)
-outputs/
+# Outputs okflint (rapports d'audit — toujours régénérables)
+.okflint/

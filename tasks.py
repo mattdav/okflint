@@ -20,7 +20,9 @@ def lint(c: Context) -> None:
     if format_command.returncode != 0:
         result += format_command.returncode
     print("\nRunning mypy...")
-    mypy_command = subprocess.run("uv run mypy src/.", shell=True)
+    # uv run mypy échoue sur Windows avec mypy compilé (Failed to canonicalize script path)
+    # On passe par python -m mypy pour contourner le problème
+    mypy_command = subprocess.run("uv run python -m mypy src/.", shell=True)
     if mypy_command.returncode != 0:
         result += mypy_command.returncode
     if result != 0:
@@ -39,6 +41,31 @@ CLEAN_DIRS: list[str] = [
     ".mypy_cache",  # Cache de mypy (si utilisé)
     "__pycache__",  # Cache Python (racine)
 ]
+
+
+@task
+def test(c: Context, verbose: bool = False, coverage: bool = True) -> None:
+    """Lance la suite de tests pytest."""
+    print("🧪 Running test suite...")
+
+    # 🔎 Construction de la commande
+    cmd = "uv run python -m pytest"
+    if verbose:
+        cmd += " -v"
+    if not coverage:
+        # pyproject.toml active la couverture par défaut via addopts
+        cmd += " --no-cov"
+
+    # 📦 Exécution
+    result = subprocess.run(cmd, shell=True)
+
+    if result.returncode != 0:
+        print("❌ Tests failed!")
+    else:
+        print("✅ All tests passed!")
+        html_report = Path("htmlcov") / "index.html"
+        if html_report.exists():
+            print(f"📊 HTML report : {html_report.resolve()}")
 
 
 @task
@@ -69,13 +96,39 @@ def clean(c: Context) -> None:
 
 
 @task
+def docs(c: Context, open_browser: bool = False) -> None:
+    """Construit la documentation Sphinx en HTML."""
+    src = Path("docs/sphinx")
+    out = src / "_build" / "html"
+    out.mkdir(parents=True, exist_ok=True)
+
+    print("📖 Building Sphinx documentation...")
+    result = subprocess.run(
+        f'uv run sphinx-build -b html "{src}" "{out}"',
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("❌ Sphinx build failed!")
+        return
+
+    index_html = out / "index.html"
+    print(f"✅ Documentation built : {index_html.resolve()}")
+
+    # 🔎 Ouverture optionnelle dans le navigateur
+    if open_browser:
+        import webbrowser
+
+        webbrowser.open(index_html.as_uri())
+
+
+@task
 def repomix(c: Context, output: str | None = None) -> None:
     """Pack la codebase en un fichier XML pour consommation LLM.
 
-    Output par défaut : outputs/YYYY-MM-DD_repomix_v<N>.xml (auto-incrémenté).
-    Utiliser --output pour forcer un nom de fichier dans outputs/.
+    Output par défaut : .okflint/YYYY-MM-DD_repomix_v<N>.xml (auto-incrémenté).
+    Utiliser --output pour forcer un nom de fichier dans .okflint/.
     """
-    outputs_dir: Path = Path("outputs")
+    outputs_dir: Path = Path(".okflint")
     outputs_dir.mkdir(exist_ok=True)
 
     if output is None:
