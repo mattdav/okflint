@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>okflint &mdash; okflint 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Démarrage rapide" href="guides/quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            okflint
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Démarrage rapide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/manifest.html">Format du manifeste</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/rules.html">Catalogue des règles</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/scanner.html">scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/manifest.html">manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/audit.html">audit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/validate.html">validate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/cli.html">cli</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">okflint</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">okflint</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="okflint">
+<h1>okflint<a class="headerlink" href="#okflint" title="Link to this heading"></a></h1>
+<p><strong>okflint</strong> est un linter de conformité pour bases documentaires OKF (Open Knowledge Format).
+Il vérifie la structure des fichiers Markdown — frontmatter, liens, types — selon un manifeste
+YAML déclarant les conventions de la base.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Démarrage rapide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#audit-d-une-base">Audit d’une base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#validation-gate-ci">Validation (gate CI)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/manifest.html">Format du manifeste</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/manifest.html#structure">Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/manifest.html#sections">Sections</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/rules.html">Catalogue des règles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/rules.html#etages">Étages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/rules.html#severites">Sévérités</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/scanner.html">scanner</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.Header"><code class="docutils literal notranslate"><span class="pre">Header</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.MarkdownLink"><code class="docutils literal notranslate"><span class="pre">MarkdownLink</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.WikiLink"><code class="docutils literal notranslate"><span class="pre">WikiLink</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.blank_code_spans"><code class="docutils literal notranslate"><span class="pre">blank_code_spans()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.build_file_index"><code class="docutils literal notranslate"><span class="pre">build_file_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.evaluate_split"><code class="docutils literal notranslate"><span class="pre">evaluate_split()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_markdown_links"><code class="docutils literal notranslate"><span class="pre">extract_markdown_links()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_wikilinks"><code class="docutils literal notranslate"><span class="pre">extract_wikilinks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.parse_frontmatter"><code class="docutils literal notranslate"><span class="pre">parse_frontmatter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/manifest.html">manifest</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.BaseConfig"><code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.HygieneConfig"><code class="docutils literal notranslate"><span class="pre">HygieneConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.Manifest"><code class="docutils literal notranslate"><span class="pre">Manifest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.ManifestError"><code class="docutils literal notranslate"><span class="pre">ManifestError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.ProfileConfig"><code class="docutils literal notranslate"><span class="pre">ProfileConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.TypeConfig"><code class="docutils literal notranslate"><span class="pre">TypeConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/audit.html">audit</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.FileReport"><code class="docutils literal notranslate"><span class="pre">FileReport</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.Header"><code class="docutils literal notranslate"><span class="pre">Header</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.analyze_file"><code class="docutils literal notranslate"><span class="pre">analyze_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.compute_stats"><code class="docutils literal notranslate"><span class="pre">compute_stats()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.get_okf_status"><code class="docutils literal notranslate"><span class="pre">get_okf_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.run_audit"><code class="docutils literal notranslate"><span class="pre">run_audit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/validate.html">validate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.Diagnostic"><code class="docutils literal notranslate"><span class="pre">Diagnostic</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.ManifestError"><code class="docutils literal notranslate"><span class="pre">ManifestError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.run_validate"><code class="docutils literal notranslate"><span class="pre">run_validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/cli.html">cli</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/cli.html#okflint.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/cli.html#okflint.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="guides/quickstart.html" class="btn btn-neutral float-right" title="Démarrage rapide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

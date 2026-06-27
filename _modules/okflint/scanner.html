@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>okflint.scanner &mdash; okflint 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            okflint
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Utilisation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Démarrage rapide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Format du manifeste</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Catalogue des règles</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Projet</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">okflint</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">okflint.scanner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for okflint.scanner</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Primitives partagées de scan de fichiers Markdown OKF.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
+
+<span class="n">_WIKILINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\[\[([^\[\]#|]+?)(?:#([^\[\]|]*?))?(?:\|([^\[\]]*?))?\]\]&quot;</span><span class="p">)</span>
+<span class="n">_MD_LINK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\[([^\[\]]*)\]\(([^()]+)\)&quot;</span><span class="p">)</span>
+<span class="n">_FRONTMATTER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n?&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+<span class="n">_INLINE_CODE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;`[^`\n]+`&quot;</span><span class="p">)</span>
+<span class="n">_HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(#{1,2})\s+(.+)$&quot;</span><span class="p">)</span>
+
+<span class="c1"># Mots-clés de sections structurelles (ADR, Runbook, Journal, meta-docs)</span>
+<span class="c1"># Un H2 contenant l&#39;un de ces mots/phrases est une section d&#39;un concept unique</span>
+<span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="c1"># ADR / décision</span>
+        <span class="s2">&quot;contexte&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;options&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;considérées&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;décision&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;conséquences&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;alternatives&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;annexes&quot;</span><span class="p">,</span>
+        <span class="c1"># Runbook / procédure</span>
+        <span class="s2">&quot;prérequis&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dépendances&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;installation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;configuration&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;utilisation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;références&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;résultats&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;actions&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;réalisées&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pièges&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rencontrés&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;reste&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;suite&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;leçons&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;bilan&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;symptômes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;liens&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;troubleshooting&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;rollback&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;vérification&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;historique&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;maintenance&quot;</span><span class="p">,</span>
+        <span class="c1"># Architecture / meta-document</span>
+        <span class="s2">&quot;architecture&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;navigation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;objectifs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;inventaire&quot;</span><span class="p">,</span>
+        <span class="c1"># Statuts de projet (kanban, TODO)</span>
+        <span class="s2">&quot;en cours&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;en attente&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;à venir&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;résolu&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;idées&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Pattern de H2 séquentiels (procédures numérotées, étapes)</span>
+<span class="n">_SEQUENTIAL_H2_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;^(?:\d+[\s.\-—]|[Éé]tape\s|Step\s|Partie\s|Part\s|Phase\s)&quot;</span><span class="p">,</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Types frontmatter qui indiquent un document non-découpable</span>
+<span class="n">_NONSPLIT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;journal&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;journalentry&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;runbook&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;procedure&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># H1 commençant par une date → journal de session (même sans type frontmatter)</span>
+<span class="n">_DATE_H1_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Header">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.Header">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un titre H1 ou H2 dans un fichier.&quot;&quot;&quot;</span>
+
+    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="WikiLink">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.WikiLink">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WikiLink</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un wikilink Obsidian [[...]] dans un fichier.&quot;&quot;&quot;</span>
+
+    <span class="n">raw</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">section</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">resolved_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">broken</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">ambiguous</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<div class="viewcode-block" id="MarkdownLink">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.MarkdownLink">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MarkdownLink</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Représente un lien markdown [text](url) dans un fichier.&quot;&quot;&quot;</span>
+
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">is_external</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">broken</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
+<div class="viewcode-block" id="blank_code_spans">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.blank_code_spans">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">blank_code_spans</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neutralise les blocs de code fencés et les spans inline.</span>
+
+<span class="sd">    Permet l&#39;extraction de liens sans faux positifs dans les zones de code.</span>
+<span class="sd">    Remplace le contenu des zones de code par des espaces en préservant les</span>
+<span class="sd">    positions de caractères (numéros de ligne inchangés). Une fence non fermée</span>
+<span class="sd">    en fin de fichier est traitée comme ouverte jusqu&#39;à l&#39;EOF.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Corps brut du fichier markdown (après frontmatter).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Contenu avec blocs de code masqués par des espaces.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">in_fence</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">indent</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">indent</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="ow">and</span> <span class="p">(</span><span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;```&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;~~~&quot;</span><span class="p">)):</span>
+            <span class="n">in_fence</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">in_fence</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">in_fence</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_INLINE_CODE_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">()),</span> <span class="n">line</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_json_safe</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convertit les types non-JSON-sérialisables issus du parsing YAML.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: Valeur arbitraire retournée par yaml.safe_load.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Valeur JSON-sérialisable équivalente.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">_to_json_safe</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_to_json_safe</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">obj</span>
+
+
+<div class="viewcode-block" id="parse_frontmatter">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.parse_frontmatter">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait le frontmatter YAML d&#39;un fichier markdown.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Contenu complet du fichier.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple (frontmatter_dict, body) ou (None, content) si absent ou invalide.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_FRONTMATTER_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">fm</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">_to_json_safe</span><span class="p">(</span><span class="n">fm</span><span class="p">),</span> <span class="n">body</span>
+    <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span></div>
+
+
+
+<div class="viewcode-block" id="build_file_index">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.build_file_index">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_file_index</span><span class="p">(</span><span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indexe tous les .md d&#39;une liste de racines pour la résolution des wikilinks.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        roots: Liste de racines à indexer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionnaire nom_sans_extension → liste de chemins relatifs à la première root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">md_file</span><span class="o">.</span><span class="n">stem</span>
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">md_file</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+                <span class="n">index</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">index</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">index</span></div>
+
+
+
+<div class="viewcode-block" id="extract_wikilinks">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_wikilinks">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_wikilinks</span><span class="p">(</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">WikiLink</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait et résout les wikilinks [[...]] dans le contenu.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Corps du fichier markdown.</span>
+<span class="sd">        vault_index: Index vault (nom_sans_extension → chemins relatifs).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Liste de WikiLink avec statut broken/ambiguous.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WikiLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_WIKILINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">section</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">alias</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">vault_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">broken</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">ambiguous</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="n">resolved_path</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">candidates</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">WikiLink</span><span class="p">(</span>
+                <span class="n">raw</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                <span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">,</span>
+                <span class="n">section</span><span class="o">=</span><span class="n">section</span><span class="p">,</span>
+                <span class="n">resolved_path</span><span class="o">=</span><span class="n">resolved_path</span><span class="p">,</span>
+                <span class="n">broken</span><span class="o">=</span><span class="n">broken</span><span class="p">,</span>
+                <span class="n">ambiguous</span><span class="o">=</span><span class="n">ambiguous</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="extract_markdown_links">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_markdown_links">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_markdown_links</span><span class="p">(</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">bundle_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait les liens markdown [text](target) et vérifie les liens internes.</span>
+
+<span class="sd">    Les URLs externes (http:// / https://) ne sont pas vérifiées.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Corps du fichier markdown.</span>
+<span class="sd">        file_path: Chemin absolu du fichier courant.</span>
+<span class="sd">        bundle_path: Racine du bundle (pour résoudre les chemins absolus).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Liste de MarkdownLink.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_MD_LINK_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="c1"># Ignorer les ancres pures (#section)</span>
+        <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">is_external</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;http://&quot;</span><span class="p">,</span> <span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="s2">&quot;ftp://&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">is_external</span><span class="p">:</span>
+            <span class="n">broken</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+            <span class="c1"># Chemin absolu relatif au bundle</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">bundle_path</span> <span class="o">/</span> <span class="n">target</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Chemin relatif au fichier courant</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">target</span>
+            <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">MarkdownLink</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">is_external</span><span class="o">=</span><span class="n">is_external</span><span class="p">,</span> <span class="n">broken</span><span class="o">=</span><span class="n">broken</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="extract_headers">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_headers">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_headers</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.</span>
+
+<span class="sd">    Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer</span>
+<span class="sd">    les `#` dans les blocs de code.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Corps du fichier avec blocs de code masqués.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Liste de Header (niveaux 1 et 2 uniquement).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">_HEADER_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Header</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">text</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">line</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">headers</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_structural_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si un titre H2 est une section structurelle (pas une entité listable).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text: Texte du titre H2.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True si le H2 est une section de document (ADR, runbook, journal).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># NFC pour neutraliser les variantes d&#39;encodage des accents</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_nonsplit_type</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si le type frontmatter exclut le fichier du découpage.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        frontmatter: Frontmatter parsé, ou None si absent.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True si le type indique un document séquentiel non-découpable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">frontmatter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">_NONSPLIT_TYPES</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_sequential_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si un titre H2 est un élément de liste séquentielle (étape, partie).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text: Texte du titre H2.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True si le H2 est une étape numérotée ou nommée séquentiellement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">normalized</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SEQUENTIAL_H2_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">normalized</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_session_journal</span><span class="p">(</span><span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indique si le fichier est un journal de session (H1 commence par une date).</span>
+
+<span class="sd">    Détecte les journaux sans type frontmatter via leur H1 daté (YYYY-MM-DD...).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        headers: Liste de headers extraits du fichier.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True si le fichier est un journal de session.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">h1s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_DATE_H1_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="evaluate_split">
+<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.evaluate_split">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_split</span><span class="p">(</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">],</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Détermine si un fichier est candidat au découpage selon des critères sémantiques.</span>
+
+<span class="sd">    Critères de déclenchement (dans l&#39;ordre) :</span>
+<span class="sd">    - multiple_h1 : ≥ 2 H1 avec des textes distincts</span>
+<span class="sd">    - homogeneous_h2_list : ≥ 4 H2 dont &lt; 2 sont structurels et &lt; 50% séquentiels</span>
+
+<span class="sd">    Exclusions préalables :</span>
+<span class="sd">    - Type frontmatter journal/runbook/procedure</span>
+<span class="sd">    - Journal de session détecté par H1 daté</span>
+<span class="sd">    - H1 dupliqués (même texte, anomalie de copier-coller)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        headers: Liste des headers extraits du fichier.</span>
+<span class="sd">        frontmatter: Frontmatter parsé, ou None si absent.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple (split_candidate, split_reason, split_entity_count).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_is_nonsplit_type</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">_is_session_journal</span><span class="p">(</span><span class="n">headers</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">h1s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">h2s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">({</span><span class="n">h</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">})</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># H1 identiques : anomalie de copier-coller, pas un découpage</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;multiple_h1&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">structural_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h2s</span> <span class="k">if</span> <span class="n">_is_structural_h2</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="n">sequential_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h2s</span> <span class="k">if</span> <span class="n">_is_sequential_h2</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">structural_count</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sequential_count</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;homogeneous_h2_list&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
