@@ -5,6 +5,7 @@ documentaires au format [Open Knowledge Format (OKF)](https://github.com/GoogleC
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 ![Python](https://img.shields.io/badge/python-3.12+-3670A0?style=flat&logo=python&logoColor=ffdd54)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mattdav.github.io/okflint/)
 
 ---
 
@@ -186,7 +187,11 @@ inv clean    # nettoyer les artefacts
 inv repomix  # packer la codebase pour un LLM
 ```
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md).
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide complet de contribution,
+le process de release et les conventions de commit.
+
+La **documentation API complète** (générée depuis les docstrings) est disponible sur
+[mattdav.github.io/okflint](https://mattdav.github.io/okflint/).
 
 ---
 

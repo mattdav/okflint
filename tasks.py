@@ -92,12 +92,16 @@ def repomix(c: Context, output: str | None = None) -> None:
 def index(c: Context) -> None:
     """Indexe la codebase dans codebase-memory-mcp pour améliorer le contexte Claude Code.
 
-    Lance l'indexation via le binaire codebase-memory-mcp installé localement.
-    L'index est stocké dans la base vectorielle locale de l'outil et permet
-    à Claude Code de faire des recherches sémantiques dans le code.
+    Utilise le mode CLI du binaire codebase-memory-mcp pour indexer le projet
+    courant dans le knowledge graph persistant. L'index survit aux redémarrages
+    de session et permet à Claude Code de faire des requêtes structurelles
+    (call graph, dépendances, etc.) avec ~99% moins de tokens qu'une exploration
+    fichier par fichier.
 
     À relancer après chaque modification significative de la codebase.
     """
+    import json
+
     binary = Path(
         r"C:\Users\matth\AppData\Local\Programs\codebase-memory-mcp\codebase-memory-mcp.exe"
     )
@@ -106,13 +110,17 @@ def index(c: Context) -> None:
         print("   Installer depuis : https://github.com/DeusData/codebase-memory-mcp")
         return
 
-    print("🧠 Indexation de la codebase dans codebase-memory-mcp...")
+    repo_path = str(Path.cwd()).replace("\\", "/")
+    payload = json.dumps({"repo_path": repo_path})
+
+    print(f"🧠 Indexation de la codebase dans codebase-memory-mcp...")
+    print(f"   Projet : {repo_path}")
     result = subprocess.run(
-        f'"{binary}" index "{Path.cwd()}"',
+        f'"{binary}" cli index_repository \'{payload}\'',
         shell=True,
     )
     if result.returncode == 0:
-        print("✅ Index mis à jour. Claude Code peut maintenant rechercher sémantiquement dans le code.")
+        print("✅ Index mis à jour. Claude Code peut maintenant interroger le knowledge graph.")
     else:
         print("❌ Indexation échouée.")
 
