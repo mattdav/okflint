@@ -1,4 +1,4 @@
-"""Chargement et validation du manifeste OKF YAML."""
+"""OKF manifest loading and validation."""
 
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ from beartype import beartype
 
 
 class ManifestError(Exception):
-    """Manifeste OKF invalide ou illisible."""
+    """Invalid or unreadable OKF manifest."""
 
 
 @dataclass
 class TypeConfig:
-    """Configuration d'un type de concept déclaré dans le profil."""
+    """Configuration of a concept type declared in the profile."""
 
     required: list[str]
     optional: list[str]
@@ -27,7 +27,7 @@ class TypeConfig:
 
 @dataclass
 class ProfileConfig:
-    """Configuration du profil de la base documentaire."""
+    """Profile configuration of the documentary base."""
 
     types: dict[str, TypeConfig]
     date_fields: list[str]
@@ -35,7 +35,7 @@ class ProfileConfig:
 
 @dataclass
 class HygieneConfig:
-    """Configuration des contrôles d'hygiène (opt-in)."""
+    """Configuration of hygiene checks (opt-in)."""
 
     broken_links: Literal["off", "warn", "error"]
     split_candidates: Literal["off", "warn", "error"]
@@ -45,7 +45,7 @@ class HygieneConfig:
 
 @dataclass
 class BaseConfig:
-    """Configuration de la base documentaire."""
+    """Documentary base configuration."""
 
     name: str
     roots: list[Path]
@@ -56,7 +56,7 @@ class BaseConfig:
 
 @dataclass
 class Manifest:
-    """Manifeste OKF chargé et validé."""
+    """Loaded and validated OKF manifest."""
 
     okf_version: str | None
     base: BaseConfig
@@ -64,13 +64,13 @@ class Manifest:
     hygiene: HygieneConfig | None
 
 
-# Valeurs d'hygiène valides
+# Valid hygiene values
 _HYGIENE_VALUES: frozenset[str] = frozenset({"off", "warn", "error"})
 
-# Version OKF connue
+# Known OKF version
 _KNOWN_OKF_VERSION = "0.1"
 
-# Valeurs par défaut de HygieneConfig quand la clé est absente
+# Default HygieneConfig values when the key is absent
 _DEFAULT_HYGIENE = HygieneConfig(
     broken_links="warn",
     split_candidates="off",
@@ -80,21 +80,21 @@ _DEFAULT_HYGIENE = HygieneConfig(
 
 
 def _coerce_level(value: Any, key: str) -> Literal["off", "warn", "error"]:
-    """Normalise une valeur YAML vers un niveau d'hygiène.
+    """Normalise a YAML value to a hygiene level.
 
-    YAML 1.1 (PyYAML) interprète off/no/false comme bool False,
-    et on/yes/true comme bool True. On absorbe ces deux cas pour ne
-    pas piéger l'utilisateur sur cette subtilité.
+    YAML 1.1 (PyYAML) interprets off/no/false as Python bool False,
+    and on/yes/true as Python bool True. Both cases are absorbed here
+    to avoid trapping the user on this subtlety.
 
     Args:
-        value: Valeur brute issue de yaml.safe_load.
-        key: Clé hygiene (pour le message d'erreur).
+        value: Raw value returned by yaml.safe_load.
+        key: Hygiene key (for the error message).
 
     Returns:
-        Niveau normalisé parmi off | warn | error.
+        Normalised level among off | warn | error.
 
     Raises:
-        ManifestError: Si la valeur n'est pas normalisable.
+        ManifestError: If the value cannot be normalised.
     """
     if value is False:
         return "off"
@@ -103,48 +103,48 @@ def _coerce_level(value: Any, key: str) -> Literal["off", "warn", "error"]:
     if value in _HYGIENE_VALUES:
         return cast(Literal["off", "warn", "error"], value)
     raise ManifestError(
-        f"hygiene.{key} doit être off | warn | error (reçu : {value!r})."
+        f"hygiene.{key} must be off | warn | error (received: {value!r})."
     )
 
 
 def _parse_type_config(name: str, raw: Any) -> TypeConfig:
-    """Parse la configuration d'un type depuis le YAML brut.
+    """Parse the configuration of a type from raw YAML.
 
     Args:
-        name: Nom canonique du type (pour les messages d'erreur).
-        raw: Valeur brute depuis le YAML.
+        name: Canonical name of the type (for error messages).
+        raw: Raw value from the YAML.
 
     Returns:
-        TypeConfig validé.
+        Validated TypeConfig.
 
     Raises:
-        ManifestError: Si la configuration est invalide.
+        ManifestError: If the configuration is invalid.
     """
     if not isinstance(raw, dict):
-        raise ManifestError(f"profile.types.{name} doit être un mapping.")
+        raise ManifestError(f"profile.types.{name} must be a mapping.")
 
     required = raw.get("required", [])
     if not isinstance(required, list) or not all(isinstance(s, str) for s in required):
         raise ManifestError(
-            f"profile.types.{name}.required doit être une liste de strings."
+            f"profile.types.{name}.required must be a list of strings."
         )
 
     optional = raw.get("optional", [])
     if not isinstance(optional, list) or not all(isinstance(s, str) for s in optional):
         raise ManifestError(
-            f"profile.types.{name}.optional doit être une liste de strings."
+            f"profile.types.{name}.optional must be a list of strings."
         )
 
-    # Vérification intersection required ∩ optional = ∅
+    # Check required ∩ optional = ∅
     overlap = set(required) & set(optional)
     if overlap:
         raise ManifestError(
-            f"profile.types.{name} : champs à la fois dans required et optional : "
+            f"profile.types.{name}: fields present in both required and optional: "
             f"{sorted(overlap)}"
         )
 
-    # status_values : liste, False (bool), None/absent — rien d'autre
-    # CRITIQUE : distinguer is False de is None
+    # status_values: list, False (bool), None/absent — nothing else
+    # CRITICAL: distinguish is False from is None
     if "status_values" not in raw:
         status_values: list[str] | Literal[False] | None = None
     else:
@@ -158,19 +158,19 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
             if not all(isinstance(s, str) for s in sv_raw):
                 raise ManifestError(
                     f"profile.types.{name}.status_values"
-                    " doit être une liste de strings."
+                    " must be a list of strings."
                 )
             status_values = sv_raw
         else:
             raise ManifestError(
                 f"profile.types.{name}.status_values"
-                f" doit être une liste, false ou null (reçu : {sv_raw!r})."
+                f" must be a list, false or null (received: {sv_raw!r})."
             )
 
     aliases = raw.get("aliases", [])
     if not isinstance(aliases, list) or not all(isinstance(s, str) for s in aliases):
         raise ManifestError(
-            f"profile.types.{name}.aliases doit être une liste de strings."
+            f"profile.types.{name}.aliases must be a list of strings."
         )
 
     return TypeConfig(
@@ -182,47 +182,47 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
 
 
 def _parse_profile(raw: Any, status_field: str | None) -> ProfileConfig:
-    """Parse la configuration du profil depuis le YAML brut.
+    """Parse the profile configuration from raw YAML.
 
     Args:
-        raw: Valeur brute du bloc profile depuis le YAML.
-        status_field: Champ de statut déclaré dans base (peut être None).
+        raw: Raw value of the profile block from the YAML.
+        status_field: Status field declared in base (may be None).
 
     Returns:
-        ProfileConfig validé.
+        Validated ProfileConfig.
 
     Raises:
-        ManifestError: Si la configuration est invalide.
+        ManifestError: If the configuration is invalid.
     """
     if not isinstance(raw, dict):
-        raise ManifestError("profile doit être un mapping.")
+        raise ManifestError("profile must be a mapping.")
 
     raw_types = raw.get("types", {})
     if not isinstance(raw_types, dict):
-        raise ManifestError("profile.types doit être un mapping.")
+        raise ManifestError("profile.types must be a mapping.")
 
     types: dict[str, TypeConfig] = {}
-    # Vrai si au moins un type nécessite status_field déclaré
+    # True if at least one type requires status_field to be declared
     needs_status_field = False
 
     for type_name, type_raw in raw_types.items():
         cfg = _parse_type_config(str(type_name), type_raw)
         types[str(type_name)] = cfg
-        # status_field requis si au moins un type a status_values liste ou False
+        # status_field required if at least one type has status_values list or False
         if isinstance(cfg.status_values, list) or cfg.status_values is False:
             needs_status_field = True
 
     if needs_status_field and status_field is None:
         raise ManifestError(
-            "base.status_field doit être déclaré quand au moins un type "
-            "utilise status_values (liste ou false)."
+            "base.status_field must be declared when at least one type "
+            "uses status_values (list or false)."
         )
 
     date_fields_raw = raw.get("date_fields", [])
     if not isinstance(date_fields_raw, list) or not all(
         isinstance(s, str) for s in date_fields_raw
     ):
-        raise ManifestError("profile.date_fields doit être une liste de strings.")
+        raise ManifestError("profile.date_fields must be a list of strings.")
 
     return ProfileConfig(
         types=types,
@@ -231,19 +231,19 @@ def _parse_profile(raw: Any, status_field: str | None) -> ProfileConfig:
 
 
 def _parse_hygiene(raw: Any) -> HygieneConfig:
-    """Parse la configuration d'hygiène depuis le YAML brut.
+    """Parse the hygiene configuration from raw YAML.
 
     Args:
-        raw: Valeur brute du bloc hygiene depuis le YAML.
+        raw: Raw value of the hygiene block from the YAML.
 
     Returns:
-        HygieneConfig validé.
+        Validated HygieneConfig.
 
     Raises:
-        ManifestError: Si une valeur n'est pas dans {off, warn, error}.
+        ManifestError: If a value is not in {off, warn, error}.
     """
     if not isinstance(raw, dict):
-        raise ManifestError("hygiene doit être un mapping.")
+        raise ManifestError("hygiene must be a mapping.")
 
     def _get_level(key: str, default: str = "off") -> Literal["off", "warn", "error"]:
         return _coerce_level(raw.get(key, default), key)
@@ -258,69 +258,69 @@ def _parse_hygiene(raw: Any) -> HygieneConfig:
 
 @beartype
 def load_manifest(path: Path) -> Manifest:
-    """Charge et valide un manifeste OKF YAML.
+    """Load and validate an OKF YAML manifest.
 
     Args:
-        path: Chemin vers le fichier YAML.
+        path: Path to the YAML file.
 
     Returns:
-        Manifest typé et validé.
+        Typed and validated Manifest.
 
     Raises:
-        ManifestError: Si le fichier est illisible, invalide, ou viole les contraintes.
+        ManifestError: If the file is unreadable, invalid, or violates constraints.
     """
     try:
         raw_text = path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise ManifestError(f"Impossible de lire {path} : {exc}") from exc
+        raise ManifestError(f"Cannot read {path}: {exc}") from exc
 
     try:
         data = yaml.safe_load(raw_text)
     except yaml.YAMLError as exc:
-        raise ManifestError(f"YAML invalide dans {path} : {exc}") from exc
+        raise ManifestError(f"Invalid YAML in {path}: {exc}") from exc
 
     if not isinstance(data, dict):
-        raise ManifestError(f"{path} n'est pas un mapping YAML au niveau racine.")
+        raise ManifestError(f"{path} is not a YAML mapping at root level.")
 
-    # Clé base obligatoire
+    # Mandatory base key
     if "base" not in data:
-        raise ManifestError(f"Clé 'base' absente dans {path}.")
+        raise ManifestError(f"Key 'base' absent in {path}.")
 
     raw_base = data["base"]
     if not isinstance(raw_base, dict):
-        raise ManifestError("base doit être un mapping.")
+        raise ManifestError("base must be a mapping.")
 
     # base.roots
     raw_roots = raw_base.get("roots")
     if not raw_roots or not isinstance(raw_roots, list):
-        raise ManifestError("base.roots doit être une liste non vide.")
+        raise ManifestError("base.roots must be a non-empty list.")
     roots: list[Path] = []
     for entry in raw_roots:
         if not isinstance(entry, dict) or "path" not in entry:
             raise ManifestError(
-                "Chaque entrée de base.roots doit avoir une clé 'path' de type string."
+                "Each entry in base.roots must have a 'path' key of type string."
             )
         if not isinstance(entry["path"], str):
-            raise ManifestError("base.roots[].path doit être un string.")
+            raise ManifestError("base.roots[].path must be a string.")
         roots.append(Path(entry["path"]))
 
     # base.reserved_files
     raw_reserved = raw_base.get("reserved_files")
     if not isinstance(raw_reserved, dict):
-        raise ManifestError("base.reserved_files doit être un mapping.")
+        raise ManifestError("base.reserved_files must be a mapping.")
     if "index" not in raw_reserved or "log" not in raw_reserved:
         raise ManifestError(
-            "base.reserved_files doit contenir les clés 'index' et 'log'."
+            "base.reserved_files must contain keys 'index' and 'log'."
         )
     reserved_files: dict[str, str] = {str(k): str(v) for k, v in raw_reserved.items()}
 
-    # base.status_field (optionnel)
+    # base.status_field (optional)
     status_field_raw = raw_base.get("status_field")
     status_field: str | None = (
         str(status_field_raw) if status_field_raw is not None else None
     )
 
-    # base.external_refs (depuis link_resolution)
+    # base.external_refs (from link_resolution)
     link_res = raw_base.get("link_resolution", {})
     external_refs_raw = (
         link_res.get("external_refs", []) if isinstance(link_res, dict) else []
@@ -340,23 +340,23 @@ def load_manifest(path: Path) -> Manifest:
         external_refs=external_refs,
     )
 
-    # okf_version (optionnel, warning si inconnu)
+    # okf_version (optional, warning if unknown)
     okf_version: str | None = None
     if "okf_version" in data:
         okf_version = str(data["okf_version"])
         if okf_version != _KNOWN_OKF_VERSION:
             print(
-                f"Warning : version okf_version={okf_version!r} inconnue "
-                f"(attendu : {_KNOWN_OKF_VERSION!r}).",
+                f"Warning: unknown okf_version={okf_version!r} "
+                f"(expected: {_KNOWN_OKF_VERSION!r}).",
                 file=sys.stderr,
             )
 
-    # profile (optionnel)
+    # profile (optional)
     profile: ProfileConfig | None = None
     if "profile" in data:
         profile = _parse_profile(data["profile"], status_field)
 
-    # hygiene (optionnel)
+    # hygiene (optional)
     hygiene: HygieneConfig | None = None
     if "hygiene" in data:
         hygiene = _parse_hygiene(data["hygiene"])

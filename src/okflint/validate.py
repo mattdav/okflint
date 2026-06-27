@@ -1,4 +1,4 @@
-"""Validation normative de fichiers Markdown OKF — exit 0 si conforme, exit 1 sinon."""
+"""Normative validation of OKF Markdown files — exit 0 if conformant, exit 1 otherwise."""
 
 from __future__ import annotations
 
@@ -30,16 +30,16 @@ from okflint.scanner import (
     parse_frontmatter,
 )
 
-# Pattern ISO date YYYY-MM-DD
+# ISO date pattern YYYY-MM-DD
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
-# Re-export pour les importeurs (cli.py)
+# Re-export for importers (cli.py)
 __all__ = ["Diagnostic", "ManifestError", "run_validate"]
 
 
 @dataclass
 class Diagnostic:
-    """Erreur ou avertissement de validation OKF."""
+    """OKF validation error or warning."""
 
     code: str
     tier: str  # "core" | "profile" | "hygiene"
@@ -49,7 +49,7 @@ class Diagnostic:
 
 
 # ---------------------------------------------------------------------------
-# Étage 1 — Cœur OKF (toujours actif)
+# Stage 1 — OKF core (always active)
 # ---------------------------------------------------------------------------
 
 
@@ -58,18 +58,18 @@ def check_core_concept(
     path: str,
     frontmatter: dict[str, Any] | None,
 ) -> list[Diagnostic]:
-    """Vérifie les règles cœur OKF sur un fichier concept.
+    """Check OKF core rules on a concept file.
 
     Args:
-        path: Chemin relatif du fichier (pour les messages).
-        frontmatter: Frontmatter parsé, ou None si absent/invalide.
+        path: Relative file path (for messages).
+        frontmatter: Parsed frontmatter, or None if absent/invalid.
 
     Returns:
-        Liste de Diagnostic (F001, F002).
+        List of Diagnostic (F001, F002).
     """
     diags: list[Diagnostic] = []
 
-    # F001 : frontmatter absent ou non parsable
+    # F001: frontmatter absent or unparsable
     if frontmatter is None:
         diags.append(
             Diagnostic(
@@ -77,12 +77,12 @@ def check_core_concept(
                 tier="core",
                 severity="error",
                 file=path,
-                message="frontmatter absent ou non parsable",
+                message="frontmatter absent or unparsable",
             )
         )
-        return diags  # F002 impossible sans frontmatter
+        return diags  # F002 impossible without frontmatter
 
-    # F002 : champ type absent ou vide
+    # F002: type field absent or empty
     if "type" not in frontmatter or str(frontmatter["type"]).strip() == "":
         diags.append(
             Diagnostic(
@@ -90,7 +90,7 @@ def check_core_concept(
                 tier="core",
                 severity="error",
                 file=path,
-                message="champ `type` absent ou vide",
+                message="`type` field absent or empty",
             )
         )
 
@@ -103,23 +103,23 @@ def check_core_reserved_index(
     content: str,
     is_root_index: bool,
 ) -> list[Diagnostic]:
-    """Vérifie la règle R001 sur un fichier index.md.
+    """Check R001 rule on an index.md file.
 
     Args:
-        path: Chemin relatif du fichier.
-        content: Contenu brut du fichier.
-        is_root_index: True si le fichier est à la racine d'un root.
+        path: Relative file path.
+        content: Raw file content.
+        is_root_index: True if the file is at a root's directory level.
 
     Returns:
-        Liste de Diagnostic (R001).
+        List of Diagnostic (R001).
     """
     diags: list[Diagnostic] = []
     fm, _ = parse_frontmatter(content)
 
     if fm is None:
-        return diags  # pas de frontmatter → conforme
+        return diags  # no frontmatter → conformant
 
-    # Frontmatter présent : autorisé seulement si root ET uniquement okf_version
+    # Frontmatter present: only allowed at root AND with only okf_version
     allowed_keys = {"okf_version"}
     has_extra_keys = bool(set(fm.keys()) - allowed_keys)
 
@@ -131,8 +131,8 @@ def check_core_reserved_index(
                 severity="error",
                 file=path,
                 message=(
-                    "frontmatter interdit dans index.md "
-                    "(seul `okf_version` autorisé à la racine)"
+                    "frontmatter forbidden in index.md "
+                    "(only `okf_version` allowed at root)"
                 ),
             )
         )
@@ -145,14 +145,14 @@ def check_core_reserved_log(
     path: str,
     content: str,
 ) -> list[Diagnostic]:
-    """Vérifie la règle R002 sur un fichier log.md.
+    """Check R002 rule on a log.md file.
 
     Args:
-        path: Chemin relatif du fichier.
-        content: Contenu brut du fichier.
+        path: Relative file path.
+        content: Raw file content.
 
     Returns:
-        Liste de Diagnostic (R002).
+        List of Diagnostic (R002).
     """
     diags: list[Diagnostic] = []
     _, body = parse_frontmatter(content)
@@ -167,7 +167,7 @@ def check_core_reserved_log(
                     tier="core",
                     severity="error",
                     file=path,
-                    message=f"heading de date non ISO dans log.md : `{h.text}`",
+                    message=f"non-ISO date heading in log.md: `{h.text}`",
                 )
             )
 
@@ -175,7 +175,7 @@ def check_core_reserved_log(
 
 
 # ---------------------------------------------------------------------------
-# Étage 2 — Profil
+# Stage 2 — Profile
 # ---------------------------------------------------------------------------
 
 
@@ -183,32 +183,32 @@ def _resolve_type(
     val_type: str,
     profile: ProfileConfig,
 ) -> tuple[str | None, str | None]:
-    """Résout le type déclaré vers une clé canonique du profil.
+    """Resolve a declared type to a canonical profile key.
 
-    Priorité : exact match → case-insensitive → aliases (case-insensitive).
+    Priority: exact match → case-insensitive → aliases (case-insensitive).
 
     Args:
-        val_type: Valeur du champ type dans le frontmatter.
-        profile: Configuration du profil.
+        val_type: Value of the type field in the frontmatter.
+        profile: Profile configuration.
 
     Returns:
-        Tuple (type_key, f106_message) où type_key est None si non trouvé.
+        Tuple (type_key, f106_message) where type_key is None if not found.
     """
-    # 1. Correspondance exacte
+    # 1. Exact match
     if val_type in profile.types:
         return val_type, None
 
-    # 2. Correspondance case-insensitive sur les clés
+    # 2. Case-insensitive match on keys
     for k in profile.types:
         if k.lower() == val_type.lower():
             return k, None
 
-    # 3. Recherche dans les aliases (case-insensitive)
+    # 3. Search in aliases (case-insensitive)
     for k, cfg in profile.types.items():
         for alias in cfg.aliases:
             if alias.lower() == val_type.lower():
                 msg = (
-                    f"graphie de `type` non normalisée : `{val_type}` → utiliser `{k}`"
+                    f"non-normalised `type` spelling: `{val_type}` → use `{k}`"
                 )
                 return k, msg
 
@@ -222,16 +222,16 @@ def check_profile(
     profile: ProfileConfig,
     status_field: str | None,
 ) -> list[Diagnostic]:
-    """Vérifie les règles de profil sur un fichier concept.
+    """Check profile rules on a concept file.
 
     Args:
-        path: Chemin relatif du fichier.
-        frontmatter: Frontmatter parsé (non None).
-        profile: Configuration du profil.
-        status_field: Nom du champ de statut déclaré dans base (peut être None).
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        profile: Profile configuration.
+        status_field: Name of the status field declared in base (may be None).
 
     Returns:
-        Liste de Diagnostic (F101-F106, S101, S102).
+        List of Diagnostic (F101-F106, S101, S102).
     """
     diags: list[Diagnostic] = []
     val_type = str(frontmatter.get("type", ""))
@@ -245,10 +245,10 @@ def check_profile(
                 tier="profile",
                 severity="error",
                 file=path,
-                message=f"valeur `type` hors des types déclarés : `{val_type}`",
+                message=f"`type` value not in declared types: `{val_type}`",
             )
         )
-        return diags  # pas de checks suivants sans type résolu
+        return diags  # no further checks without a resolved type
 
     if f106_msg is not None:
         diags.append(
@@ -263,7 +263,7 @@ def check_profile(
 
     type_cfg: TypeConfig = profile.types[type_key]
 
-    # F102 — champs requis manquants (sauf "type" déjà vérifié)
+    # F102 — missing required fields (except "type" already checked)
     for req_field in type_cfg.required:
         if req_field == "type":
             continue
@@ -274,17 +274,17 @@ def check_profile(
                     tier="profile",
                     severity="error",
                     file=path,
-                    message=f"champ requis manquant : `{req_field}`",
+                    message=f"missing required field: `{req_field}`",
                 )
             )
 
-    # F103/F104/F105 — statut
-    # CRITIQUE : distinguer is False de is None
+    # F103/F104/F105 — status
+    # CRITICAL: distinguish is False from is None
     sv = type_cfg.status_values
-    sf = status_field or "statut"  # nom du champ de statut
+    sf = status_field or "status"  # name of the status field
 
     if sv is False:
-        # statut interdit pour ce type
+        # status forbidden for this type
         if sf in frontmatter:
             diags.append(
                 Diagnostic(
@@ -293,13 +293,13 @@ def check_profile(
                     severity="error",
                     file=path,
                     message=(
-                        f"champ de statut `{sf}` présent mais interdit "
-                        f"pour le type `{type_key}`"
+                        f"status field `{sf}` present but forbidden "
+                        f"for type `{type_key}`"
                     ),
                 )
             )
     elif isinstance(sv, list):
-        # statut obligatoire et à valeur contrainte
+        # status required and value constrained
         if sf not in frontmatter:
             diags.append(
                 Diagnostic(
@@ -307,7 +307,7 @@ def check_profile(
                     tier="profile",
                     severity="error",
                     file=path,
-                    message=f"champ de statut `{sf}` requis pour le type `{type_key}`",
+                    message=f"status field `{sf}` required for type `{type_key}`",
                 )
             )
         elif frontmatter[sf] not in sv:
@@ -318,16 +318,16 @@ def check_profile(
                     severity="error",
                     file=path,
                     message=(
-                        f"valeur de statut hors vocabulaire : "
-                        f"`{sf}={frontmatter[sf]}` (valeurs : {sv})"
+                        f"status value outside vocabulary: "
+                        f"`{sf}={frontmatter[sf]}` (allowed: {sv})"
                     ),
                 )
             )
-    # sv is None → optionnel, aucune vérification
+    # sv is None → optional, no check
 
-    # S101 — champ de statut mal nommé
+    # S101 — incorrectly named status field
     if status_field is not None:
-        # Vérifier "status" (anglais) si status_field != "status"
+        # Check "status" (English) if status_field != "status"
         if status_field != "status" and "status" in frontmatter:
             diags.append(
                 Diagnostic(
@@ -336,12 +336,12 @@ def check_profile(
                     severity="error",
                     file=path,
                     message=(
-                        f"champ de statut mal nommé : `status`"
-                        f" → utiliser `{status_field}`"
+                        f"incorrectly named status field: `status`"
+                        f" → use `{status_field}`"
                     ),
                 )
             )
-        # Vérifier "statut" (français) si status_field != "statut"
+        # Check "statut" (French) if status_field != "statut"
         if status_field != "statut" and "statut" in frontmatter:
             diags.append(
                 Diagnostic(
@@ -350,13 +350,13 @@ def check_profile(
                     severity="error",
                     file=path,
                     message=(
-                        f"champ de statut mal nommé : `statut`"
-                        f" → utiliser `{status_field}`"
+                        f"incorrectly named status field: `statut`"
+                        f" → use `{status_field}`"
                     ),
                 )
             )
 
-    # S102 — dates mal formatées
+    # S102 — incorrectly formatted dates
     for date_field in profile.date_fields:
         if date_field in frontmatter and frontmatter[date_field]:
             val = str(frontmatter[date_field])
@@ -368,8 +368,8 @@ def check_profile(
                         severity="error",
                         file=path,
                         message=(
-                            f"date mal formatée : `{date_field}={val}` "
-                            f"(attendu YYYY-MM-DD)"
+                            f"incorrectly formatted date: `{date_field}={val}` "
+                            f"(expected YYYY-MM-DD)"
                         ),
                     )
                 )
@@ -378,7 +378,7 @@ def check_profile(
 
 
 # ---------------------------------------------------------------------------
-# Étage 3 — Hygiène
+# Stage 3 — Hygiene
 # ---------------------------------------------------------------------------
 
 
@@ -389,16 +389,16 @@ def check_hygiene_unknown_fields(
     type_cfg: TypeConfig,
     level: Literal["off", "warn", "error"],
 ) -> list[Diagnostic]:
-    """Vérifie les champs frontmatter inconnus (F201).
+    """Check for unknown frontmatter fields (F201).
 
     Args:
-        path: Chemin relatif du fichier.
-        frontmatter: Frontmatter parsé.
-        type_cfg: Configuration du type résolu.
-        level: Niveau de contrôle (off | warn | error).
+        path: Relative file path.
+        frontmatter: Parsed frontmatter.
+        type_cfg: Configuration of the resolved type.
+        level: Control level (off | warn | error).
 
     Returns:
-        Liste de Diagnostic (F201).
+        List of Diagnostic (F201).
     """
     if level == "off":
         return []
@@ -413,7 +413,7 @@ def check_hygiene_unknown_fields(
             tier="hygiene",
             severity=severity,
             file=path,
-            message=f"champ inconnu dans le frontmatter : `{f}`",
+            message=f"unknown field in frontmatter: `{f}`",
         )
         for f in sorted(unknown)
     ]
@@ -427,17 +427,17 @@ def check_hygiene_links(
     external_refs: set[str],
     level: Literal["off", "warn", "error"],
 ) -> list[Diagnostic]:
-    """Vérifie les liens cassés ou ambigus (L001, L002, L003).
+    """Check for broken or ambiguous links (L001, L002, L003).
 
     Args:
-        path: Chemin relatif du fichier.
-        wikilinks: Liste de WikiLink extraits.
-        md_links: Liste de MarkdownLink extraits.
-        external_refs: Noms de fichiers hors-base autorisés (lowercased).
-        level: Niveau de contrôle (off | warn | error).
+        path: Relative file path.
+        wikilinks: List of extracted WikiLinks.
+        md_links: List of extracted MarkdownLinks.
+        external_refs: Allowed out-of-base file names (lowercased).
+        level: Control level (off | warn | error).
 
     Returns:
-        Liste de Diagnostic (L001, L002, L003).
+        List of Diagnostic (L001, L002, L003).
     """
     if level == "off":
         return []
@@ -453,7 +453,7 @@ def check_hygiene_links(
                     tier="hygiene",
                     severity=severity,
                     file=path,
-                    message=f"wikilink cassé : [[{wl.target}]]",
+                    message=f"broken wikilink: [[{wl.target}]]",
                 )
             )
         if wl.ambiguous:
@@ -463,7 +463,7 @@ def check_hygiene_links(
                     tier="hygiene",
                     severity=severity,
                     file=path,
-                    message=f"wikilink ambigu : [[{wl.target}]]",
+                    message=f"ambiguous wikilink: [[{wl.target}]]",
                 )
             )
 
@@ -475,7 +475,7 @@ def check_hygiene_links(
                     tier="hygiene",
                     severity=severity,
                     file=path,
-                    message=f"lien markdown cassé : {ml.target}",
+                    message=f"broken markdown link: {ml.target}",
                 )
             )
 
@@ -489,16 +489,16 @@ def check_hygiene_structure(
     frontmatter: dict[str, Any] | None,
     level: Literal["off", "warn", "error"],
 ) -> list[Diagnostic]:
-    """Vérifie si le fichier est candidat au découpage (S201).
+    """Check whether the file is a split candidate (S201).
 
     Args:
-        path: Chemin relatif du fichier.
-        headers: Liste des headers extraits.
-        frontmatter: Frontmatter parsé ou None.
-        level: Niveau de contrôle (off | warn | error).
+        path: Relative file path.
+        headers: List of extracted headers.
+        frontmatter: Parsed frontmatter or None.
+        level: Control level (off | warn | error).
 
     Returns:
-        Liste de Diagnostic (S201).
+        List of Diagnostic (S201).
     """
     if level == "off":
         return []
@@ -513,7 +513,7 @@ def check_hygiene_structure(
                 tier="hygiene",
                 severity=severity,
                 file=path,
-                message=f"candidat au découpage ({reason}, {count} sections)",
+                message=f"split candidate ({reason}, {count} sections)",
             )
         ]
 
@@ -526,15 +526,15 @@ def check_hygiene_reserved(
     reserved_config: dict[str, str],
     level: Literal["off", "warn", "error"],
 ) -> list[Diagnostic]:
-    """Vérifie la présence des fichiers réservés dans chaque root (R201).
+    """Check for the presence of reserved files in each root (R201).
 
     Args:
-        roots: Liste des racines de la base.
-        reserved_config: Mapping nom_logique → nom_fichier.
-        level: Niveau de contrôle (off | warn | error).
+        roots: List of base roots.
+        reserved_config: Mapping logical_name → filename.
+        level: Control level (off | warn | error).
 
     Returns:
-        Liste de Diagnostic (R201).
+        List of Diagnostic (R201).
     """
     if level == "off":
         return []
@@ -551,7 +551,7 @@ def check_hygiene_reserved(
                         tier="hygiene",
                         severity=severity,
                         file=filename,
-                        message=f"fichier réservé absent dans {root} : {filename}",
+                        message=f"reserved file missing in {root}: {filename}",
                     )
                 )
 
@@ -559,7 +559,7 @@ def check_hygiene_reserved(
 
 
 # ---------------------------------------------------------------------------
-# Orchestrateurs
+# Orchestrators
 # ---------------------------------------------------------------------------
 
 
@@ -569,19 +569,19 @@ def validate_file(
     manifest: Manifest,
     base_index: dict[str, list[str]],
 ) -> list[Diagnostic]:
-    """Orchestre la validation complète d'un fichier markdown.
+    """Orchestrate the full validation of a markdown file.
 
     Args:
-        file_path: Chemin absolu du fichier à valider.
-        manifest: Manifeste OKF chargé et validé.
-        base_index: Index des fichiers de la base (nom → chemins).
+        file_path: Absolute path of the file to validate.
+        manifest: Loaded and validated OKF manifest.
+        base_index: Base file index (name → paths).
 
     Returns:
-        Liste de Diagnostic (vide si conforme).
+        List of Diagnostic (empty if conformant).
     """
     content = file_path.read_text(encoding="utf-8")
 
-    # Détermination de la root applicable
+    # Determine the applicable root
     applicable_root = manifest.base.roots[0]
     for root in manifest.base.roots:
         try:
@@ -596,7 +596,7 @@ def validate_file(
     reserved_idx = manifest.base.reserved_files.get("index", "index.md")
     reserved_log = manifest.base.reserved_files.get("log", "log.md")
 
-    # Fichiers réservés : traitements spécifiques, pas de check concept
+    # Reserved files: specific handling, no concept check
     if file_path.name == reserved_idx:
         is_root = any(file_path.parent == r for r in manifest.base.roots)
         return check_core_reserved_index(rel, content, is_root)
@@ -604,19 +604,19 @@ def validate_file(
     if file_path.name == reserved_log:
         return check_core_reserved_log(rel, content)
 
-    # Fichier concept
+    # Concept file
     fm, body = parse_frontmatter(content)
     diagnostics: list[Diagnostic] = []
 
-    # Cœur OKF
+    # OKF core
     core_diags = check_core_concept(rel, fm)
     diagnostics.extend(core_diags)
 
-    # Si F001 ou F002 → skip les étages suivants
+    # If F001 or F002 → skip subsequent stages
     if any(d.code in ("F001", "F002") for d in core_diags):
         return diagnostics
 
-    # fm est forcément non-None ici (F001 n'a pas déclenché)
+    # fm is necessarily non-None here (F001 did not fire)
     assert fm is not None
 
     safe_body = blank_code_spans(body)
@@ -624,23 +624,23 @@ def validate_file(
     md_links = extract_markdown_links(safe_body, file_path, applicable_root)
     headers = extract_headers(safe_body)
 
-    # Profil
+    # Profile
     resolved_type_cfg: TypeConfig | None = None
     if manifest.profile is not None:
         profile_diags = check_profile(
             rel, fm, manifest.profile, manifest.base.status_field
         )
         diagnostics.extend(profile_diags)
-        # Résoudre le type_cfg pour F201 (hygiene unknown fields)
+        # Resolve type_cfg for F201 (hygiene unknown fields)
         type_key, _ = _resolve_type(str(fm.get("type", "")), manifest.profile)
         if type_key is not None:
             resolved_type_cfg = manifest.profile.types[type_key]
 
-    # Hygiène
+    # Hygiene
     if manifest.hygiene is not None:
         hygiene: HygieneConfig = manifest.hygiene
 
-        # Liens
+        # Links
         diagnostics.extend(
             check_hygiene_links(
                 rel,
@@ -656,7 +656,7 @@ def validate_file(
             check_hygiene_structure(rel, headers, fm, hygiene.split_candidates)
         )
 
-        # Champs inconnus (seulement si profil ET type résolu)
+        # Unknown fields (only if profile AND resolved type)
         if manifest.profile is not None and resolved_type_cfg is not None:
             diagnostics.extend(
                 check_hygiene_unknown_fields(
@@ -672,17 +672,17 @@ def run_validate(
     manifest_path: Path,
     targets: list[Path],
 ) -> tuple[list[Diagnostic], int]:
-    """Orchestre la validation OKF d'une liste de cibles.
+    """Orchestrate OKF validation over a list of targets.
 
     Args:
-        manifest_path: Chemin vers le manifeste OKF YAML.
-        targets: Fichiers ou dossiers à valider.
+        manifest_path: Path to the OKF YAML manifest.
+        targets: Files or directories to validate.
 
     Returns:
-        Tuple (liste de diagnostics, code de sortie 0 ou 1).
+        Tuple (list of diagnostics, exit code 0 or 1).
 
     Raises:
-        ManifestError: Si le manifeste est invalide ou illisible.
+        ManifestError: If the manifest is invalid or unreadable.
     """
     manifest = load_manifest(manifest_path)
     base_index = build_file_index(manifest.base.roots)
@@ -698,7 +698,7 @@ def run_validate(
         for md_file in md_files:
             all_diagnostics.extend(validate_file(md_file, manifest, base_index))
 
-    # Hygiène réservée (contrôle global sur les roots)
+    # Reserved hygiene (global check on roots)
     reserved_level: Literal["off", "warn", "error"] = (
         manifest.hygiene.reserved_files if manifest.hygiene is not None else "off"
     )

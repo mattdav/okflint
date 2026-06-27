@@ -1,4 +1,4 @@
-"""Audit d'un bundle OKF Obsidian — inventaire et diagnostic de conformité."""
+"""OKF bundle audit — inventory and conformance diagnostic."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from okflint.scanner import (
 
 OkfStatus = Literal["conformant", "partial", "non_conformant"]
 
-# Noms réservés OKF v0.1 (ne sont pas des concepts)
+# OKF v0.1 reserved names (not concepts)
 RESERVED_NAMES: set[str] = {"index.md", "log.md"}
 
 
@@ -33,7 +33,7 @@ _HEADER_RE = re.compile(r"^(#{1,2})\s+(.+)$")
 
 @dataclass
 class Header:
-    """Représente un titre H1 ou H2 dans un fichier."""
+    """Represents an H1 or H2 heading in a file."""
 
     level: int
     text: str
@@ -42,7 +42,7 @@ class Header:
 
 @dataclass
 class FileReport:
-    """Rapport d'analyse d'un fichier .md du bundle."""
+    """Analysis report for a .md file in the bundle."""
 
     path: str
     depth: int
@@ -59,63 +59,63 @@ class FileReport:
     headers: list[Header]
 
 
-# Mots-clés de sections structurelles (ADR, Runbook, Journal, meta-docs)
-# Un H2 contenant l'un de ces mots/phrases est une section d'un concept unique
+# Structural section keywords (ADR, Runbook, Journal, meta-docs).
+# An H2 containing one of these words/phrases is a section of a single concept.
 _STRUCTURAL_H2_KEYWORDS: frozenset[str] = frozenset(
     {
-        # ADR / décision
-        "contexte",
+        # ADR / decision
+        "context",
         "options",
-        "considérées",
-        "décision",
-        "conséquences",
+        "considered",
+        "decision",
+        "consequences",
         "alternatives",
-        "annexes",
-        # Runbook / procédure
-        "prérequis",
-        "dépendances",
+        "appendices",
+        # Runbook / procedure
+        "prerequisites",
+        "dependencies",
         "installation",
         "configuration",
-        "utilisation",
-        "références",
-        "résultats",
+        "usage",
+        "references",
+        "results",
         "actions",
-        "réalisées",
-        "pièges",
-        "rencontrés",
-        "reste",
-        "suite",
-        "leçons",
-        "bilan",
+        "performed",
+        "pitfalls",
+        "encountered",
+        "remaining",
+        "next steps",
+        "lessons",
+        "summary",
         "diagnostic",
-        "symptômes",
-        "liens",
+        "symptoms",
+        "links",
         "troubleshooting",
         "rollback",
-        "vérification",
-        "historique",
+        "verification",
+        "history",
         "maintenance",
         # Architecture / meta-document
         "architecture",
         "navigation",
-        "objectifs",
-        "inventaire",
-        # Statuts de projet (kanban, TODO)
-        "en cours",
-        "en attente",
-        "à venir",
-        "résolu",
-        "idées",
+        "objectives",
+        "inventory",
+        # Project statuses (kanban, TODO)
+        "in progress",
+        "on hold",
+        "upcoming",
+        "resolved",
+        "ideas",
     }
 )
 
-# Pattern de H2 séquentiels (procédures numérotées, étapes)
+# Pattern for sequential H2s (numbered procedures, steps)
 _SEQUENTIAL_H2_RE = re.compile(
     r"^(?:\d+[\s.\-—]|[Éé]tape\s|Step\s|Partie\s|Part\s|Phase\s)",
     re.IGNORECASE,
 )
 
-# Types frontmatter qui indiquent un document non-découpable
+# Frontmatter types that indicate a non-splittable document
 _NONSPLIT_TYPES: frozenset[str] = frozenset(
     {
         "journal",
@@ -125,32 +125,32 @@ _NONSPLIT_TYPES: frozenset[str] = frozenset(
     }
 )
 
-# H1 commençant par une date → journal de session (même sans type frontmatter)
+# H1 starting with a date → session journal (even without frontmatter type)
 _DATE_H1_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
 def _is_structural_h2(text: str) -> bool:
-    """Indique si un titre H2 est une section structurelle (pas une entité listable).
+    """Indicate whether an H2 heading is a structural section (not a listable entity).
 
     Args:
-        text: Texte du titre H2.
+        text: H2 heading text.
 
     Returns:
-        True si le H2 est une section de document (ADR, runbook, journal).
+        True if the H2 is a document section (ADR, runbook, journal).
     """
-    # NFC pour neutraliser les variantes d'encodage des accents
+    # NFC to neutralise accent encoding variants
     lower = unicodedata.normalize("NFC", text).lower()
     return any(kw in lower for kw in _STRUCTURAL_H2_KEYWORDS)
 
 
 def _is_nonsplit_type(frontmatter: dict[str, Any] | None) -> bool:
-    """Indique si le type frontmatter exclut le fichier du découpage.
+    """Indicate whether the frontmatter type excludes the file from splitting.
 
     Args:
-        frontmatter: Frontmatter parsé, ou None si absent.
+        frontmatter: Parsed frontmatter, or None if absent.
 
     Returns:
-        True si le type indique un document séquentiel non-découpable.
+        True if the type indicates a sequential non-splittable document.
     """
     if frontmatter is None:
         return False
@@ -159,28 +159,28 @@ def _is_nonsplit_type(frontmatter: dict[str, Any] | None) -> bool:
 
 
 def _is_sequential_h2(text: str) -> bool:
-    """Indique si un titre H2 est un élément de liste séquentielle (étape, partie).
+    """Indicate whether an H2 heading is a sequential list element (step, part).
 
     Args:
-        text: Texte du titre H2.
+        text: H2 heading text.
 
     Returns:
-        True si le H2 est une étape numérotée ou nommée séquentiellement.
+        True if the H2 is a numbered or sequentially named step.
     """
     normalized = unicodedata.normalize("NFC", text)
     return bool(_SEQUENTIAL_H2_RE.match(normalized))
 
 
 def _is_session_journal(headers: list[Header]) -> bool:
-    """Indique si le fichier est un journal de session (H1 commence par une date).
+    """Indicate whether the file is a session journal (H1 starts with a date).
 
-    Détecte les journaux sans type frontmatter via leur H1 daté (YYYY-MM-DD...).
+    Detects journals without a frontmatter type via their dated H1 (YYYY-MM-DD...).
 
     Args:
-        headers: Liste de headers extraits du fichier.
+        headers: List of headers extracted from the file.
 
     Returns:
-        True si le fichier est un journal de session.
+        True if the file is a session journal.
     """
     h1s = [h for h in headers if h.level == 1]
     return bool(h1s) and all(_DATE_H1_RE.match(h.text) for h in h1s)
@@ -190,20 +190,20 @@ def _evaluate_split(
     headers: list[Header],
     frontmatter: dict[str, Any] | None,
 ) -> tuple[bool, str | None, int | None]:
-    """Détermine si un fichier est candidat au découpage selon des critères sémantiques.
+    """Determine whether a file is a split candidate based on semantic criteria.
 
-    Critères de déclenchement (dans l'ordre) :
-    - multiple_h1 : ≥ 2 H1 avec des textes distincts
-    - homogeneous_h2_list : ≥ 4 H2 dont < 2 sont structurels et < 50% séquentiels
+    Trigger criteria (in order):
+    - multiple_h1: ≥ 2 H1 with distinct texts
+    - homogeneous_h2_list: ≥ 4 H2 of which < 2 are structural and < 50% sequential
 
-    Exclusions préalables :
-    - Type frontmatter journal/runbook/procedure
-    - Journal de session détecté par H1 daté
-    - H1 dupliqués (même texte, anomalie de copier-coller)
+    Pre-exclusions:
+    - journal/runbook/procedure frontmatter type
+    - Session journal detected by dated H1
+    - Duplicate H1s (same text, copy-paste anomaly)
 
     Args:
-        headers: Liste des headers extraits du fichier.
-        frontmatter: Frontmatter parsé, ou None si absent.
+        headers: List of headers extracted from the file.
+        frontmatter: Parsed frontmatter, or None if absent.
 
     Returns:
         Tuple (split_candidate, split_reason, split_entity_count).
@@ -219,7 +219,7 @@ def _evaluate_split(
 
     if len(h1s) >= 2:
         if len({h.text for h in h1s}) == 1:
-            # H1 identiques : anomalie de copier-coller, pas un découpage
+            # Identical H1s: copy-paste anomaly, not a split
             return False, None, None
         return True, "multiple_h1", len(h1s)
 
@@ -234,10 +234,10 @@ def _evaluate_split(
 
 @beartype
 def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
-    """Détermine le statut OKF d'un concept selon son frontmatter.
+    """Determine the OKF status of a concept from its frontmatter.
 
     Args:
-        frontmatter: Frontmatter parsé, ou None si absent.
+        frontmatter: Parsed frontmatter, or None if absent.
 
     Returns:
         'conformant' | 'partial' | 'non_conformant'
@@ -251,16 +251,16 @@ def get_okf_status(frontmatter: dict[str, Any] | None) -> OkfStatus:
 
 @beartype
 def extract_headers(content: str) -> list[Header]:
-    """Extrait les titres H1 et H2 avec leur numéro de ligne dans le body.
+    """Extract H1 and H2 headings with their line number in the body.
 
-    Doit recevoir un contenu pré-blanqué via blank_code_spans pour ignorer
-    les `#` dans les blocs de code.
+    Must receive content pre-blanked via blank_code_spans to ignore
+    `#` characters inside code blocks.
 
     Args:
-        content: Corps du fichier avec blocs de code masqués.
+        content: File body with code blocks masked.
 
     Returns:
-        Liste de Header (niveaux 1 et 2 uniquement).
+        List of Header (levels 1 and 2 only).
     """
     headers: list[Header] = []
     for i, line in enumerate(content.splitlines(), start=1):
@@ -278,15 +278,15 @@ def analyze_file(
     bundle_path: Path,
     vault_index: dict[str, list[str]],
 ) -> FileReport:
-    """Analyse complète d'un fichier .md du bundle.
+    """Full analysis of a .md file in the bundle.
 
     Args:
-        file_path: Chemin absolu du fichier.
-        bundle_path: Racine du bundle.
-        vault_index: Index vault pour résolution des wikilinks.
+        file_path: Absolute path of the file.
+        bundle_path: Bundle root.
+        vault_index: Vault index for wikilink resolution.
 
     Returns:
-        FileReport avec tous les champs remplis.
+        FileReport with all fields populated.
     """
     rel_path = file_path.relative_to(bundle_path).as_posix()
     depth = len(file_path.relative_to(bundle_path).parts) - 1
@@ -328,16 +328,16 @@ def analyze_file(
 
 @beartype
 def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
-    """Agrège les statistiques globales du rapport.
+    """Aggregate global statistics for the report.
 
-    Seuls les fichiers non réservés sont comptés dans by_okf_status.
+    Only non-reserved files are counted in by_okf_status.
 
     Args:
-        files: Liste des rapports individuels.
-        vault_total: Nombre total de fichiers .md dans la vault entière.
+        files: List of individual file reports.
+        vault_total: Total number of .md files in the entire vault.
 
     Returns:
-        Dictionnaire de statistiques.
+        Statistics dictionary.
     """
     concept_files = [f for f in files if not f.is_reserved]
 
@@ -373,23 +373,23 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
 
 @beartype
 def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
-    """Orchestre l'audit complet d'un bundle OKF.
+    """Orchestrate the full audit of an OKF bundle.
 
     Args:
-        bundle_path: Racine du bundle à auditer.
-        vault_path: Racine de la vault Obsidian (pour l'index wikilinks).
+        bundle_path: Root of the bundle to audit.
+        vault_path: Root of the Obsidian vault (for the wikilinks index).
 
     Returns:
-        Rapport d'audit complet sérialisable en JSON.
+        Full audit report serialisable as JSON.
     """
-    print(f"🔎 Indexation de la vault : {vault_path}")
+    print(f"🔎 Indexing vault: {vault_path}")
     vault_index = build_file_index([vault_path])
     vault_total = sum(len(v) for v in vault_index.values())
-    print(f"   {vault_total} fichiers .md indexés")
+    print(f"   {vault_total} .md files indexed")
 
-    print(f"📦 Scan du bundle : {bundle_path}")
+    print(f"📦 Scanning bundle: {bundle_path}")
     md_files = sorted(bundle_path.rglob("*.md"))
-    print(f"   {len(md_files)} fichiers trouvés")
+    print(f"   {len(md_files)} files found")
 
     files: list[FileReport] = []
     for md_file in md_files:

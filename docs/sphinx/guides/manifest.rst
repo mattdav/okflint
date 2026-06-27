@@ -1,7 +1,7 @@
-Format du manifeste
-===================
+Manifest format
+===============
 
-Le manifeste ``okf-base.yaml`` déclare les conventions de la base documentaire.
+The ``okf-base.yaml`` manifest declares the conventions of the documentary base.
 
 Structure
 ---------
@@ -11,13 +11,13 @@ Structure
    okf_version: "0.1"
 
    base:
-     name: Ma Base
+     name: My Base
      roots:
        - path: docs/
      reserved_files:
        index: index.md
        log: log.md
-     status_field: statut
+     status_field: status
      link_resolution:
        external_refs:
          - Wikipedia
@@ -25,9 +25,9 @@ Structure
    profile:
      types:
        concept:
-         required: [type, titre]
-         optional: [statut, tags]
-         status_values: [brouillon, validé, archivé]
+         required: [type, title]
+         optional: [status, tags]
+         status_values: [draft, validated, archived]
        reference:
          required: [type]
          status_values: false
@@ -42,12 +42,12 @@ Structure
 Sections
 --------
 
-**base** (obligatoire)
-   Racines de la base, fichiers réservés, champ de statut, références externes.
+**base** (required)
+   Base roots, reserved files, status field, external references.
 
-**profile** (optionnel)
-   Types de concepts avec leurs champs requis/optionnels et vocabulaires de statut.
-   ``status_values: false`` interdit le champ de statut pour ce type.
+**profile** (optional)
+   Concept types with their required/optional fields and status vocabularies.
+   ``status_values: false`` forbids the status field for that type.
 
-**hygiene** (optionnel)
-   Niveaux de contrôle pour chaque famille de règles : ``off`` | ``warn`` | ``error``.
+**hygiene** (optional)
+   Control levels for each rule family: ``off`` | ``warn`` | ``error``.

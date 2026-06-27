@@ -1,57 +1,57 @@
-# okf-base.example.yaml — manifeste d'exemple pour okflint
+# okf-base.example.yaml — example manifest for okflint
 #
-# Copiez ce fichier sous le nom `okf-base.yaml` à la racine de votre base
-# documentaire, puis adaptez-le à votre taxonomie.
+# Copy this file as `okf-base.yaml` at the root of your documentary base,
+# then adapt it to your taxonomy.
 #
-# okflint est un MOTEUR GÉNÉRIQUE : il ne connaît aucun vocabulaire de types
-# en dur. C'est CE manifeste qui définit votre standard de conformité.
+# okflint is a GENERIC ENGINE: it knows no type vocabulary in hard code.
+# THIS manifest defines your conformance standard.
 #
-# Trois étages de contrôle (voir docs/RULES.md) :
-#   - Cœur OKF   : codé en dur, toujours actif (F001, F002, R001, R002)
-#   - Profil     : vos règles, déclarées dans `profile` ci-dessous
-#   - Hygiène    : checks plus stricts qu'OKF, opt-in via `hygiene`
+# Three control stages (see docs/RULES.md):
+#   - OKF core   : hardcoded, always active (F001, F002, R001, R002)
+#   - Profile    : your rules, declared in `profile` below
+#   - Hygiene    : checks stricter than OKF, opt-in via `hygiene`
 
 okf_version: "0.1"
 
 base:
-  # Nom logique de la base documentaire.
-  name: "Ma base documentaire"
+  # Logical name of the documentary base.
+  name: "My documentary base"
 
-  # Racines physiques de la base. Plusieurs racines possibles : les liens sont
-  # résolus contre l'index de la base entière, pas contre un dossier isolé.
+  # Physical roots of the base. Multiple roots are allowed: links are
+  # resolved against the full base index, not against an isolated folder.
   roots:
     - path: "."
 
-  # Fichiers réservés OKF (exemptés de la validation de type).
+  # OKF reserved files (exempt from type validation).
   reserved_files:
     index: "index.md"
     log: "log.md"
 
-  # Nom du champ de statut DANS cette base. C'est une CLÉ anglaise (status_field)
-  # dont la VALEUR est votre convention : ici "status", mais libre (ex. "statut").
+  # Name of the status field IN this base. This is an English KEY (status_field)
+  # whose VALUE is your convention: here "status", but it is free (e.g. "statut").
   status_field: "status"
 
-  # Résolution des liens.
+  # Link resolution.
   link_resolution:
-    scope: base          # les liens résolvent contre toute la base
-    external_refs: []    # noms de fichiers hors-base assumés (jamais "cassés")
+    scope: base          # links resolve against the entire base
+    external_refs: []    # out-of-base file names assumed valid (never "broken")
 
 # ---------------------------------------------------------------------------
-# PROFIL (optionnel) — votre affinement contractuel au-dessus du cœur OKF.
-# Si ce bloc est absent, seul le cœur OKF s'applique.
+# PROFILE (optional) — your contractual refinement on top of the OKF core.
+# If this block is absent, only the OKF core applies.
 # ---------------------------------------------------------------------------
 profile:
-  # Champs devant être au format ISO YYYY-MM-DD s'ils sont présents (règle S102).
+  # Fields that must be in ISO YYYY-MM-DD format if present (rule S102).
   date_fields: [created, updated]
 
-  # Vocabulaire type-aware. Chaque type déclare :
-  #   - required      : champs frontmatter obligatoires
-  #   - optional      : champs frontmatter autorisés (facultatifs)
-  #   - aliases       : graphies tolérées du type, normalisées vers le nom canonique
+  # Type-aware vocabulary. Each type declares:
+  #   - required      : mandatory frontmatter fields
+  #   - optional      : allowed frontmatter fields (optional)
+  #   - aliases       : tolerated spellings of the type, normalised to the canonical name
   #   - status_values :
-  #       [liste]  → champ de statut REQUIS, valeur contrainte à la liste
-  #       false    → champ de statut INTERDIT pour ce type
-  #       null     → champ de statut optionnel, valeur libre (ou clé absente)
+  #       [list]   → status field REQUIRED, value constrained to the list
+  #       false    → status field FORBIDDEN for this type
+  #       null     → status field optional, value free (or key absent)
   types:
     Decision:
       aliases: [adr, ADR]
@@ -73,11 +73,12 @@ profile:
       status_values: false
 
 # ---------------------------------------------------------------------------
-# HYGIÈNE (optionnel) — checks plus stricts qu'OKF. Chaque clé : off | warn | error.
-# OKF demande de tolérer ces cas : par défaut donc `off` ou `warn`, jamais imposé.
+# HYGIENE (optional) — checks stricter than OKF. Each key: off | warn | error.
+# OKF requires tolerance of these cases: defaults are therefore `off` or `warn`,
+# never enforced.
 # ---------------------------------------------------------------------------
 hygiene:
-  broken_links: warn       # L001, L002, L003 — liens cassés / ambigus
-  split_candidates: warn   # S201 — fichiers multi-concepts
-  reserved_files: off      # R201 — présence de index.md / log.md
-  unknown_fields: off      # F201 — champs hors du schéma déclaré
+  broken_links: warn       # L001, L002, L003 — broken / ambiguous links
+  split_candidates: warn   # S201 — multi-concept files
+  reserved_files: off      # R201 — presence of index.md / log.md
+  unknown_fields: off      # F201 — fields outside the declared schema

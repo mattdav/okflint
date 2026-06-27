@@ -1,7 +1,7 @@
-"""okflint — linter de conformité pour bases documentaires OKF.
+"""okflint — compliance linter for OKF documentary bases.
 
-Outil de contrôle qualité déterministe (façon Ruff/mypy) pour vérifier
-la conformité de documents Markdown au standard Open Knowledge Format.
+Deterministic quality-control tool (Ruff/mypy-style) for verifying
+that Markdown documents conform to the Open Knowledge Format standard.
 """
 
 __project_name__ = "okflint"

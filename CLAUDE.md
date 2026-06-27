@@ -1,64 +1,64 @@
 # okflint
 
-Linter de conformité déterministe pour bases documentaires OKF (Open Knowledge
-Format). Vérifie qu'une base Markdown respecte OKF et le cadre déclaré dans son
-manifeste. Pas de LLM, pas d'état runtime : un gate reproductible, façon Ruff.
+Deterministic compliance linter for OKF (Open Knowledge Format) documentary bases.
+Verifies that a Markdown base conforms to OKF and to the framework declared in its
+manifest. No LLM, no runtime state: a reproducible gate, Ruff-style.
 
 ## Structure
 
 ```
 src/okflint/
-├── cli.py        ← dispatcher CLI : okflint audit | validate
-├── scanner.py    ← primitives partagées (scan, frontmatter, code-fence, liens)
-├── audit.py      ← commande audit (descriptive, exit 0 toujours)
-├── validate.py   ← commande validate (gate normatif, exit 0/1)
-├── manifest.py   ← chargement + validation du manifeste lui-même
+├── cli.py        ← CLI dispatcher: okflint audit | validate
+├── scanner.py    ← shared primitives (scan, frontmatter, code-fence, links)
+├── audit.py      ← audit command (descriptive, always exit 0)
+├── validate.py   ← validate command (normative gate, exit 0/1)
+├── manifest.py   ← manifest loading + self-validation
 ├── __init__.py
 ├── __main__.py   ← python -m okflint
-└── py.typed      ← marqueur PEP 561 (package typé)
+└── py.typed      ← PEP 561 marker (typed package)
 ```
 
-## Commandes
+## Commands
 
-- `inv lint` — ruff check --fix + ruff format + mypy. Doit passer à zéro.
-- `inv test` — pytest avec couverture.
-- `inv repomix` — pack la codebase en XML daté dans `.repomix/` pour un LLM.
-- `inv index` — indexe la codebase dans codebase-memory-mcp (améliore le contexte Claude Code).
-- `inv release [--part=patch|minor|major] [--dry-run]` — bump version + push + déclenche la CI/CD.
-- `uv build` — construit sdist + wheel dans `dist/`.
-- `okflint audit --bundle <dir> --vault <dir> [--apply]` — audit descriptif.
-- `okflint validate --manifest <okf-base.yaml> <targets...>` — gate de conformité.
+- `inv lint` — ruff check --fix + ruff format + mypy. Must pass with zero issues.
+- `inv test` — pytest with coverage.
+- `inv repomix` — pack the codebase as a dated XML in `.repomix/` for an LLM.
+- `inv index` — index the codebase in codebase-memory-mcp (improves Claude Code context).
+- `inv release [--part=patch|minor|major] [--dry-run]` — bump version + push + trigger CI/CD.
+- `uv build` — build sdist + wheel in `dist/`.
+- `okflint audit --bundle <dir> --vault <dir> [--apply]` — descriptive audit.
+- `okflint validate --manifest <okf-base.yaml> <targets...>` — compliance gate.
 
 ## Architecture
 
-Validation en **3 étages** (catalogue complet dans `config/RULES.md`) :
-1. **Cœur OKF** — codé en dur, la clause de conformité §9 de la spec (F001, F002, R001, R002).
-2. **Profil** — piloté par le manifeste, les règles type-aware de la base (F101-F106, S101, S102).
-3. **Hygiène** — opt-in, plus strict qu'OKF, en avertissement (L001-L003, S201, R201, F201).
+Validation in **3 stages** (full catalogue in `config/RULES.md`):
+1. **OKF core** — hardcoded, the §9 compliance clause of the spec (F001, F002, R001, R002).
+2. **Profile** — manifest-driven, type-aware rules for the base (F101-F106, S101, S102).
+3. **Hygiene** — opt-in, stricter than OKF, as warnings (L001-L003, S201, R201, F201).
 
-Le moteur est **générique** : aucun vocabulaire de types n'est codé en dur. Tout
-(types, champs, statuts, nom du champ de statut) vit dans le manifeste `okf-base.yaml`.
-`manifest.py` valide le manifeste lui-même avant de l'appliquer.
+The engine is **generic**: no type vocabulary is hardcoded. Everything
+(types, fields, statuses, status field name) lives in the `okf-base.yaml` manifest.
+`manifest.py` validates the manifest itself before applying it.
 
-Doctrine : **déterministe d'abord, LLM jamais dans le moteur.** Ce qui relève du
-jugement (découper, réécrire, router) appartient au consommateur de la base, pas au
-linter. Voir `ROADMAP.md` pour la frontière okflint / harness.
+Doctrine: **deterministic first, never LLM in the engine.** What requires
+judgment (splitting, rewriting, routing) belongs to the consumer of the base, not the
+linter. See `ROADMAP.md` for the okflint / harness boundary.
 
-## Dépendances notables
+## Notable dependencies
 
-- **Runtime** : `pyyaml` (seule dépendance de production).
-- **Dev** : `ruff`, `mypy` (lint), `pytest` + `pytest-cov` (tests), `invoke` (tasks).
-- **Build** : `hatchling` (>= 1.26 pour la syntaxe SPDX de licence).
+- **Runtime**: `pyyaml` (sole production dependency).
+- **Dev**: `ruff`, `mypy` (lint), `pytest` + `pytest-cov` (tests), `invoke` (tasks).
+- **Build**: `hatchling` (>= 1.26 for SPDX licence syntax).
 
 ## Conventions
 
-- `uv run` exclusivement (jamais `python`/`pip` directs).
-- Type hints stricts (`mypy strict`). Docstrings format Google sur les fonctions publiques.
-- Commentaires en français, code en anglais.
-- Aucune valeur hardcodée spécifique à un environnement dans le code du package
-  (les chemins de bundle/vault sont des arguments CLI, pas des constantes).
+- `uv run` exclusively (never direct `python`/`pip`).
+- Strict type hints (`mypy strict`). Google-format docstrings on public functions.
+- Comments in English, code in English.
+- No environment-specific hardcoded values in the package code
+  (bundle/vault paths are CLI arguments, not constants).
 
-## Suivi de progression
+## Progress tracking
 
-- Lire `.claude/progress.log` en début de session si le fichier existe.
-- Mettre à jour `.claude/progress.log` en fin de tâche.
+- Read `.claude/progress.log` at the start of a session if the file exists.
+- Update `.claude/progress.log` at the end of a task.

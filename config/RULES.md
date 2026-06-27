@@ -1,229 +1,225 @@
-# Règles okflint
+# okflint rules
 
-`okflint` vérifie qu'une base documentaire est conforme à
+`okflint` verifies that a documentary base conforms to
 [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-**et** au cadre que cette base s'est elle-même donné dans son manifeste.
+**and** to the framework the base has itself declared in its manifest.
 
-Ce document liste tous les points de contrôle, leur code, leur sévérité, et
-comment corriger chaque cas.
+This document lists all check points, their code, their severity, and how to
+fix each case.
 
 ---
 
-## Philosophie : trois étages
+## Philosophy: three stages
 
-OKF est délibérément minimal — sa clause de conformité (§9) n'impose que trois
-règles. Mais la spec invite explicitement chaque producteur à affiner son cadre
-au-delà (« anything beyond that is left to the producer »). `okflint` matérialise
-cette invitation en trois étages d'autorité distincte :
+OKF is deliberately minimal — its conformance clause (§9) imposes only three
+rules. But the spec explicitly invites each producer to refine their framework
+beyond that (« anything beyond that is left to the producer »). `okflint`
+materialises this invitation as three stages of distinct authority:
 
-| Étage | Autorité | Préfixe sortie | Sévérité | Effet exit code |
+| Stage | Authority | Output prefix | Severity | Exit code effect |
 |---|---|---|---|---|
-| **Cœur OKF** | la spec OKF v0.1 §9 (universel, non négociable) | `OKF non-conforme` | erreur | `exit 1` |
-| **Profil** | le manifeste que *vous* avez déclaré | `Profil non respecté` | erreur | `exit 1` |
-| **Hygiène** | plus strict qu'OKF (opt-in) | `hygiène (hors-spec)` | avertissement | `exit 0` |
+| **OKF core** | OKF v0.1 spec §9 (universal, non-negotiable) | `OKF non-conformant` | error | `exit 1` |
+| **Profile** | the manifest *you* declared | `Profile not respected` | error | `exit 1` |
+| **Hygiene** | stricter than OKF (opt-in) | `hygiene (out-of-spec)` | warning | `exit 0` |
 
-Le point essentiel : violer **la spec** et violer **votre contrat déclaré** sont
-deux choses différentes. Au sens strict d'OKF, une base qui déclare un manifeste
-mais ne le respecte pas reste *littéralement* parsable — mais elle trahit l'esprit
-OKF (une base auto-descriptive doit tenir ses propres promesses). `okflint`
-signale les deux, en les nommant distinctement.
+The key point: violating **the spec** and violating **your declared contract** are
+two different things. In the strict OKF sense, a base that declares a manifest
+but does not respect it remains *literally* parsable — but it betrays the OKF spirit
+(a self-describing base must keep its own promises). `okflint` flags both,
+naming them distinctly.
 
-Le cœur est codé en dur. Le profil et l'hygiène ne se déclenchent que si votre
-manifeste les déclare : une base minimale (manifeste réduit au strict nécessaire)
-ne sera contrôlée que sur le cœur OKF.
+The core is hardcoded. Profile and hygiene only fire if your manifest declares
+them: a minimal base (manifest reduced to the bare minimum) will only be checked
+against the OKF core.
 
 ---
 
-## Étage 1 — Cœur OKF
+## Stage 1 — OKF core
 
-Toujours actif. Codé en dur. Correspond mot pour mot à la clause de conformité
-OKF v0.1 (§9) et aux contraintes structurelles des fichiers réservés (§6, §7, §11).
+Always active. Hardcoded. Corresponds word-for-word to the OKF v0.1 conformance
+clause (§9) and to the structural constraints of reserved files (§6, §7, §11).
 
-### `F001` — Frontmatter absent ou non parsable
+### `F001` — Frontmatter absent or unparsable
 
-**Sévérité** : erreur · **Source** : OKF §9.1
+**Severity**: error · **Source**: OKF §9.1
 
-Tout fichier `.md` non réservé doit commencer par un bloc de frontmatter YAML
-délimité par `---`, et ce bloc doit être parsable.
+Every non-reserved `.md` file must begin with a YAML frontmatter block delimited
+by `---`, and that block must be parsable.
 
 ```markdown
-<!-- ❌ F001 : pas de frontmatter -->
-# Mon concept
+<!-- ❌ F001: no frontmatter -->
+# My concept
 ...
 
-<!-- ✅ corrigé -->
+<!-- ✅ fixed -->
 ---
 type: Reference
 ---
 
-# Mon concept
+# My concept
 ...
 ```
 
-**Correction** : ajouter un bloc frontmatter valide en tête de fichier.
+**Fix**: add a valid frontmatter block at the top of the file.
 
-### `F002` — Champ `type` absent ou vide
+### `F002` — `type` field absent or empty
 
-**Sévérité** : erreur · **Source** : OKF §9.2
+**Severity**: error · **Source**: OKF §9.2
 
-Le frontmatter doit contenir un champ `type` non vide. C'est le **seul** champ
-qu'OKF rend obligatoire.
+The frontmatter must contain a non-empty `type` field. This is the **only** field
+OKF makes mandatory.
 
 ```yaml
-# ❌ F002 : type manquant
+# ❌ F002: type missing
 ---
-title: Mon concept
+title: My concept
 ---
 
-# ✅ corrigé
+# ✅ fixed
 ---
 type: Reference
-title: Mon concept
+title: My concept
 ---
 ```
 
-**Correction** : renseigner un `type` descriptif. OKF n'impose aucune valeur
-particulière ; si un profil est déclaré, voir `F101`.
+**Fix**: set a descriptive `type`. OKF imposes no particular value; if a profile
+is declared, see `F101`.
 
-### `R001` — Frontmatter interdit dans un `index.md`
+### `R001` — Frontmatter forbidden in `index.md`
 
-**Sévérité** : erreur · **Source** : OKF §6, §11
+**Severity**: error · **Source**: OKF §6, §11
 
-Un `index.md` ne contient pas de frontmatter, à une seule exception : l'`index.md`
-de la racine du bundle peut porter `okf_version` (et rien d'autre).
+An `index.md` contains no frontmatter, with one exception: the `index.md` at
+the bundle root may carry `okf_version` (and nothing else).
 
 ```yaml
-# ❌ R001 : frontmatter complet dans un index.md
+# ❌ R001: full frontmatter in an index.md
 ---
 type: Reference
-tags: [accueil]
+tags: [home]
 ---
 
-# ✅ autorisé uniquement à la racine du bundle
+# ✅ allowed only at the bundle root
 ---
 okf_version: "0.1"
 ---
 ```
 
-**Correction** : retirer le frontmatter de l'`index.md`, ou le réduire à
-`okf_version` s'il s'agit de l'index racine.
+**Fix**: remove the frontmatter from `index.md`, or reduce it to
+`okf_version` if it is the root index.
 
-### `R002` — Heading de date non ISO dans un `log.md`
+### `R002` — Non-ISO date heading in `log.md`
 
-**Sévérité** : erreur · **Source** : OKF §7
+**Severity**: error · **Source**: OKF §7
 
-Dans un `log.md`, les titres de date doivent être au format ISO 8601
-`YYYY-MM-DD`.
+In a `log.md`, date headings must be in ISO 8601 `YYYY-MM-DD` format.
 
 ```markdown
 <!-- ❌ R002 -->
-## 22 mai 2026
+## 22 May 2026
 
-<!-- ✅ corrigé -->
+<!-- ✅ fixed -->
 ## 2026-05-22
 ```
 
-**Correction** : reformater les headings de date en `YYYY-MM-DD`.
+**Fix**: reformat date headings as `YYYY-MM-DD`.
 
 ---
 
-## Étage 2 — Profil
+## Stage 2 — Profile
 
-Ne se déclenchent que si le manifeste déclare un bloc `profile`. Ces règles
-encodent **votre** cadre : vos types, vos champs, votre vocabulaire de statut.
-Elles ne sont pas OKF au sens strict — elles sont l'affinement contractuel que
-vous avez choisi, et qu'`okflint` vous aide à tenir.
+Only fired when the manifest declares a `profile` block. These rules encode
+**your** framework: your types, your fields, your status vocabulary.
+They are not OKF in the strict sense — they are the contractual refinement you
+chose, and that `okflint` helps you uphold.
 
-### `F101` — Valeur `type` hors des types déclarés
+### `F101` — `type` value not in declared types
 
-**Sévérité** : erreur
+**Severity**: error
 
-Le `type` d'un concept doit faire partie des types déclarés dans
-`profile.types`. (Ne se déclenche que si le profil déclare une liste de types.)
+A concept's `type` must be one of the types declared in `profile.types`.
+(Only fires if the profile declares a list of types.)
 
-**Correction** : utiliser un type déclaré, ou ajouter le type au manifeste s'il
-est légitime.
+**Fix**: use a declared type, or add the type to the manifest if it is legitimate.
 
-### `F102` — Champ requis manquant
+### `F102` — Missing required field
 
-**Sévérité** : erreur
+**Severity**: error
 
-Chaque type déclare ses champs `required`. Un concept de ce type doit les porter
-tous.
+Each type declares its `required` fields. A concept of that type must carry
+all of them.
 
 ```yaml
-# profile.types.Decision.required = [type, statut, created]
-# ❌ F102 : created manquant
+# profile.types.Decision.required = [type, status, created]
+# ❌ F102: created missing
 ---
 type: Decision
-statut: Accepté
+status: Accepted
 ---
 ```
 
-**Correction** : ajouter le champ manquant.
+**Fix**: add the missing field.
 
-### `F103` — Statut présent mais interdit
+### `F103` — Status present but forbidden
 
-**Sévérité** : erreur
+**Severity**: error
 
-Quand un type déclare `status_values: false`, le champ de statut ne doit pas
-exister sur ses concepts (ex. une entrée de journal datée n'a pas de statut).
+When a type declares `status_values: false`, the status field must not exist
+on its concepts (e.g. a dated journal entry has no status).
 
-**Correction** : retirer le champ de statut du concept.
+**Fix**: remove the status field from the concept.
 
-### `F104` — Statut requis manquant
+### `F104` — Required status missing
 
-**Sévérité** : erreur
+**Severity**: error
 
-Quand un type déclare `status_values: [liste]`, le champ de statut est requis.
+When a type declares `status_values: [list]`, the status field is required.
 
-**Correction** : ajouter le champ de statut avec une valeur de la liste.
+**Fix**: add the status field with a value from the list.
 
-### `F105` — Valeur de statut hors vocabulaire
+### `F105` — Status value outside vocabulary
 
-**Sévérité** : erreur
+**Severity**: error
 
-La valeur du champ de statut doit appartenir à la liste déclarée pour ce type.
+The value of the status field must belong to the list declared for that type.
 
 ```yaml
-# profile.types.Procedure.status_values = [draft, prod, obsolète]
+# profile.types.Procedure.status_values = [draft, prod, obsolete]
 # ❌ F105
 ---
 type: Procedure
-statut: en-cours
+status: in-progress
 ---
 ```
 
-**Correction** : utiliser une valeur déclarée, ou étendre le vocabulaire dans le
-manifeste.
+**Fix**: use a declared value, or extend the vocabulary in the manifest.
 
-### `F106` — Casse ou graphie du `type` non normalisée
+### `F106` — Non-normalised `type` spelling
 
-**Sévérité** : erreur
+**Severity**: error
 
-Si un type déclare des `aliases`, une graphie alternative est tolérée à la
-lecture mais signalée pour normalisation (ex. `adr` → `Decision`).
+If a type declares `aliases`, an alternative spelling is tolerated on reading
+but flagged for normalisation (e.g. `adr` → `Decision`).
 
-**Correction** : remplacer la graphie par le nom canonique du type. Corrigeable
-automatiquement (voir `okflint fix`, à venir).
+**Fix**: replace the spelling with the type's canonical name. Auto-fixable
+(see `okflint fix`, coming soon).
 
-### `S101` — Champ de statut mal nommé
+### `S101` — Incorrectly named status field
 
-**Sévérité** : erreur
+**Severity**: error
 
-Le champ de statut doit porter le nom déclaré dans `base.status_field`. Par
-exemple, si une base a déclaré `status_field: "statut"`, un concept qui utilise
-`status` au lieu de `statut` est un écart au contrat.
+The status field must use the name declared in `base.status_field`. For
+example, if a base declared `status_field: "status"`, a concept using
+`statut` instead of `status` is a contract deviation.
 
-**Correction** : renommer le champ vers le nom déclaré. Corrigeable
-automatiquement.
+**Fix**: rename the field to the declared name. Auto-fixable.
 
-### `S102` — Champ de date non ISO
+### `S102` — Non-ISO date field
 
-**Sévérité** : erreur
+**Severity**: error
 
-Les champs listés dans `profile.date_fields` doivent être au format ISO
-`YYYY-MM-DD` quand ils sont présents.
+Fields listed in `profile.date_fields` must be in ISO `YYYY-MM-DD` format
+when present.
 
 ```yaml
 # profile.date_fields = [created, updated]
@@ -233,127 +229,121 @@ type: Decision
 created: 2026-5-1
 ---
 
-# ✅ corrigé
+# ✅ fixed
 created: 2026-05-01
 ```
 
-**Correction** : reformater la date en `YYYY-MM-DD`. Corrigeable
-automatiquement.
+**Fix**: reformat the date as `YYYY-MM-DD`. Auto-fixable.
 
 ---
 
-## Étage 3 — Hygiène
+## Stage 3 — Hygiene
 
-Plus strict qu'OKF. OKF demande explicitement aux consommateurs de **tolérer**
-ces cas (« Consumers MUST tolerate broken links »). `okflint` les signale quand
-même, parce qu'une base soignée gagne à les corriger — mais en **avertissement**,
-jamais en erreur, et toujours étiquetés comme hors-spec. Activables/désactivables
-via le bloc `hygiene` du manifeste (`off` | `warn` | `error`).
+Stricter than OKF. OKF explicitly asks consumers to **tolerate** these cases
+(« Consumers MUST tolerate broken links »). `okflint` flags them anyway, because
+a well-maintained base benefits from fixing them — but as **warnings**, never
+errors, and always labelled as out-of-spec. Configurable via the `hygiene` block
+in the manifest (`off` | `warn` | `error`).
 
-### `L001` — Wikilink cassé
+### `L001` — Broken wikilink
 
-**Sévérité** : avertissement (configurable) · **Hors-spec**
+**Severity**: warning (configurable) · **Out-of-spec**
 
-Un wikilink `[[Cible]]` dont la cible n'existe pas dans la base. Note : les
-wikilinks sont une convention Obsidian, pas OKF (qui utilise les liens markdown).
+A wikilink `[[Target]]` whose target does not exist in the base. Note: wikilinks
+are an Obsidian convention, not OKF (which uses markdown links).
 
-**Correction** : corriger la cible, ou déclarer la référence dans
-`base.link_resolution.external_refs` si elle est hors-base et assumée.
+**Fix**: fix the target, or declare the reference in
+`base.link_resolution.external_refs` if it is out-of-base and assumed valid.
 
-### `L002` — Lien markdown cassé
+### `L002` — Broken markdown link
 
-**Sévérité** : avertissement (configurable) · **Hors-spec**
+**Severity**: warning (configurable) · **Out-of-spec**
 
-Un lien `[texte](/chemin.md)` dont la cible n'existe pas dans la base.
+A link `[text](/path.md)` whose target does not exist in the base.
 
-**Correction** : corriger le chemin de destination.
+**Fix**: fix the destination path.
 
-### `L003` — Wikilink ambigu
+### `L003` — Ambiguous wikilink
 
-**Sévérité** : avertissement (configurable) · **Hors-spec**
+**Severity**: warning (configurable) · **Out-of-spec**
 
-Un wikilink `[[Cible]]` qui résout vers plusieurs fichiers de la base (même nom
-dans des dossiers différents).
+A wikilink `[[Target]]` that resolves to multiple files in the base (same name
+in different directories).
 
-**Correction** : préciser le chemin, ou désambiguïser les noms de fichiers.
+**Fix**: specify the path, or disambiguate file names.
 
-### `S201` — Candidat au découpage
+### `S201` — Split candidate
 
-**Sévérité** : avertissement (configurable) · **Hors-spec**
+**Severity**: warning (configurable) · **Out-of-spec**
 
-Un fichier qui contient plusieurs concepts distincts (plusieurs `# H1`, ou une
-liste homogène de `## H2` décrivant des entités séparables). Signal, jamais
-obligation : un découpage reste un choix éditorial.
+A file containing multiple distinct concepts (multiple `# H1`, or a homogeneous
+list of `## H2` describing separable entities). A signal, never an obligation:
+splitting remains an editorial choice.
 
-**Correction** : envisager d'éclater le fichier en plusieurs concepts, ou ignorer
-si la cohésion justifie le maintien.
+**Fix**: consider splitting the file into multiple concepts, or ignore if the
+cohesion justifies keeping it together.
 
-### `R201` — Fichier réservé recommandé absent
+### `R201` — Recommended reserved file missing
 
-**Sévérité** : avertissement (configurable, `off` par défaut) · **Hors-spec**
+**Severity**: warning (configurable, `off` by default) · **Out-of-spec**
 
-Un `index.md` ou un `log.md` est absent à la racine d'un root. OKF rend ces
-fichiers **optionnels** (§3) et interdit explicitement de rejeter une base pour
-leur absence (§9). `okflint` ne les signale donc que sur demande, pour les
-producteurs qui adoptent une convention interne de progressive disclosure (un
-`index.md` par dossier).
+An `index.md` or `log.md` is missing at a root's directory level. OKF makes
+these files **optional** (§3) and explicitly forbids rejecting a base for their
+absence (§9). `okflint` only flags them on request, for producers who adopt an
+internal convention of progressive disclosure (one `index.md` per directory).
 
-> ⚠️ À ne pas confondre avec `R001`/`R002` (cœur OKF) : ceux-là vérifient la
-> **structure** des fichiers réservés *quand ils existent* ; `R201` ne concerne
-> que leur **présence**, qui reste optionnelle au sens d'OKF.
+> ⚠️ Not to be confused with `R001`/`R002` (OKF core): those check the
+> **structure** of reserved files *when they exist*; `R201` only concerns
+> their **presence**, which remains optional under OKF.
 
-**Correction** : ajouter un `index.md` / `log.md`, ou laisser `reserved_files: off`
-dans le manifeste si l'absence est assumée.
+**Fix**: add an `index.md` / `log.md`, or leave `reserved_files: off` in the
+manifest if the absence is intentional.
 
-### `F201` — Champ de frontmatter hors du schéma déclaré
+### `F201` — Frontmatter field outside declared schema
 
-**Sévérité** : avertissement (configurable, `off` par défaut) · **Hors-spec**
+**Severity**: warning (configurable, `off` by default) · **Out-of-spec**
 
-Un concept porte un champ de frontmatter absent de `required ∪ optional` pour son
-type. OKF autorise explicitement les champs additionnels (§4.1 : *« Producers MAY
-include any additional keys »*) et interdit de rejeter pour ça — donc jamais une
-erreur. Mais en avertissement, la règle attrape les coquilles (`tag:` au lieu de
-`tags:`) et la dérive silencieuse du schéma. Ne se déclenche que si un profil
-déclare le type concerné.
+A concept carries a frontmatter field absent from `required ∪ optional` for its
+type. OKF explicitly allows additional fields (§4.1: *« Producers MAY include any
+additional keys »*) and forbids rejecting for this — so never an error. But as a
+warning, the rule catches typos (`tag:` instead of `tags:`) and silent schema
+drift. Only fires if a profile declares the relevant type.
 
-**Correction** : corriger le nom du champ, l'ajouter à `optional` dans le manifeste
-s'il est légitime, ou laisser `unknown_fields: off` si la base assume des champs
-libres.
+**Fix**: fix the field name, add it to `optional` in the manifest if legitimate,
+or leave `unknown_fields: off` if the base intentionally allows free fields.
 
 ---
 
-## Référence rapide
+## Quick reference
 
-| Code | Étage | Sévérité | Résumé |
+| Code | Stage | Severity | Summary |
 |---|---|---|---|
-| `F001` | Cœur OKF | erreur | frontmatter absent/non parsable |
-| `F002` | Cœur OKF | erreur | `type` absent ou vide |
-| `R001` | Cœur OKF | erreur | frontmatter interdit dans `index.md` |
-| `R002` | Cœur OKF | erreur | date non ISO dans `log.md` |
-| `F101` | Profil | erreur | `type` hors des types déclarés |
-| `F102` | Profil | erreur | champ requis manquant |
-| `F103` | Profil | erreur | statut présent mais interdit |
-| `F104` | Profil | erreur | statut requis manquant |
-| `F105` | Profil | erreur | valeur de statut hors vocabulaire |
-| `F106` | Profil | erreur | graphie de `type` non normalisée |
-| `S101` | Profil | erreur | champ de statut mal nommé |
-| `S102` | Profil | erreur | champ de date non ISO |
-| `L001` | Hygiène | warning | wikilink cassé |
-| `L002` | Hygiène | warning | lien markdown cassé |
-| `L003` | Hygiène | warning | wikilink ambigu |
-| `S201` | Hygiène | warning | candidat au découpage |
-| `R201` | Hygiène | warning | fichier réservé recommandé absent |
-| `F201` | Hygiène | warning | champ hors du schéma déclaré |
+| `F001` | OKF core | error | frontmatter absent/unparsable |
+| `F002` | OKF core | error | `type` absent or empty |
+| `R001` | OKF core | error | frontmatter forbidden in `index.md` |
+| `R002` | OKF core | error | non-ISO date in `log.md` |
+| `F101` | Profile | error | `type` not in declared types |
+| `F102` | Profile | error | missing required field |
+| `F103` | Profile | error | status present but forbidden |
+| `F104` | Profile | error | required status missing |
+| `F105` | Profile | error | status value outside vocabulary |
+| `F106` | Profile | error | non-normalised `type` spelling |
+| `S101` | Profile | error | incorrectly named status field |
+| `S102` | Profile | error | non-ISO date field |
+| `L001` | Hygiene | warning | broken wikilink |
+| `L002` | Hygiene | warning | broken markdown link |
+| `L003` | Hygiene | warning | ambiguous wikilink |
+| `S201` | Hygiene | warning | split candidate |
+| `R201` | Hygiene | warning | recommended reserved file missing |
+| `F201` | Hygiene | warning | field outside declared schema |
 
 ---
 
-## Conformité et code de sortie
+## Conformance and exit code
 
-- **`exit 0`** : aucune erreur (cœur + profil). Des avertissements d'hygiène
-  peuvent subsister.
-- **`exit 1`** : au moins une erreur de cœur OKF ou de profil.
+- **`exit 0`**: no errors (core + profile). Hygiene warnings may still be present.
+- **`exit 1`**: at least one OKF core or profile error.
 
-Une base est dite **OKF-conforme** si elle ne déclenche aucune erreur de cœur
-(`F001`, `F002`, `R001`, `R002`). Elle est **conforme à son profil** si elle ne
-déclenche en plus aucune erreur de profil. `okflint validate` exige les deux pour
-retourner `exit 0`.
+A base is said to be **OKF-conformant** if it triggers no core errors
+(`F001`, `F002`, `R001`, `R002`). It is **profile-conformant** if it additionally
+triggers no profile errors. `okflint validate` requires both to return `exit 0`.

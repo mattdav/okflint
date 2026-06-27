@@ -1,4 +1,4 @@
-"""Permet l'exécution via `python -m okflint`."""
+"""Allows execution via `python -m okflint`."""
 
 from okflint.cli import main
 

@@ -1,20 +1,20 @@
-Catalogue des règles
-====================
+Rules catalogue
+===============
 
-Le catalogue complet des règles est maintenu dans ``config/RULES.md`` à la racine du dépôt.
+The full rules catalogue is maintained in ``config/RULES.md`` at the repository root.
 
-Étages
+Stages
 ------
 
-- **Cœur OKF** (``F001``, ``F002``, ``R001``, ``R002``) — toujours actif, vérifie la
-  conformité minimale au standard OKF §9.
-- **Profil** (``F101``–``F106``, ``S101``, ``S102``) — actif si un bloc ``profile`` est
-  déclaré dans le manifeste.
-- **Hygiène** (``F201``, ``L001``–``L003``, ``S201``, ``R201``) — opt-in par clé
-  ``hygiene`` dans le manifeste, niveau ``warn`` ou ``error``.
+- **OKF core** (``F001``, ``F002``, ``R001``, ``R002``) — always active, checks
+  minimal conformance to OKF standard §9.
+- **Profile** (``F101``–``F106``, ``S101``, ``S102``) — active when a ``profile``
+  block is declared in the manifest.
+- **Hygiene** (``F201``, ``L001``–``L003``, ``S201``, ``R201``) — opt-in via the
+  ``hygiene`` key in the manifest, level ``warn`` or ``error``.
 
-Sévérités
----------
+Severities
+----------
 
-- ``error`` — fait échouer ``okflint validate`` (exit 1)
-- ``warning`` — affiché mais n'échoue pas (exit 0)
+- ``error`` — causes ``okflint validate`` to fail (exit 1)
+- ``warning`` — displayed but does not fail (exit 0)

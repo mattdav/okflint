@@ -1,13 +1,13 @@
 okflint
 =======
 
-**okflint** est un linter de conformité pour bases documentaires OKF (Open Knowledge Format).
-Il vérifie la structure des fichiers Markdown — frontmatter, liens, types — selon un manifeste
-YAML déclarant les conventions de la base.
+**okflint** is a compliance linter for OKF (Open Knowledge Format) documentary bases.
+It verifies the structure of Markdown files — frontmatter, links, types — against a
+YAML manifest declaring the base's conventions.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Utilisation
+   :caption: Usage
 
    guides/quickstart
    guides/manifest
@@ -25,6 +25,6 @@ YAML déclarant les conventions de la base.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Projet
+   :caption: Project
 
    Roadmap <https://github.com/mattdav/okflint/blob/main/ROADMAP.md>

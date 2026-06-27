@@ -1,4 +1,4 @@
-"""Tests des primitives de scan de fichiers Markdown."""
+"""Tests for Markdown file scanning primitives."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ class TestParseFrontmatter:
 
 class TestBlankCodeSpans:
     def test_inline_code_masked(self) -> None:
-        content = "Voir `[[wikilink]]` ici"
+        content = "See `[[wikilink]]` here"
         result = blank_code_spans(content)
         assert "[[wikilink]]" not in result
 

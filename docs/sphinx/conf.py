@@ -1,4 +1,4 @@
-"""Configuration Sphinx pour la documentation okflint."""
+"""Sphinx configuration for okflint documentation."""
 
 from __future__ import annotations
 

@@ -1,17 +1,17 @@
-# Guide de contribution — okflint
+# Contribution guide — okflint
 
-> **Merci de contribuer à okflint. Ce document décrit les conventions et processus
-> à respecter pour maintenir une base de code cohérente et de qualité.**
+> **Thank you for contributing to okflint. This document describes the conventions and
+> processes to follow in order to maintain a consistent, high-quality codebase.**
 
 ---
 
-## Environnement de développement
+## Development environment
 
-### Prérequis
+### Prerequisites
 
 - Python ≥ 3.10
-- [uv](https://docs.astral.sh/uv/) — gestionnaire de paquets
-- [invoke](https://www.pyinvoke.org/) — runner de tâches (installé via les dev deps)
+- [uv](https://docs.astral.sh/uv/) — package manager
+- [invoke](https://www.pyinvoke.org/) — task runner (installed via dev deps)
 
 ### Installation
 
@@ -22,79 +22,79 @@ uv sync --all-extras
 uv pip install -e .
 ```
 
-Vérifier que tout fonctionne :
+Verify everything works:
 
 ```bash
-inv lint        # doit passer à zéro
-inv test        # tous les tests doivent passer
+inv lint        # must pass with zero issues
+inv test        # all tests must pass
 uv run okflint --help
 ```
 
 ---
 
-## Architecture du projet
+## Project architecture
 
 ```
 src/okflint/
-├── cli.py        ← dispatcher CLI : okflint audit | validate
-├── scanner.py    ← primitives partagées (scan, frontmatter, code-fence, liens)
-├── audit.py      ← commande audit (descriptive)
-├── validate.py   ← commande validate (gate normatif)
-├── manifest.py   ← chargement + validation du manifeste
+├── cli.py        ← CLI dispatcher: okflint audit | validate
+├── scanner.py    ← shared primitives (scan, frontmatter, code-fence, links)
+├── audit.py      ← audit command (descriptive)
+├── validate.py   ← validate command (normative gate)
+├── manifest.py   ← manifest loading + validation
 ├── __init__.py
 ├── __main__.py   ← python -m okflint
 └── py.typed
 ```
 
-okflint est un **moteur générique** : aucun vocabulaire de types n'est codé en dur.
-Tout le standard d'une base (types, champs, statuts) est déclaré dans son manifeste
-`okf-base.yaml`. Le catalogue des règles de validation est documenté dans
-[`config/RULES.md`](config/RULES.md) — c'est la spec de référence. Toute nouvelle règle
-doit y être documentée avec son code, son étage et sa sévérité.
+okflint is a **generic engine**: no type vocabulary is hardcoded.
+The entire standard of a base (types, fields, statuses) is declared in its
+`okf-base.yaml` manifest. The catalogue of validation rules is documented in
+[`config/RULES.md`](config/RULES.md) — this is the reference spec. Every new rule
+must be documented there with its code, stage, and severity.
 
 ### Doctrine
 
-- **Déterministe d'abord.** Le moteur ne contient aucun appel LLM. Une règle qui
-  exigerait du jugement n'a pas sa place dans le cœur ou le profil.
-- **Honnêteté OKF.** okflint distingue ce qui est *vraiment* OKF (cœur, §9 de la
-  spec) de ce qui est une convention de la base (profil) ou un choix plus strict
-  (hygiène). Ne jamais présenter une convention locale comme une exigence OKF.
-- Voir [`ROADMAP.md`](ROADMAP.md) pour la frontière entre okflint (validation
-  statique) et le harness d'un agent (orchestration runtime).
+- **Deterministic first.** The engine contains no LLM calls. A rule that
+  requires judgment has no place in the core or the profile.
+- **OKF honesty.** okflint distinguishes what is *truly* OKF (core, §9 of the
+  spec) from what is a base convention (profile) or a stricter choice
+  (hygiene). Never present a local convention as an OKF requirement.
+- See [`ROADMAP.md`](ROADMAP.md) for the boundary between okflint (static validation)
+  and an agent harness (runtime orchestration).
 
 ---
 
-## Qualité du code
+## Code quality
 
-### Outils
+### Tools
 
-| Outil | Rôle |
+| Tool | Role |
 |---|---|
-| [ruff](https://docs.astral.sh/ruff/) | Linting et formatting |
-| [mypy](https://mypy.readthedocs.io/) | Vérification des types statiques (mode strict) |
+| [ruff](https://docs.astral.sh/ruff/) | Linting and formatting |
+| [mypy](https://mypy.readthedocs.io/) | Static type checking (strict mode) |
 
-### Commande unique
+### Single command
 
 ```bash
-inv lint        # doit passer à zéro
+inv lint        # must pass with zero issues
 ```
 
-Lance en séquence : `ruff check --fix`, `ruff format`, `mypy`.
-**Doit passer à zéro avant tout commit.**
+Runs in sequence: `ruff check --fix`, `ruff format`, `mypy`.
+**Must pass with zero issues before any commit.**
 
-### Règles strictes
+### Strict rules
 
-- Aucun `# noqa` sans commentaire justificatif sur la même ligne.
-- Aucun `# type: ignore` sans commentaire justificatif sur la même ligne.
-- Type hints obligatoires sur toutes les fonctions et méthodes publiques.
-- Éviter `Any` sauf cas justifié.
-- Commentaires en français, code (noms, identifiants) en anglais.
+- No `# noqa` without a justification comment on the same line.
+- No `# type: ignore` without a justification comment on the same line.
+- Type hints required on all public functions and methods.
+- Avoid `Any` except in justified cases.
+- Comments in English, code (names, identifiers) in English.
 
 ### beartype
 
-**Toutes les fonctions publiques** (non préfixées par `_`) doivent être décorées avec `@beartype`.
-Ce décorateur valide les types à l'exécution en complément de mypy (statique).
-Ne pas décorer les fonctions privées ni les tasks invoke (signature incompatible).
+**All public functions** (not prefixed with `_`) must be decorated with `@beartype`.
+This decorator validates types at runtime, complementing mypy (static).
+Do not decorate private functions or invoke tasks (incompatible signature).
 
 ---
 
@@ -106,119 +106,119 @@ inv test
 
 ### Conventions
 
-- Un fichier de test par module : `tests/test_<module>.py`.
-- Les fixtures partagées vont dans `tests/conftest.py`.
-- Nommer les tests explicitement : `test_<fonction>_<scenario>_<resultat_attendu>`.
-- Couvrir les cas limites : absence de frontmatter, YAML invalide, manifeste
-  malformé, valeurs de statut interdites, liens cassés vs références externes.
+- One test file per module: `tests/test_<module>.py`.
+- Shared fixtures go in `tests/conftest.py`.
+- Name tests explicitly: `test_<function>_<scenario>_<expected_result>`.
+- Cover edge cases: missing frontmatter, invalid YAML, malformed manifest,
+  forbidden status values, broken links vs external references.
 
-### Règle fondamentale
+### Fundamental rule
 
-Chaque règle du catalogue (`config/RULES.md`) doit être couverte par au moins un test
-qui vérifie qu'elle se déclenche sur un cas non conforme et ne se déclenche pas sur
-un cas conforme. Les tests ne doivent jamais être supprimés pour faire passer la CI.
+Each rule in the catalogue (`config/RULES.md`) must be covered by at least one test
+that verifies it triggers on a non-conforming case and does not trigger on a
+conforming case. Tests must never be deleted to make CI pass.
 
 ---
 
-## Workflow git
+## Git workflow
 
 ### Branches
 
-| Branche | Usage |
+| Branch | Usage |
 |---|---|
-| `main` | Code stable, prêt pour publication |
-| `feat/<nom>` | Nouvelle fonctionnalité |
-| `fix/<nom>` | Correction de bug |
-| `chore/<nom>` | Maintenance, refactoring, CI |
+| `main` | Stable code, ready for release |
+| `feat/<name>` | New feature |
+| `fix/<name>` | Bug fix |
+| `chore/<name>` | Maintenance, refactoring, CI |
 
-### Format des commits
+### Commit format
 
 ```
-feat: ajouter la règle S202 de cohésion sémantique
-fix: corriger la distinction False/None pour status_values
-chore: mettre à jour les dépendances
-docs: compléter le catalogue de règles
-test: couvrir les cas limites du parsing de manifeste
+feat: add S202 semantic cohesion rule
+fix: correct False/None distinction for status_values
+chore: update dependencies
+docs: complete the rules catalogue
+test: cover manifest parsing edge cases
 ```
 
-Types acceptés : `feat`, `fix`, `chore`, `docs`, `test`, `refactor`.
+Accepted types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`.
 
-### Avant de committer
+### Before committing
 
 ```bash
-inv lint   # doit passer à zéro
-inv test   # tous les tests doivent passer
+inv lint   # must pass with zero issues
+inv test   # all tests must pass
 ```
 
 ---
 
-## Process de release
+## Release process
 
-### Prérequis
+### Prerequisites
 
-- Être sur la branche `main` avec un working tree propre
-- Avoir les droits de push sur le repo
-- Avoir configuré le **Trusted Publisher** sur pypi.org (Settings du repo GitHub)
+- Be on the `main` branch with a clean working tree
+- Have push rights on the repository
+- Have configured the **Trusted Publisher** on pypi.org (GitHub repo Settings)
 
-### Format des messages de commit
+### Commit message format
 
-okflint utilise [commitizen](https://commitizen-tools.github.io/commitizen/) pour
-valider les messages et générer automatiquement le CHANGELOG.
+okflint uses [commitizen](https://commitizen-tools.github.io/commitizen/) to
+validate messages and automatically generate the CHANGELOG.
 
-**Format obligatoire** :
+**Required format**:
 ```
-<type>(<scope optionnel>): <description>
-```
-
-Types acceptés : `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`, `ci`, `build`, `style`.
-
-Exemples valides :
-```
-feat: ajouter la règle S202 de cohésion sémantique
-fix(manifest): corriger la distinction False/None pour status_values
-docs: mettre à jour le README
-chore: mettre à jour les dépendances
+<type>(<optional scope>): <description>
 ```
 
-### Déclencher une release
+Accepted types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`, `ci`, `build`, `style`.
 
-Une seule commande lance tout le processus :
+Valid examples:
+```
+feat: add S202 semantic cohesion rule
+fix(manifest): correct False/None distinction for status_values
+docs: update README
+chore: update dependencies
+```
+
+### Triggering a release
+
+A single command launches the entire process:
 
 ```bash
-inv release               # patch (0.1.0 → 0.1.1) — corrections de bugs
-inv release --part=minor  # minor (0.1.0 → 0.2.0) — nouvelles fonctionnalités
+inv release               # patch (0.1.0 → 0.1.1) — bug fixes
+inv release --part=minor  # minor (0.1.0 → 0.2.0) — new features
 inv release --part=major  # major (0.1.0 → 1.0.0) — breaking changes
-inv release --dry-run     # simulation sans rien modifier
+inv release --dry-run     # simulation without modifying anything
 ```
 
-**Ce que fait `inv release` :**
-1. Vérifie que vous êtes sur `main` avec un tree propre
-2. Lance lint + tests (sécurité avant publication)
-3. Bumpe la version via commitizen + met à jour `CHANGELOG.md`
-4. Crée un commit de release + un tag `vX.Y.Z`
-5. Pousse le commit ET le tag vers `origin/main`
-6. Le tag déclenche automatiquement le workflow `release.yml` qui :
-   - Build sdist + wheel
-   - Publie sur PyPI via Trusted Publisher
-   - Crée la GitHub Release avec notes auto-générées
+**What `inv release` does:**
+1. Verifies you are on `main` with a clean tree
+2. Runs lint + tests (safety before publishing)
+3. Bumps the version via commitizen + updates `CHANGELOG.md`
+4. Creates a release commit + a `vX.Y.Z` tag
+5. Pushes the commit AND the tag to `origin/main`
+6. The tag automatically triggers the `release.yml` workflow which:
+   - Builds sdist + wheel
+   - Publishes to PyPI via Trusted Publisher
+   - Creates the GitHub Release with auto-generated notes
 
-### Trusted Publisher PyPI (configuration une fois)
+### Trusted Publisher PyPI (one-time setup)
 
-Pour que `release.yml` puisse publier sans token :
-1. Aller sur https://pypi.org/manage/account/publishing/
-2. Ajouter un Trusted Publisher :
-   - Owner : `mattdav`
-   - Repository : `okflint`
-   - Workflow : `release.yml`
-   - Environment : `pypi`
+To allow `release.yml` to publish without a token:
+1. Go to https://pypi.org/manage/account/publishing/
+2. Add a Trusted Publisher:
+   - Owner: `mattdav`
+   - Repository: `okflint`
+   - Workflow: `release.yml`
+   - Environment: `pypi`
 
 ---
 
-## Checklist avant une Pull Request
+## Pull Request checklist
 
-- [ ] `uv run inv lint` passe à zéro
-- [ ] `uv run inv test` passe à zéro
-- [ ] Toute nouvelle règle est documentée dans `config/RULES.md` (code, étage, sévérité)
-- [ ] Toute nouvelle règle est couverte par un test (cas conforme + cas non conforme)
-- [ ] Les nouvelles fonctions publiques ont des type hints et une docstring Google
-- [ ] Aucune valeur spécifique à un environnement n'est hardcodée dans le package
+- [ ] `uv run inv lint` passes with zero issues
+- [ ] `uv run inv test` passes with zero issues
+- [ ] Every new rule is documented in `config/RULES.md` (code, stage, severity)
+- [ ] Every new rule is covered by a test (conforming case + non-conforming case)
+- [ ] New public functions have type hints and a Google docstring
+- [ ] No environment-specific values are hardcoded in the package

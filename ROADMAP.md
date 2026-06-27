@@ -1,84 +1,83 @@
-# Roadmap okflint
+# okflint Roadmap
 
-Ce document trace les évolutions envisagées au-delà de la v0.1. Il n'engage aucun
-calendrier — c'est un backlog de réflexion, pas un plan de release.
+This document outlines envisioned evolutions beyond v0.1. It does not commit to
+any timeline — it is a thinking backlog, not a release plan.
 
-okflint suit une ligne directrice stable : **valider de façon déterministe la
-conformité d'une base documentaire à OKF et au cadre que la base s'est elle-même
-donné dans son manifeste.** Toute évolution doit rester dans ce périmètre — pas de
-jugement LLM dans le moteur, pas de logique d'exécution runtime. Ce qui relève du
-jugement ou de l'orchestration appartient au *consommateur* de la base (un agent,
-un harness), pas au linter.
-
----
-
-## v0.1 — État actuel
-
-- Validation en 3 étages : cœur OKF (§9), profil (manifeste), hygiène (opt-in)
-- 18 règles cataloguées (voir [`config/RULES.md`](config/RULES.md))
-- CLI unifiée `okflint audit | validate`
-- Moteur générique piloté par un manifeste YAML (`okf-base.yaml`)
-- Validation du manifeste lui-même (`manifest.py`)
+okflint follows a stable guiding principle: **deterministically validate the
+conformance of a documentary base to OKF and to the framework the base has itself
+declared in its manifest.** Every evolution must stay within this scope — no LLM
+judgment in the engine, no runtime execution logic. What requires judgment or
+orchestration belongs to the *consumer* of the base (an agent, a harness), not the
+linter.
 
 ---
 
-## Chantier A — Cohésion sémantique pour un découpage déterministe plus fin
+## v0.1 — Current state
 
-**Problème.** La règle actuelle `S201` (candidat au découpage) repose sur des
-signaux structurels grossiers : présence de plusieurs `# H1`, ou liste homogène de
-`## H2`. Elle rate les fichiers qui ont une structure d'apparence cohérente mais
-mélangent des **thématiques trop éloignées** — typiquement le genre de fichier qui
-fait mal réagir un agent (skills mal activées, contexte superflu chargé).
-
-**Direction.** Ajouter des règles de cohésion sémantique **mesurées de façon
-déterministe**, sans LLM, par exemple :
-
-- **Cohésion lexicale inter-sections** : vectorisation TF-IDF par section, mesure de
-  similarité inter-sections. Une cohésion faible (sections au vocabulaire disjoint)
-  signale un fichier hétérogène → candidat au découpage. Reproductible, auditable.
-- **Divergence des familles de liens entrants** : si différentes sections d'un
-  fichier sont citées par des familles de concepts disjointes (section A pointée par
-  les `Decision`, section B par les `Procedure`), c'est probablement deux concepts.
-- **Divergence de tags intra-fichier** : si un fichier porte (ou ses sections
-  portent) des tags thématiquement éloignés.
-
-Ces signaux donneraient une ou plusieurs règles d'hygiène supplémentaires
-(ex. `S202` — hétérogénéité thématique élevée). Le **jugement final** (faut-il
-découper, comment nommer les morceaux) reste hors okflint : il appartient à
-l'humain ou à un agent qui consomme le diagnostic.
-
-**Frontière.** okflint *signale* un candidat au découpage avec des métriques ; il
-ne *décide* ni *n'exécute* le découpage.
+- 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
+- 18 catalogued rules (see [`config/RULES.md`](config/RULES.md))
+- Unified CLI `okflint audit | validate`
+- Generic engine driven by a YAML manifest (`okf-base.yaml`)
+- Manifest self-validation (`manifest.py`)
 
 ---
 
-## Chantier B — Attendus d'une grille de lecture vérifiables par le manifeste
+## Track A — Semantic cohesion for finer deterministic splitting
 
-**Contexte.** Un agent qui exploite une base a besoin d'une *grille de lecture* :
-à partir des frontmatter (types, tags), savoir quels concepts consulter pour une
-intention donnée, dans quel ordre, en récupérant le moins de contexte superflu
-possible. Cette grille est un travail méthodologique propre à chaque organisation —
-elle n'est pas du ressort d'okflint.
+**Problem.** The current `S201` rule (split candidate) relies on coarse structural
+signals: presence of multiple `# H1` headings, or a homogeneous list of `## H2`
+headings. It misses files that look structurally coherent but mix **thematically
+distant topics** — the kind of file that causes agents to react poorly (wrong skills
+activated, superfluous context loaded).
 
-**Ce qu'okflint PEUT faire.** De la même façon qu'il ne décide pas quels types
-existent (le manifeste le déclare) mais vérifie que la base les respecte, okflint
-peut vérifier que la base contient **tout ce qu'il faut pour qu'une grille de
-lecture fonctionne**, dès lors que le manifeste déclare les attendus de cette
-grille. Exemples d'attendus déclarables et vérifiables :
+**Direction.** Add semantic cohesion rules **measured deterministically**,
+without an LLM, for example:
 
-- « Tout concept de type `Procedure` doit porter un tag de `domaine` pour être
-  routable » → règle de champ requis conditionnel.
-- « Les valeurs du champ `domaine` appartiennent à un vocabulaire fermé » → règle de
-  vocabulaire contrôlé sur un champ arbitraire.
-- « Tout concept routable déclare une `intention` » → règle de présence.
+- **Inter-section lexical cohesion**: TF-IDF vectorisation per section, inter-section
+  similarity measure. Low cohesion (sections with disjoint vocabularies) flags a
+  heterogeneous file → split candidate. Reproducible, auditable.
+- **Incoming link family divergence**: if different sections of a file are cited by
+  disjoint concept families (section A pointed to by `Decision` nodes, section B by
+  `Procedure` nodes), it is probably two concepts.
+- **Intra-file tag divergence**: if a file carries (or its sections carry)
+  thematically distant tags.
 
-Cela suppose d'étendre le manifeste avec une section décrivant ces attendus (un
-bloc `routing` ou `grid`, à concevoir), et d'ajouter les règles de validation
-correspondantes au catalogue.
+These signals would yield one or more additional hygiene rules
+(e.g. `S202` — high thematic heterogeneity). The **final judgment** (should we
+split, how to name the pieces) remains outside okflint: it belongs to the human or
+to an agent that consumes the diagnostic.
 
-**Frontière — essentielle.** okflint vérifie que la base est **structurée pour être
-routable** (les champs, tags, vocabulaires nécessaires sont présents et cohérents).
-Il ne **parcourt pas** la grille : le parcours fléché « pour l'intention A, lis X
-puis Y » est de la logique d'orchestration *runtime*, exécutée par l'agent dans son
-harness. okflint est statique ; il valide une base au repos. La grille rend la base
-*routable* ; le harness *route*.
+**Boundary.** okflint *signals* a split candidate with metrics; it does not
+*decide* or *execute* the split.
+
+---
+
+## Track B — Reading-grid expectations verifiable by the manifest
+
+**Context.** An agent exploiting a base needs a *reading grid*:
+from the frontmatter (types, tags), know which concepts to consult for a given
+intent, in what order, retrieving as little superfluous context as possible. This
+grid is a methodological concern specific to each organisation — it is not
+okflint's responsibility.
+
+**What okflint CAN do.** Just as it does not decide which types exist (the manifest
+declares them) but verifies the base respects them, okflint can verify that the base
+contains **everything needed for a reading grid to work**, provided the manifest
+declares the grid's expectations. Examples of declarable, verifiable expectations:
+
+- "Every concept of type `Procedure` must carry a `domain` tag to be routable"
+  → conditional required field rule.
+- "Values of the `domain` field belong to a closed vocabulary" → controlled
+  vocabulary rule on an arbitrary field.
+- "Every routable concept declares an `intent`" → presence rule.
+
+This requires extending the manifest with a section describing these expectations
+(a `routing` or `grid` block, to be designed), and adding the corresponding
+validation rules to the catalogue.
+
+**Boundary — essential.** okflint verifies that the base is **structured to be
+routable** (the necessary fields, tags, and vocabularies are present and consistent).
+It does **not traverse** the grid: the directed walk "for intent A, read X then Y"
+is runtime orchestration logic, executed by the agent in its harness. okflint is
+static; it validates a base at rest. The grid makes the base *routable*; the harness
+*routes*.

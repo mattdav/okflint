@@ -1,4 +1,4 @@
-"""Fixtures partagées pour la suite de tests okflint."""
+"""Shared fixtures for the okflint test suite."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def _base_manifest_dict(root: Path) -> dict:
 
 @pytest.fixture
 def make_md() -> Callable[[Path, str], Path]:
-    """Crée un fichier .md au chemin donné avec le contenu donné."""
+    """Create a .md file at the given path with the given content."""
 
     def _make(path: Path, content: str) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,7 +35,7 @@ def make_md() -> Callable[[Path, str], Path]:
 
 @pytest.fixture
 def minimal_manifest(tmp_path: Path) -> tuple[Path, Path]:
-    """Manifeste minimal (base seulement) + répertoire racine."""
+    """Minimal manifest (base only) + root directory."""
     root = tmp_path / "root"
     root.mkdir()
     manifest_path = tmp_path / "manifest.yaml"
@@ -46,7 +46,7 @@ def minimal_manifest(tmp_path: Path) -> tuple[Path, Path]:
 
 @pytest.fixture
 def profile_manifest(tmp_path: Path) -> tuple[Path, Path]:
-    """Manifeste avec profil : Decision + JournalEntry."""
+    """Manifest with profile: Decision + JournalEntry."""
     root = tmp_path / "root"
     root.mkdir()
     manifest_path = tmp_path / "manifest.yaml"
@@ -74,7 +74,7 @@ def profile_manifest(tmp_path: Path) -> tuple[Path, Path]:
 
 @pytest.fixture
 def hygiene_manifest(tmp_path: Path) -> tuple[Path, Path]:
-    """Manifeste avec profil + hygiène complète en warn."""
+    """Manifest with profile + full hygiene set to warn."""
     root = tmp_path / "root"
     root.mkdir()
     manifest_path = tmp_path / "manifest.yaml"

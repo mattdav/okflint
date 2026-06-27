@@ -1,8 +1,8 @@
-"""Point d'entrée CLI unifié d'okflint.
+"""Unified CLI entry point for okflint.
 
-Expose deux sous-commandes façon Ruff :
-    okflint audit     — inventaire et diagnostic descriptif d'une base
-    okflint validate  — gate normatif de conformité (exit 0/1)
+Exposes two sub-commands Ruff-style:
+    okflint audit     — inventory and descriptive diagnostic of a base
+    okflint validate  — normative compliance gate (exit 0/1)
 """
 
 from __future__ import annotations
@@ -20,26 +20,26 @@ from okflint.validate import ManifestError, run_validate
 
 
 def _cmd_audit(args: argparse.Namespace) -> int:
-    """Exécute la sous-commande audit.
+    """Execute the audit sub-command.
 
     Args:
-        args: Namespace argparse (bundle, vault, apply).
+        args: argparse Namespace (bundle, vault, apply).
 
     Returns:
-        Code de sortie (toujours 0 : audit est descriptif).
+        Exit code (always 0: audit is descriptive).
     """
     bundle_path = Path(args.bundle)
     vault_path = Path(args.vault)
     report = run_audit(bundle_path, vault_path)
     stats = report["stats"]
     n_concepts = stats["total_concept_files"]
-    print(f"Fichiers : {stats['total_files']} ({n_concepts} concepts)")
-    print(f"Statut OKF : {stats['by_okf_status']}")
+    print(f"Files: {stats['total_files']} ({n_concepts} concepts)")
+    print(f"OKF status: {stats['by_okf_status']}")
     wikilinks_broken = stats["broken_wikilinks"]
-    print(f"Wikilinks  : {stats['total_wikilinks']} dont {wikilinks_broken} cassés")
+    print(f"Wikilinks: {stats['total_wikilinks']} of which {wikilinks_broken} broken")
     md_broken = stats["broken_markdown_links"]
-    print(f"Liens MD   : {stats['total_markdown_links']} dont {md_broken} cassés")
-    print(f"Candidats découpe : {stats['split_candidates']}")
+    print(f"MD links: {stats['total_markdown_links']} of which {md_broken} broken")
+    print(f"Split candidates: {stats['split_candidates']}")
 
     if args.apply:
         from datetime import date
@@ -54,27 +54,27 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         out.write_text(
             json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
         )
-        print(f"Rapport : {out}")
+        print(f"Report: {out}")
     else:
-        print("(dry-run — relancer avec --apply pour écrire le rapport JSON)")
+        print("(dry-run — re-run with --apply to write the JSON report)")
     return 0
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
-    """Exécute la sous-commande validate.
+    """Execute the validate sub-command.
 
     Args:
-        args: Namespace argparse (manifest, json_output, targets).
+        args: argparse Namespace (manifest, json_output, targets).
 
     Returns:
-        Code de sortie (0 si conforme, 1 si au moins une erreur).
+        Exit code (0 if conformant, 1 if at least one error).
     """
     manifest_path = Path(args.manifest)
     targets = [Path(t) for t in args.targets]
     try:
         errors, code = run_validate(manifest_path, targets)
     except ManifestError as exc:
-        print(f"Erreur manifeste : {exc}", file=sys.stderr)
+        print(f"Manifest error: {exc}", file=sys.stderr)
         return 2
 
     if args.json_output:
@@ -85,67 +85,67 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             icon = "❌" if e.severity == "error" else "⚠️"
             print(f"{icon} [{e.code}] {e.file} — {e.message}")
         if not errors:
-            print("✅ Tous les fichiers sont conformes OKF.")
+            print("✅ All files are OKF-conformant.")
         else:
             errs = sum(1 for e in errors if e.severity == "error")
             warns = sum(1 for e in errors if e.severity == "warning")
-            print(f"\n{errs} erreur(s), {warns} avertissement(s).")
+            print(f"\n{errs} error(s), {warns} warning(s).")
     return code
 
 
 @beartype
 def build_parser() -> argparse.ArgumentParser:
-    """Construit le parser argparse avec les sous-commandes.
+    """Build the argparse parser with sub-commands.
 
     Returns:
-        Le parser configuré.
+        The configured parser.
     """
     parser = argparse.ArgumentParser(
         prog="okflint",
-        description="Linter de conformité pour bases documentaires OKF.",
+        description="Compliance linter for OKF documentary bases.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # -- audit ----------------------------------------------------------------
     p_audit = subparsers.add_parser(
-        "audit", help="Inventaire et diagnostic descriptif d'une base."
+        "audit", help="Inventory and descriptive diagnostic of a base."
     )
     p_audit.add_argument(
         "--bundle",
         required=True,
-        help="Racine du bundle à auditer.",
+        help="Root of the bundle to audit.",
     )
     p_audit.add_argument(
         "--vault",
         required=True,
-        help="Racine de la vault (pour l'index de résolution des wikilinks).",
+        help="Root of the vault (for the wikilink resolution index).",
     )
     p_audit.add_argument(
         "--apply",
         action="store_true",
-        help="Écrit le rapport JSON dans .okflint/ (rapport daté auto-incrémenté).",
+        help="Write the JSON report to .okflint/ (dated, auto-incremented).",
     )
     p_audit.set_defaults(func=_cmd_audit)
 
     # -- validate -------------------------------------------------------------
     p_validate = subparsers.add_parser(
-        "validate", help="Gate de conformité OKF (exit 0 si conforme, 1 sinon)."
+        "validate", help="OKF compliance gate (exit 0 if conformant, 1 otherwise)."
     )
     p_validate.add_argument(
         "--manifest",
         default="okf-base.yaml",
-        help="Chemin du manifeste OKF (défaut : okf-base.yaml).",
+        help="Path to the OKF manifest (default: okf-base.yaml).",
     )
     p_validate.add_argument(
         "--json",
         dest="json_output",
         action="store_true",
-        help="Sortie JSON (pour CI).",
+        help="JSON output (for CI).",
     )
     p_validate.add_argument(
         "targets",
         nargs="+",
-        help="Fichiers ou dossiers à valider.",
+        help="Files or directories to validate.",
     )
     p_validate.set_defaults(func=_cmd_validate)
 
@@ -154,7 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 @beartype
 def main() -> None:
-    """Point d'entrée console_scripts : okflint <command>."""
+    """Console scripts entry point: okflint <command>."""
     parser = build_parser()
     args = parser.parse_args()
     code: int = args.func(args)

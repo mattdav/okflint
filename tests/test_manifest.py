@@ -1,4 +1,4 @@
-"""Tests du chargement et de la validation du manifeste OKF."""
+"""Tests for OKF manifest loading and validation."""
 
 from __future__ import annotations
 
@@ -36,25 +36,25 @@ class TestCoerceLevel:
 
 
 # ---------------------------------------------------------------------------
-# load_manifest — erreurs
+# load_manifest — errors
 # ---------------------------------------------------------------------------
 
 
 class TestLoadManifestErrors:
     def test_missing_file_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(ManifestError, match="Impossible de lire"):
+        with pytest.raises(ManifestError, match="Cannot read"):
             load_manifest(tmp_path / "nonexistent.yaml")
 
     def test_invalid_yaml_raises(self, tmp_path: Path) -> None:
         f = tmp_path / "bad.yaml"
         f.write_text("key: [unclosed\n", encoding="utf-8")
-        with pytest.raises(ManifestError, match="YAML invalide"):
+        with pytest.raises(ManifestError, match="Invalid YAML"):
             load_manifest(f)
 
     def test_missing_base_key_raises(self, tmp_path: Path) -> None:
         f = tmp_path / "m.yaml"
         f.write_text("okf_version: '0.1'\n", encoding="utf-8")
-        with pytest.raises(ManifestError, match="'base' absente"):
+        with pytest.raises(ManifestError, match="'base' absent"):
             load_manifest(f)
 
     def test_empty_roots_raises(self, tmp_path: Path) -> None:
@@ -63,7 +63,7 @@ class TestLoadManifestErrors:
             "base:\n  roots: []\n  reserved_files:\n    index: index.md\n    log: log.md\n",
             encoding="utf-8",
         )
-        with pytest.raises(ManifestError, match="roots doit être une liste non vide"):
+        with pytest.raises(ManifestError, match="roots must be a non-empty list"):
             load_manifest(f)
 
     def test_missing_log_in_reserved_files_raises(self, tmp_path: Path) -> None:
@@ -75,7 +75,7 @@ class TestLoadManifestErrors:
             "  reserved_files:\n    index: index.md\n",
             encoding="utf-8",
         )
-        with pytest.raises(ManifestError, match="'index' et 'log'"):
+        with pytest.raises(ManifestError, match="'index' and 'log'"):
             load_manifest(f)
 
     def test_required_optional_overlap_raises(self, tmp_path: Path) -> None:
@@ -94,7 +94,7 @@ class TestLoadManifestErrors:
             "  date_fields: []\n",
             encoding="utf-8",
         )
-        with pytest.raises(ManifestError, match="required et optional"):
+        with pytest.raises(ManifestError, match="required and optional"):
             load_manifest(f)
 
     def test_status_values_without_status_field_raises(self, tmp_path: Path) -> None:
@@ -131,7 +131,7 @@ class TestLoadManifestErrors:
 
 
 # ---------------------------------------------------------------------------
-# load_manifest — succès
+# load_manifest — success
 # ---------------------------------------------------------------------------
 
 
@@ -159,7 +159,7 @@ class TestLoadManifestSuccess:
         m = load_manifest(manifest_path)
         assert m.profile is not None
         je = m.profile.types["JournalEntry"]
-        # CRITIQUE : must be exactly False (bool), not None
+        # CRITICAL: must be exactly False (bool), not None
         assert je.status_values is False
 
     def test_decision_aliases_loaded(

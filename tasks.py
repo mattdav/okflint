@@ -6,20 +6,20 @@ from pathlib import Path
 from invoke import Context, task
 
 # ================ Config ================= #
-RELEASE_BRANCH = "main"  # branche de référence pour les releases
+RELEASE_BRANCH = "main"  # reference branch for releases
 CLEAN_DIRS: list[str] = [
-    "build",          # Artéfacts de build
-    "dist",           # Distributions packagées
-    ".pytest_cache",  # Cache de pytest
-    ".ruff_cache",    # Cache de Ruff
-    ".mypy_cache",    # Cache de mypy
-    ".okflint",       # Rapports d'audit JSON (régénérables)
-    "htmlcov",        # Rapport de couverture HTML
-    "__pycache__",    # Cache Python (racine)
+    "build",          # Build artefacts
+    "dist",           # Packaged distributions
+    ".pytest_cache",  # pytest cache
+    ".ruff_cache",    # Ruff cache
+    ".mypy_cache",    # mypy cache
+    ".okflint",       # JSON audit reports (regeneratable)
+    "htmlcov",        # HTML coverage report
+    "__pycache__",    # Python cache (root)
 ]
 
 CLEAN_FILES: list[str] = [
-    ".coverage",  # Données de couverture pytest-cov
+    ".coverage",  # pytest-cov coverage data
 ]
 
 
@@ -39,17 +39,17 @@ def clean(c: Context) -> None:
             print(f"  - Removing {filename}")
             path.unlink(missing_ok=True)
 
-    # Nettoyer récursivement les __pycache__
+    # Recursively clean __pycache__
     for path in Path(".").rglob("__pycache__"):
         print(f"  - Removing {path}")
         shutil.rmtree(path, ignore_errors=True)
 
-    # Nettoyer les *.egg-info
+    # Clean *.egg-info
     for path in Path(".").rglob("*.egg-info"):
         print(f"  - Removing {path}")
         shutil.rmtree(path, ignore_errors=True)
 
-    # Nettoyer les fichiers .pyc
+    # Clean .pyc files
     for path in Path(".").rglob("*.pyc"):
         print(f"  - Removing {path}")
         path.unlink(missing_ok=True)
@@ -59,10 +59,10 @@ def clean(c: Context) -> None:
 
 @task
 def repomix(c: Context, output: str | None = None) -> None:
-    """Pack la codebase en un fichier XML pour consommation LLM.
+    """Pack the codebase as an XML file for LLM consumption.
 
-    Output par défaut : .repomix/YYYY-MM-DD_repomix_v<N>.xml (auto-incrémenté).
-    Utiliser --output pour forcer un nom de fichier dans .repomix/.
+    Default output: .repomix/YYYY-MM-DD_repomix_v<N>.xml (auto-incremented).
+    Use --output to force a filename in .repomix/.
     """
     outputs_dir: Path = Path(".repomix")
     outputs_dir.mkdir(exist_ok=True)
@@ -90,15 +90,15 @@ def repomix(c: Context, output: str | None = None) -> None:
 # ================ Quality test ================= #
 @task
 def index(c: Context) -> None:
-    """Indexe la codebase dans codebase-memory-mcp pour améliorer le contexte Claude Code.
+    """Index the codebase in codebase-memory-mcp to improve Claude Code context.
 
-    Utilise le mode CLI du binaire codebase-memory-mcp pour indexer le projet
-    courant dans le knowledge graph persistant. L'index survit aux redémarrages
-    de session et permet à Claude Code de faire des requêtes structurelles
-    (call graph, dépendances, etc.) avec ~99% moins de tokens qu'une exploration
-    fichier par fichier.
+    Uses the CLI mode of the codebase-memory-mcp binary to index the current
+    project into the persistent knowledge graph. The index survives session
+    restarts and allows Claude Code to make structural queries
+    (call graph, dependencies, etc.) with ~99% fewer tokens than a file-by-file
+    exploration.
 
-    À relancer après chaque modification significative de la codebase.
+    Re-run after every significant change to the codebase.
     """
     import json
 
@@ -106,23 +106,23 @@ def index(c: Context) -> None:
         r"C:\Users\matth\AppData\Local\Programs\codebase-memory-mcp\codebase-memory-mcp.exe"
     )
     if not binary.exists():
-        print(f"❌ Binaire codebase-memory-mcp introuvable : {binary}")
-        print("   Installer depuis : https://github.com/DeusData/codebase-memory-mcp")
+        print(f"❌ codebase-memory-mcp binary not found: {binary}")
+        print("   Install from: https://github.com/DeusData/codebase-memory-mcp")
         return
 
     repo_path = str(Path.cwd()).replace("\\", "/")
     payload = json.dumps({"repo_path": repo_path})
 
-    print(f"🧠 Indexation de la codebase dans codebase-memory-mcp...")
-    print(f"   Projet : {repo_path}")
+    print("🧠 Indexing codebase in codebase-memory-mcp...")
+    print(f"   Project: {repo_path}")
     result = subprocess.run(
         f'"{binary}" cli index_repository \'{payload}\'',
         shell=True,
     )
     if result.returncode == 0:
-        print("✅ Index mis à jour. Claude Code peut maintenant interroger le knowledge graph.")
+        print("✅ Index updated. Claude Code can now query the knowledge graph.")
     else:
-        print("❌ Indexation échouée.")
+        print("❌ Indexing failed.")
 
 
 @task
@@ -138,8 +138,8 @@ def lint(c: Context) -> None:
     if format_command.returncode != 0:
         result += format_command.returncode
     print("\nRunning mypy...")
-    # uv run mypy échoue sur Windows avec mypy compilé (Failed to canonicalize script path)
-    # On passe par python -m mypy pour contourner le problème
+    # uv run mypy fails on Windows with compiled mypy (Failed to canonicalize script path)
+    # Using python -m mypy as a workaround
     mypy_command = subprocess.run("uv run python -m mypy src/.", shell=True)
     if mypy_command.returncode != 0:
         result += mypy_command.returncode
@@ -151,18 +151,18 @@ def lint(c: Context) -> None:
 
 @task
 def test(c: Context, verbose: bool = False, coverage: bool = True) -> None:
-    """Lance la suite de tests pytest."""
+    """Run the pytest test suite."""
     print("🧪 Running test suite...")
 
-    # 🔎 Construction de la commande
+    # Build the command
     cmd = "uv run python -m pytest"
     if verbose:
         cmd += " -v"
     if not coverage:
-        # pyproject.toml active la couverture par défaut via addopts
+        # pyproject.toml enables coverage by default via addopts
         cmd += " --no-cov"
 
-    # 📦 Exécution
+    # Execute
     result = subprocess.run(cmd, shell=True)
 
     if result.returncode != 0:
@@ -171,12 +171,12 @@ def test(c: Context, verbose: bool = False, coverage: bool = True) -> None:
         print("✅ All tests passed!")
         html_report = Path("htmlcov") / "index.html"
         if html_report.exists():
-            print(f"📊 HTML report : {html_report.resolve()}")
+            print(f"📊 HTML report: {html_report.resolve()}")
 
 
 @task
 def docs(c: Context, open_browser: bool = False) -> None:
-    """Construit la documentation Sphinx en HTML."""
+    """Build the Sphinx documentation as HTML."""
     src = Path("docs/sphinx")
     out = src / "_build" / "html"
     out.mkdir(parents=True, exist_ok=True)
@@ -191,9 +191,9 @@ def docs(c: Context, open_browser: bool = False) -> None:
         return
 
     index_html = out / "index.html"
-    print(f"✅ Documentation built : {index_html.resolve()}")
+    print(f"✅ Documentation built: {index_html.resolve()}")
 
-    # 🔎 Ouverture optionnelle dans le navigateur
+    # Optionally open in browser
     if open_browser:
         import webbrowser
 
@@ -207,33 +207,33 @@ def release(
     dry_run: bool = False,
     skip_tests: bool = False,
 ) -> None:
-    """Orchestre une release : bump version, changelog, commit, tag, push.
+    """Orchestrate a release: bump version, changelog, commit, tag, push.
 
-    Séquence :
-      1. Vérifie qu'on est sur la branche main et que le working tree est propre
-      2. Lance lint + tests (sécurité avant publication) — sauf si --skip-tests
-      3. Bumpe la version via commitizen (patch | minor | major)
-      4. Crée un commit de release + un tag signé vX.Y.Z
-      5. Pousse le commit ET le tag vers origin/main
-      6. Le tag déclenche automatiquement le workflow GitHub Actions release.yml
-         qui build, publie sur PyPI, et crée la GitHub Release.
+    Sequence:
+      1. Verify we are on the main branch with a clean working tree
+      2. Run lint + tests (safety before publishing) — unless --skip-tests
+      3. Bump the version via commitizen (patch | minor | major)
+      4. Create a release commit + a signed vX.Y.Z tag
+      5. Push the commit AND the tag to origin/main
+      6. The tag automatically triggers the GitHub Actions release.yml workflow
+         which builds, publishes to PyPI, and creates the GitHub Release.
 
-    Usage :
+    Usage:
         inv release                  # bump patch (0.1.0 → 0.1.1)
         inv release --part=minor     # bump minor (0.1.0 → 0.2.0)
         inv release --part=major     # bump major (0.1.0 → 1.0.0)
-        inv release --dry-run        # simule sans rien modifier
-        inv release --skip-tests     # pour développer en local seulement
+        inv release --dry-run        # simulate without modifying anything
+        inv release --skip-tests     # for local development only
     """
 
     def _run(cmd: str, check: bool = True) -> int:
-        """Exécute une commande shell, affiche le résultat, retourne le code de sortie."""
+        """Execute a shell command, display the result, return the exit code."""
         if dry_run:
             print(f"[dry-run] {cmd}")
             return 0
         result = subprocess.run(cmd, shell=True)
         if check and result.returncode != 0:
-            print(f"\n\u274c Échec : {cmd}")
+            print(f"\n\u274c Failed: {cmd}")
             raise SystemExit(result.returncode)
         return result.returncode
 
@@ -242,64 +242,64 @@ def release(
     print(f"  Dry run    : {dry_run}")
     print(f"  Branch     : {RELEASE_BRANCH}")
 
-    # ── Étape 0 : vérifications préalables ───────────────────────────────────────
-    print("\n📦 Étape 1/5 : vérifications...")
+    # ── Step 0: pre-flight checks ─────────────────────────────────────────────
+    print("\n📦 Step 1/5: pre-flight checks...")
 
-    # Branche courante
+    # Current branch
     current_branch = subprocess.run(
         "git rev-parse --abbrev-ref HEAD", shell=True, capture_output=True, text=True
     ).stdout.strip()
     if not dry_run and current_branch != RELEASE_BRANCH:
-        print(f"❌ Vous êtes sur '{current_branch}', pas sur '{RELEASE_BRANCH}'.")
-        print("   Faites 'git checkout main' avant de releaser.")
+        print(f"❌ You are on '{current_branch}', not on '{RELEASE_BRANCH}'.")
+        print("   Run 'git checkout main' before releasing.")
         raise SystemExit(1)
 
-    # Working tree propre
+    # Clean working tree
     dirty = subprocess.run(
         "git status --porcelain", shell=True, capture_output=True, text=True
     ).stdout.strip()
     if not dry_run and dirty:
-        print("❌ Le working tree n'est pas propre. Commitez ou stashez d'abord.")
+        print("❌ Working tree is not clean. Commit or stash first.")
         print(dirty)
         raise SystemExit(1)
 
-    print("✅ Branche et working tree OK")
+    print("✅ Branch and working tree OK")
 
-    # ── Étape 1 : lint + tests ───────────────────────────────────────────────
+    # ── Step 1: lint + tests ──────────────────────────────────────────────────
     if not skip_tests:
-        print("\n📦 Étape 2/5 : lint + tests...")
+        print("\n📦 Step 2/5: lint + tests...")
         _run("uv run ruff check src/")
         _run("uv run ruff format --check src/")
         _run("uv run python -m mypy src/")
         _run("uv run python -m pytest --cov=src/okflint --cov-fail-under=85 -q")
-        print("✅ Lint et tests OK")
+        print("✅ Lint and tests OK")
     else:
-        print("\n⚠️  Étape 2/5 : lint + tests ignorés (--skip-tests)")
+        print("\n⚠️  Step 2/5: lint + tests skipped (--skip-tests)")
 
-    # ── Étape 2 : bump version + changelog ─────────────────────────────────
-    print(f"\n📦 Étape 3/5 : bump version ({part})...")
+    # ── Step 2: bump version + changelog ─────────────────────────────────────
+    print(f"\n📦 Step 3/5: bump version ({part})...")
     bump_cmd = f"uv run cz bump --increment {part.upper()}"
     if dry_run:
         bump_cmd += " --dry-run"
     _run(bump_cmd)
-    print("✅ Version bumpée + CHANGELOG.md mis à jour")
+    print("✅ Version bumped + CHANGELOG.md updated")
 
-    # Récupère la nouvelle version après le bump
+    # Get the new version after the bump
     new_version = subprocess.run(
         "uv run cz version --project", shell=True, capture_output=True, text=True
     ).stdout.strip()
-    print(f"   Nouvelle version : {new_version}")
+    print(f"   New version: {new_version}")
 
-    # ── Étape 3 : push commit + tag ──────────────────────────────────────────
-    print("\n📦 Étape 4/5 : push commit + tag...")
+    # ── Step 3: push commit + tag ─────────────────────────────────────────────
+    print("\n📦 Step 4/5: push commit + tag...")
     _run(f"git push origin {RELEASE_BRANCH}")
     _run(f"git push origin v{new_version}")
-    print("✅ Commit + tag poussés")
+    print("✅ Commit + tag pushed")
 
-    # ── Étape 4 : résumé ──────────────────────────────────────────────────
-    print("\n📦 Étape 5/5 : résumé...")
-    print(f"🎉 Release v{new_version} lancée !")
-    print("   → GitHub Actions release.yml va builder et publier sur PyPI")
-    print("   → Suivre sur : https://github.com/mattdav/okflint/actions")
+    # ── Step 4: summary ───────────────────────────────────────────────────────
+    print("\n📦 Step 5/5: summary...")
+    print(f"🎉 Release v{new_version} launched!")
+    print("   → GitHub Actions release.yml will build and publish to PyPI")
+    print("   → Follow at: https://github.com/mattdav/okflint/actions")
     if not dry_run:
-        print(f"   → PyPI : https://pypi.org/project/okflint/{new_version}/")
+        print(f"   → PyPI: https://pypi.org/project/okflint/{new_version}/")

@@ -1,4 +1,4 @@
-"""Tests du module audit OKF."""
+"""Tests for the OKF audit module."""
 
 from __future__ import annotations
 
@@ -46,13 +46,13 @@ class TestGetOkfStatus:
 
 class TestIsStructuralH2:
     def test_structural_keyword_detected(self) -> None:
-        assert _is_structural_h2("Contexte")
-        assert _is_structural_h2("Décision")
-        assert _is_structural_h2("Prérequis")
+        assert _is_structural_h2("Context")
+        assert _is_structural_h2("Decision")
+        assert _is_structural_h2("Prerequisites")
 
     def test_non_structural_h2(self) -> None:
-        assert not _is_structural_h2("Mon Service Alpha")
-        assert not _is_structural_h2("Projet Kubernetes")
+        assert not _is_structural_h2("My Alpha Service")
+        assert not _is_structural_h2("Kubernetes Project")
 
 
 # ---------------------------------------------------------------------------
@@ -82,12 +82,12 @@ class TestIsSequentialH2:
         assert _is_sequential_h2("1. Installation")
         assert _is_sequential_h2("2 - Configuration")
 
-    def test_etape_prefix_is_sequential(self) -> None:
-        assert _is_sequential_h2("Étape 1 : init")
+    def test_step_prefix_is_sequential(self) -> None:
+        assert _is_sequential_h2("Step 1: init")
 
     def test_regular_h2_not_sequential(self) -> None:
-        assert not _is_sequential_h2("Mon Service")
-        assert not _is_sequential_h2("Présentation générale")
+        assert not _is_sequential_h2("My Service")
+        assert not _is_sequential_h2("General Overview")
 
 
 # ---------------------------------------------------------------------------

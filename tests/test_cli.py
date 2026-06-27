@@ -1,4 +1,4 @@
-"""Tests du dispatcher CLI okflint."""
+"""Tests for the okflint CLI dispatcher."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ class TestBuildParser:
 
 
 # ---------------------------------------------------------------------------
-# _cmd_validate — codes de sortie
+# _cmd_validate — exit codes
 # ---------------------------------------------------------------------------
 
 
@@ -140,7 +140,7 @@ class TestCmdAudit:
 
 
 # ---------------------------------------------------------------------------
-# main() — point d'entrée
+# main() — entry point
 # ---------------------------------------------------------------------------
 
 

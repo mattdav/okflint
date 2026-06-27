@@ -1,24 +1,24 @@
 # Changelog
 
-Toutes les modifications notables d'okflint sont documentées dans ce fichier.
+All notable changes to okflint are documented in this file.
 
-Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
-Versioning : [Semantic Versioning](https://semver.org/lang/fr/).
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Versioning: [Semantic Versioning](https://semver.org/).
 
-Ce fichier est maintenu automatiquement par [commitizen](https://commitizen-tools.github.io/commitizen/).
-Ne pas modifier manuellement les sections générées.
+This file is maintained automatically by [commitizen](https://commitizen-tools.github.io/commitizen/).
+Do not manually edit the generated sections.
 
 ---
 
 ## v0.1.0 (2026-06-27)
 
-### Nouvelles fonctionnalités
+### New features
 
-- CLI unifiée `okflint audit | validate`
-- Validation en 3 étages : cœur OKF (§9), profil (manifeste), hygiène (opt-in)
-- 18 règles cataloguées dans `config/RULES.md`
-- Moteur générique piloté par un manifeste YAML (`okf-base.yaml`)
-- Validation du manifeste lui-même (`manifest.py`)
-- Support des wikilinks Obsidian (audit + résolution de liens)
-- Couverture de tests à 93%
-- Documentation Sphinx auto-générée
+- Unified CLI `okflint audit | validate`
+- 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
+- 18 rules catalogued in `config/RULES.md`
+- Generic engine driven by a YAML manifest (`okf-base.yaml`)
+- Manifest self-validation (`manifest.py`)
+- Obsidian wikilinks support (audit + link resolution)
+- 93% test coverage
+- Auto-generated Sphinx documentation

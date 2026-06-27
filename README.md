@@ -1,7 +1,7 @@
 # okflint
 
-**Le Ruff de la documentation.** Un linter de conformité déterministe pour bases
-documentaires au format [Open Knowledge Format (OKF)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
+**The Ruff of documentation.** A deterministic compliance linter for documentary
+bases in [Open Knowledge Format (OKF)](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 ![Python](https://img.shields.io/badge/python-3.12+-3670A0?style=flat&logo=python&logoColor=ffdd54)
@@ -9,33 +9,33 @@ documentaires au format [Open Knowledge Format (OKF)](https://github.com/GoogleC
 
 ---
 
-## Pourquoi
+## Why
 
-Quand la valeur d'un projet migre vers sa base documentaire, cette base doit être
-tenue à un standard — comme le code l'est par un linter. `okflint` vérifie, de
-façon **déterministe, reproductible et sans LLM**, que des documents Markdown
-respectent un standard OKF déclaré dans un manifeste YAML.
+When a project's value migrates into its documentary base, that base must be held
+to a standard — just as code is by a linter. `okflint` verifies, in a
+**deterministic, reproducible, LLM-free** way, that Markdown documents conform to
+an OKF standard declared in a YAML manifest.
 
-Deux commandes :
+Two commands:
 
-- **`okflint audit`** — inventaire et diagnostic descriptif d'une base (statistiques,
-  liens cassés, candidats au découpage). Toujours `exit 0`.
-- **`okflint validate`** — gate normatif de conformité. `exit 0` si conforme,
-  `exit 1` sinon. Conçu pour les pre-commit hooks et la CI.
+- **`okflint audit`** — inventory and descriptive diagnostic of a base (statistics,
+  broken links, split candidates). Always `exit 0`.
+- **`okflint validate`** — normative compliance gate. `exit 0` if conformant,
+  `exit 1` otherwise. Designed for pre-commit hooks and CI.
 
 ---
 
 ## Installation
 
 ```bash
-# Via uv (recommandé)
+# Via uv (recommended)
 uv tool install okflint
 
-# Ou via pip
+# Or via pip
 pip install okflint
 ```
 
-Pour le développement :
+For development:
 
 ```bash
 git clone https://github.com/mattdav/okflint
@@ -46,129 +46,133 @@ uv pip install -e .
 
 ---
 
-## Démarrage rapide
+## Quick start
 
-1. Copiez le manifeste d'exemple à la racine de votre base documentaire :
+1. Copy the example manifest to the root of your documentary base:
 
 ```bash
-cp okf-base.example.yaml /chemin/vers/ma-base/okf-base.yaml
+cp okf-base.example.yaml /path/to/my-base/okf-base.yaml
 ```
 
-2. Adaptez-le à votre taxonomie (types, champs requis, vocabulaire de statut).
+2. Adapt it to your taxonomy (types, required fields, status vocabulary).
 
-3. Validez :
+3. Validate:
 
 ```bash
-okflint validate --manifest /chemin/vers/ma-base/okf-base.yaml /chemin/vers/ma-base
+okflint validate --manifest /path/to/my-base/okf-base.yaml /path/to/my-base
 ```
 
 ---
 
-## Le manifeste
+## The manifest
 
-`okflint` est un **moteur générique** : il ne connaît aucun vocabulaire de types en
-dur. C'est le manifeste `okf-base.yaml` qui définit votre standard. Voir
-[`okf-base.example.yaml`](okf-base.example.yaml) pour un modèle commenté.
+`okflint` is a **generic engine**: it knows no type vocabulary in hard code.
+The `okf-base.yaml` manifest defines your standard. See
+[`okf-base.example.yaml`](okf-base.example.yaml) for an annotated template.
 
-Chaque type déclare ses champs requis/optionnels et sa politique de statut :
+Each type declares its required/optional fields and its status policy:
 
-| `statut_values` | Sémantique |
+| `status_values` | Semantics |
 |---|---|
-| `[liste]` | champ `statut` **requis**, valeur contrainte à la liste |
-| `false` | champ `statut` **interdit** pour ce type |
-| `null` (ou absent) | champ `statut` **optionnel**, valeur libre |
+| `[list]` | `status` field **required**, value constrained to the list |
+| `false` | `status` field **forbidden** for this type |
+| `null` (or absent) | `status` field **optional**, value free |
 
-> **Ressources OKF** —
-> [Spec officielle Google Cloud](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-> · [openknowledgeformat.com](https://openknowledgeformat.com/) (exemples, templates, validateur en ligne)
-> · [okf.md](https://okf.md/spec/) (guide annoté)
+> **OKF resources** —
+> [Official Google Cloud spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+> · [openknowledgeformat.com](https://openknowledgeformat.com/) (examples, templates, online validator)
+> · [okf.md](https://okf.md/spec/) (annotated guide)
 
 ---
 
-## Concepts clés
+## Key concepts
 
-| Terme | Définition |
+| Term | Definition |
 |---|---|
-| **bundle** | Le dossier racine de la base documentaire à auditer ou valider. Tous les fichiers `.md` qu'il contient (récursivement) sont analysés. |
-| **vault** | Le dossier racine de l'ensemble de vos Markdown (qui peut être plus grand que le bundle). Sert uniquement à résoudre les wikilinks `[[...]]` : un lien est considéré valide si la cible existe quelque part dans la vault, même hors du bundle. Si vous n'utilisez pas les wikilinks Obsidian, passez le même chemin que le bundle. |
-| **manifest** | Le fichier `okf-base.yaml` que vous rédigez pour décrire votre standard : quels types de concepts vous utilisez, quels champs sont requis, quel vocabulaire de statut. Voir `okf-base.example.yaml` pour un modèle commenté. |
-| **target** | Pour `validate` uniquement : un ou plusieurs chemins vers des dossiers ou des fichiers `.md` à valider. Si vous passez un dossier, tous les `.md` qu'il contient (récursivement) sont validés. Si vous passez un fichier, seul ce fichier est validé. |
+| **bundle** | The root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. |
+| **vault** | The root folder of all your Markdown (which may be larger than the bundle). Used only to resolve `[[...]]` wikilinks: a link is considered valid if the target exists anywhere in the vault, even outside the bundle. If you do not use Obsidian wikilinks, pass the same path as the bundle. |
+| **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. See `okf-base.example.yaml` for an annotated template. |
+| **target** | For `validate` only: one or more paths to folders or `.md` files to validate. If you pass a folder, all `.md` files it contains (recursively) are validated. If you pass a file, only that file is validated. |
 
 ---
 
-## Utilisation
+## Usage
 
-### `okflint audit` — Inventaire et diagnostic
+### `okflint audit` — Inventory and diagnostic
 
-`audit` scanne un bundle et produit un rapport descriptif : statistiques de conformité OKF, wikilinks cassés, liens markdown cassés, candidats au découpage. Cette commande est **toujours exit 0** — c'est un outil d'observation, pas un gate.
+`audit` scans a bundle and produces a descriptive report: OKF conformance statistics,
+broken wikilinks, broken Markdown links, split candidates. This command is
+**always exit 0** — it is an observation tool, not a gate.
 
 ```bash
-# Rapport en console (dry-run)
-okflint audit --bundle /chemin/vers/ma-base --vault /chemin/vers/ma-vault
+# Console report (dry-run)
+okflint audit --bundle /path/to/my-base --vault /path/to/my-vault
 
-# Écrire le rapport JSON complet dans .okflint/ (rapport daté auto-incrémenté)
-okflint audit --bundle /chemin/vers/ma-base --vault /chemin/vers/ma-vault --apply
+# Write the full JSON report to .okflint/ (dated, auto-incremented report)
+okflint audit --bundle /path/to/my-base --vault /path/to/my-vault --apply
 ```
 
-**Options :**
+**Options:**
 
-| Option | Requis | Description |
+| Option | Required | Description |
 |---|---|---|
-| `--bundle <chemin>` | oui | Dossier racine de la base à auditer |
-| `--vault <chemin>` | oui | Dossier racine de la vault pour la résolution des wikilinks |
-| `--apply` | non | Écrit le rapport JSON complet dans `.okflint/YYYY-MM-DD_audit_vN.json` |
+| `--bundle <path>` | yes | Root folder of the base to audit |
+| `--vault <path>` | yes | Root folder of the vault for wikilink resolution |
+| `--apply` | no | Writes the full JSON report to `.okflint/YYYY-MM-DD_audit_vN.json` |
 
-**Exemple concret — vault Obsidian :**
+**Concrete example — Obsidian vault:**
 ```bash
 okflint audit \
-  --bundle ~/Obsidian/Mon-projet/docs \
+  --bundle ~/Obsidian/My-project/docs \
   --vault ~/Obsidian \
   --apply
-# Produit : .okflint/2026-06-27_audit_v1.json
+# Produces: .okflint/2026-06-27_audit_v1.json
 ```
 
-**Exemple concret — bundle = vault (pas de wikilinks) :**
+**Concrete example — bundle = vault (no wikilinks):**
 ```bash
 okflint audit --bundle ./docs --vault ./docs
 ```
 
 ---
 
-### `okflint validate` — Gate de conformité
+### `okflint validate` — Compliance gate
 
-`validate` vérifie la conformité de fichiers Markdown à OKF et au profil déclaré dans votre manifeste. Retourne **exit 0** si aucune erreur, **exit 1** sinon. Conçu pour les pre-commit hooks et la CI.
+`validate` checks the conformance of Markdown files to OKF and to the profile
+declared in your manifest. Returns **exit 0** if no errors, **exit 1** otherwise.
+Designed for pre-commit hooks and CI.
 
 ```bash
-# Valider toute une base
-okflint validate --manifest okf-base.yaml /chemin/vers/ma-base
+# Validate an entire base
+okflint validate --manifest okf-base.yaml /path/to/my-base
 
-# Valider un seul sous-dossier
-okflint validate --manifest okf-base.yaml /chemin/vers/ma-base/ADR
+# Validate a single sub-folder
+okflint validate --manifest okf-base.yaml /path/to/my-base/ADR
 
-# Valider des fichiers précis
+# Validate specific files
 okflint validate --manifest okf-base.yaml concept1.md concept2.md
 
-# Sortie JSON machine-readable (pour CI, scripts)
-okflint validate --manifest okf-base.yaml --json /chemin/vers/ma-base
+# Machine-readable JSON output (for CI, scripts)
+okflint validate --manifest okf-base.yaml --json /path/to/my-base
 ```
 
-**Options :**
+**Options:**
 
-| Option | Requis | Défaut | Description |
+| Option | Required | Default | Description |
 |---|---|---|---|
-| `--manifest <chemin>` | non | `okf-base.yaml` | Chemin du manifeste OKF |
-| `--json` | non | — | Sortie JSON au lieu du texte lisible |
-| `<targets...>` | oui | — | Un ou plusieurs chemins (dossiers ou fichiers `.md`) à valider |
+| `--manifest <path>` | no | `okf-base.yaml` | Path to the OKF manifest |
+| `--json` | no | — | JSON output instead of human-readable text |
+| `<targets...>` | yes | — | One or more paths (folders or `.md` files) to validate |
 
-**Codes de sortie :**
+**Exit codes:**
 
-| Code | Signification |
+| Code | Meaning |
 |---|---|
-| `0` | Aucune erreur (des warnings peuvent subsister) |
-| `1` | Au moins une erreur de conformité |
-| `2` | Manifeste invalide ou illisible |
+| `0` | No errors (warnings may still be present) |
+| `1` | At least one conformance error |
+| `2` | Invalid or unreadable manifest |
 
-**Exemple concret — intégration CI GitHub Actions :**
+**Concrete example — CI GitHub Actions integration:**
 ```yaml
 - name: Validate docs
   run: |
@@ -176,7 +180,7 @@ okflint validate --manifest okf-base.yaml --json /chemin/vers/ma-base
     okflint validate --manifest docs/okf-base.yaml docs/
 ```
 
-**Exemple concret — pre-commit hook git :**
+**Concrete example — git pre-commit hook:**
 ```bash
 # .git/hooks/pre-commit
 okflint validate --manifest okf-base.yaml docs/ || exit 1
@@ -184,18 +188,18 @@ okflint validate --manifest okf-base.yaml docs/ || exit 1
 
 ---
 
-## Développement
+## Development
 
 ```bash
 inv lint     # ruff + mypy
-inv clean    # nettoyer les artefacts
-inv repomix  # packer la codebase pour un LLM
+inv clean    # clean build artefacts
+inv repomix  # pack the codebase for an LLM
 ```
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le guide complet de contribution,
-le process de release et les conventions de commit.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide,
+the release process, and commit conventions.
 
-La **documentation API complète** (générée depuis les docstrings) est disponible sur
+The **full API documentation** (generated from docstrings) is available at
 [mattdav.github.io/okflint](https://mattdav.github.io/okflint/).
 
 ---
@@ -204,37 +208,36 @@ La **documentation API complète** (générée depuis les docstrings) est dispon
 
 ```
 src/okflint/
-├── cli.py        ← dispatcher : okflint audit | validate
-├── scanner.py    ← primitives partagées (scan, frontmatter, liens)
-├── audit.py      ← commande audit (descriptive)
-├── validate.py   ← commande validate (gate normatif)
+├── cli.py        ← dispatcher: okflint audit | validate
+├── scanner.py    ← shared primitives (scan, frontmatter, links)
+├── audit.py      ← audit command (descriptive)
+├── validate.py   ← validate command (normative gate)
 └── __main__.py   ← python -m okflint
 ```
 
-Manifeste de la validation : `manifest.py` (chargement + validation du contrat).
+Validation manifest: `manifest.py` (contract loading + validation).
 
 ---
 
 ## Roadmap
 
-Les évolutions envisagées au-delà de la v0.1 (cohésion sémantique pour un
-découpage plus fin, attendus de grille de lecture vérifiables) sont décrites dans
-[ROADMAP.md](ROADMAP.md).
+Envisioned evolutions beyond v0.1 (semantic cohesion for finer splitting,
+verifiable reading-grid expectations) are described in [ROADMAP.md](ROADMAP.md).
 
 ---
 
-## Ce qu'okflint ne fait pas
+## What okflint does not do
 
-okflint est un **gate statique et déterministe**. Par principe, il ne fera jamais :
+okflint is a **static, deterministic gate**. By design, it will never:
 
-- **Exécuter un parcours de lecture** pour un agent — c'est le rôle du harness.
-- **Juger le contenu** d'un concept par LLM (résumer, classer, réécrire).
-- **Décider** d'un découpage ou d'une réorganisation — il signale, ne tranche pas.
-- **Imposer une convention** non déclarée par votre manifeste — pas de vocabulaire
-  en dur, pas de langue imposée.
+- **Execute a reading traversal** for an agent — that is the harness's role.
+- **Judge the content** of a concept via LLM (summarise, classify, rewrite).
+- **Decide** on a split or reorganisation — it signals, it does not rule.
+- **Impose a convention** not declared by your manifest — no hardcoded vocabulary,
+  no imposed language.
 
 ---
 
-## Licence
+## License
 
 [MIT](LICENSE) — [@mattdav](https://github.com/mattdav)
