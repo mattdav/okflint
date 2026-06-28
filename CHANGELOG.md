@@ -18,6 +18,17 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.1.3 (2026-06-28)
+
+### Feat
+
+- ajout de exclude_patterns par racine dans le manifeste (Track F)
+- ajoute le support des vault manifests (okf-vault.json) — Track E
+
+### Fix
+
+- résout les roots du manifeste relativement au fichier manifeste
+
 ## v0.1.2 (2026-06-28)
 
 ### Feat
