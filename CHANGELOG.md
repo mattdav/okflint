@@ -10,6 +10,12 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.1.2 (2026-06-28)
+
+### Feat
+
+- scan multi-root via manifest (Track D) + fix inv index sur Windows
+
 ## v0.1.1 (2026-06-27)
 
 ### Fix
