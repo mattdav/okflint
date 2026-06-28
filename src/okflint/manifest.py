@@ -295,7 +295,13 @@ def load_manifest(path: Path) -> Manifest:
             )
         if not isinstance(entry["path"], str):
             raise ManifestError("base.roots[].path must be a string.")
-        roots.append(Path(entry["path"]))
+        raw_root = Path(entry["path"])
+        # Resolve relative roots against the manifest file's directory so that
+        # roots like "." or "docs/" work regardless of the process CWD.
+        resolved_root = (
+            raw_root if raw_root.is_absolute() else (path.parent / raw_root).resolve()
+        )
+        roots.append(resolved_root)
 
     # base.reserved_files
     raw_reserved = raw_base.get("reserved_files")
