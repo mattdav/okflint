@@ -1,3 +1,10 @@
+---
+type: ProjectStandards
+project: okflint
+updated: 2026-06-28
+tags: [python, cli, linter, okf, open-source]
+---
+
 # Contribution guide — okflint
 
 > **Thank you for contributing to okflint. This document describes the conventions and

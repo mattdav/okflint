@@ -142,3 +142,7 @@ cython_debug/
 
 # Outputs repomix (pack codebase pour LLM — toujours régénérables)
 .repomix/
+
+# Manifest personnel (non versionné, propre à l'environnement local)
+okf-base.yaml
+okf-vault.json

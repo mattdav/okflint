@@ -1,3 +1,11 @@
+---
+type: ProjectLifeCycle
+project: okflint
+status: active
+updated: 2026-06-28
+tags: [python, cli, linter, okf, open-source]
+---
+
 # Changelog
 
 All notable changes to okflint are documented in this file.

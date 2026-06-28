@@ -1,3 +1,10 @@
+---
+type: ProjectStandards
+project: okflint
+updated: 2026-06-28
+tags: [python, cli, linter, okf, open-source]
+---
+
 # okflint
 
 Deterministic compliance linter for OKF (Open Knowledge Format) documentary bases.

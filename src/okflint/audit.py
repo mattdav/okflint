@@ -377,17 +377,25 @@ def run_audit(
     vault_paths: list[Path] | Path,
     *,
     target_filter: Path | None = None,
+    vault_index: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
     """Orchestrate the full audit of one or more OKF bundle roots.
 
     Accepts a single Path or a list of Paths for both bundle_paths and
     vault_paths (single-Path form maintained for backward compatibility).
 
+    When ``vault_index`` is provided it is reused directly and ``vault_paths``
+    is ignored, allowing the caller to build the index union once for a whole
+    vault and then call ``run_audit`` per-bundle without rebuilding.
+
     Args:
         bundle_paths: Root(s) of the bundle(s) to audit.
         vault_paths: Root(s) of the Obsidian vault(s) (for the wikilinks index).
+            Ignored when ``vault_index`` is supplied.
         target_filter: If set, restrict scanning to files under this path.
             Used when --bundle is combined with --manifest as a sub-filter.
+        vault_index: Pre-built file index (stem → list of relative paths).
+            When provided, vault indexing is skipped entirely.
 
     Returns:
         Full audit report serialisable as JSON.
@@ -400,12 +408,17 @@ def run_audit(
         [vault_paths] if isinstance(vault_paths, Path) else list(vault_paths)
     )
 
-    n_vault = len(_vault_paths)
-    vault_label = f"{n_vault} root{'s' if n_vault > 1 else ''}"
-    print(f"🔎 Indexing vault: {vault_label}")
-    vault_index = build_file_index(_vault_paths)
-    vault_total = sum(len(v) for v in vault_index.values())
-    print(f"   {vault_total} .md files indexed")
+    _vault_index: dict[str, list[str]]
+    if vault_index is None:
+        n_vault = len(_vault_paths)
+        vault_label = f"{n_vault} root{'s' if n_vault > 1 else ''}"
+        print(f"🔎 Indexing vault: {vault_label}")
+        _vault_index = build_file_index(_vault_paths)
+        vault_total = sum(len(v) for v in _vault_index.values())
+        print(f"   {vault_total} .md files indexed")
+    else:
+        _vault_index = vault_index
+        vault_total = sum(len(v) for v in _vault_index.values())
 
     n_bundle = len(_bundle_paths)
     bundle_label = f"{n_bundle} root{'s' if n_bundle > 1 else ''}"
@@ -422,7 +435,7 @@ def run_audit(
 
     files: list[FileReport] = []
     for md_file, bundle_root in all_md_files:
-        report = analyze_file(md_file, bundle_root, vault_index)
+        report = analyze_file(md_file, bundle_root, _vault_index)
         files.append(report)
 
     stats = compute_stats(files, vault_total)

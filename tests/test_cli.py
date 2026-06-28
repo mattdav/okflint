@@ -41,9 +41,12 @@ class TestBuildParser:
         assert args.targets == ["file.md"]
 
     def test_validate_default_manifest(self) -> None:
+        # Default is None; _cmd_validate falls back to "okf-base.yaml" at runtime.
+        # None is required to distinguish "not provided" from "explicitly set"
+        # when --vault points to a JSON file (vault-mode detection).
         parser = build_parser()
         args = parser.parse_args(["validate", "file.md"])
-        assert args.manifest == "okf-base.yaml"
+        assert args.manifest is None
 
     def test_validate_json_flag(self) -> None:
         parser = build_parser()
@@ -263,6 +266,18 @@ class TestCmdAuditManifest:
         assert _cmd_audit(args) == 0
         assert "Warning:" in capsys.readouterr().err
 
+    def test_bad_manifest_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        bad_manifest = tmp_path / "bad.yaml"
+        bad_manifest.write_text("okf_version: '0.1'\n", encoding="utf-8")
+        parser = build_parser()
+        args = parser.parse_args(["audit", "--manifest", str(bad_manifest)])
+        assert _cmd_audit(args) == 2
+        assert "error" in capsys.readouterr().err.lower()
+
     def test_multi_root_manifest_scan(
         self,
         tmp_path: Path,
@@ -308,3 +323,10 @@ class TestCmdValidateNoTargets:
         parser = build_parser()
         args = parser.parse_args(["validate", "--manifest", str(manifest_path)])
         assert _cmd_validate(args) == 1
+
+    def test_bad_manifest_no_targets_exit_2(self, tmp_path: Path) -> None:
+        bad_manifest = tmp_path / "bad.yaml"
+        bad_manifest.write_text("okf_version: '0.1'\n", encoding="utf-8")
+        parser = build_parser()
+        args = parser.parse_args(["validate", "--manifest", str(bad_manifest)])
+        assert _cmd_validate(args) == 2

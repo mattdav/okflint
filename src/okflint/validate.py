@@ -669,12 +669,20 @@ def validate_file(
 def run_validate(
     manifest_path: Path,
     targets: list[Path],
+    *,
+    vault_index: dict[str, list[str]] | None = None,
 ) -> tuple[list[Diagnostic], int]:
     """Orchestrate OKF validation over a list of targets.
+
+    When ``vault_index`` is provided it is used as the wikilink resolution
+    index instead of rebuilding one from the manifest roots, allowing the
+    caller to pass a vault-wide union index built once for all bundles.
 
     Args:
         manifest_path: Path to the OKF YAML manifest.
         targets: Files or directories to validate.
+        vault_index: Pre-built file index (stem → list of relative paths).
+            When provided, the per-manifest index build is skipped.
 
     Returns:
         Tuple (list of diagnostics, exit code 0 or 1).
@@ -683,7 +691,11 @@ def run_validate(
         ManifestError: If the manifest is invalid or unreadable.
     """
     manifest = load_manifest(manifest_path)
-    base_index = build_file_index(manifest.base.roots)
+    _base_index: dict[str, list[str]] = (
+        vault_index
+        if vault_index is not None
+        else build_file_index(manifest.base.roots)
+    )
 
     all_diagnostics: list[Diagnostic] = []
 
@@ -694,7 +706,7 @@ def run_validate(
             md_files = [target]
 
         for md_file in md_files:
-            all_diagnostics.extend(validate_file(md_file, manifest, base_index))
+            all_diagnostics.extend(validate_file(md_file, manifest, _base_index))
 
     # Reserved hygiene (global check on roots)
     reserved_level: Literal["off", "warn", "error"] = (

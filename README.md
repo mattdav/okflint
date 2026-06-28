@@ -1,3 +1,10 @@
+---
+type: ProjectDescription
+project: okflint
+updated: 2026-06-28
+tags: [python, cli, linter, okf, open-source]
+---
+
 # okflint
 
 **The Ruff of documentation.** A deterministic compliance linter for documentary
@@ -91,6 +98,7 @@ Each type declares its required/optional fields and its status policy:
 |---|---|
 | **bundle** | A root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. Multiple bundles can be declared via `base.roots` in the manifest. |
 | **vault** | The root folder(s) of all your Markdown (may be larger than the bundle). Used only to resolve `[[...]]` wikilinks. When using `--manifest`, all roots serve as the vault automatically. |
+| **vault manifest** | An `okf-vault.json` file listing multiple bundles in a workspace. Passing it to `--vault` enables audit/validate across all bundles at once, with a shared union wikilink-resolution index. |
 | **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. Declares one or more roots via `base.roots`. See `okf-base.example.yaml` for an annotated template. |
 | **target** | For `validate` only: one or more paths to folders or `.md` files to validate. If omitted, all roots declared in the manifest are validated. |
 
@@ -116,9 +124,14 @@ okflint audit --bundle /path/to/my-base --vault /path/to/my-vault
 
 # Manifest + --bundle as a sub-filter (scans only files under --bundle)
 okflint audit --manifest /path/to/okf-base.yaml --bundle /path/to/sub-folder
+
+# Audit every bundle in a vault manifest (union wikilink index)
+okflint audit --vault /path/to/okf-vault.json
+okflint audit --vault /path/to/okf-vault.json --apply
 ```
 
-Either `--manifest` or both `--bundle` and `--vault` must be provided.
+Either `--manifest`, both `--bundle` and `--vault` (folder), or `--vault` pointing to
+an `okf-vault.json` file must be provided.
 
 **Options:**
 
@@ -126,10 +139,12 @@ Either `--manifest` or both `--bundle` and `--vault` must be provided.
 |---|---|---|
 | `--manifest <path>` | conditional | OKF manifest; `base.roots` defines the bundle and vault roots |
 | `--bundle <path>` | conditional | Root folder to audit; acts as a sub-filter when `--manifest` is also set |
-| `--vault <path>` | conditional | Vault root for wikilink resolution (required when using `--bundle` alone) |
+| `--vault <path>` | conditional | Vault folder for wikilink resolution, **or** an `okf-vault.json` file for multi-bundle mode |
 | `--apply` | no | Writes the full JSON report to `.okflint/YYYY-MM-DD_audit_vN.json` |
 
 When scanning multiple roots, the console output includes per-root file counts.
+In vault JSON mode, each bundle is printed under its own `=== name ===` header,
+followed by a `=== Total vault ===` aggregate.
 
 **Concrete example — Obsidian vault:**
 ```bash
@@ -144,6 +159,29 @@ okflint audit \
 ```bash
 okflint audit --manifest ./okf-base.yaml --apply
 ```
+
+**Concrete example — multi-bundle workspace:**
+```bash
+# okf-vault.json lists several bundles, each with its own okf-base.yaml
+okflint audit --vault ./okf-vault.json --apply
+# Produces: .okflint/2026-06-28_vault_audit_v1.json
+```
+
+**`okf-vault.json` format:**
+```json
+{
+  "okf_vault_version": "0.1",
+  "name": "my-workspace",
+  "bundles": [
+    { "path": "projects/alpha" },
+    { "path": "projects/beta", "manifest": "okf-base.yaml" }
+  ]
+}
+```
+
+Each bundle entry requires a `path` field (absolute or relative to the vault file).
+The optional `manifest` field names the manifest file inside the bundle directory
+(defaults to `okf-base.yaml`).
 
 ---
 
@@ -168,6 +206,12 @@ okflint validate --manifest okf-base.yaml concept1.md concept2.md
 
 # Machine-readable JSON output (for CI, scripts)
 okflint validate --manifest okf-base.yaml --json /path/to/my-base
+
+# Validate every bundle in a vault (each bundle uses its own manifest)
+okflint validate --vault /path/to/okf-vault.json
+
+# Validate with a specific manifest but use the vault's union index
+okflint validate --vault /path/to/okf-vault.json --manifest /path/to/okf-base.yaml
 ```
 
 **Options:**
@@ -175,6 +219,7 @@ okflint validate --manifest okf-base.yaml --json /path/to/my-base
 | Option | Required | Default | Description |
 |---|---|---|---|
 | `--manifest <path>` | no | `okf-base.yaml` | Path to the OKF manifest |
+| `--vault <path>` | no | — | `okf-vault.json` file: without `--manifest` validates each bundle with its own manifest; with `--manifest` uses the vault union index |
 | `--json` | no | — | JSON output instead of human-readable text |
 | `<targets...>` | no | all manifest roots | One or more paths (folders or `.md` files) to validate |
 
@@ -184,7 +229,10 @@ okflint validate --manifest okf-base.yaml --json /path/to/my-base
 |---|---|
 | `0` | No errors (warnings may still be present) |
 | `1` | At least one conformance error |
-| `2` | Invalid or unreadable manifest |
+| `2` | Invalid or unreadable manifest / vault config error |
+
+In vault JSON mode without `--manifest`, errors are prefixed with `[bundle_name]`
+and the exit code is the maximum across all bundles.
 
 **Concrete example — CI GitHub Actions integration:**
 ```yaml
@@ -226,10 +274,11 @@ src/okflint/
 ├── scanner.py    ← shared primitives (scan, frontmatter, links)
 ├── audit.py      ← audit command (descriptive)
 ├── validate.py   ← validate command (normative gate)
+├── vault.py      ← okf-vault.json loading (VaultConfig, load_vault)
 └── __main__.py   ← python -m okflint
 ```
 
-Validation manifest: `manifest.py` (contract loading + validation).
+Bundle manifest: `manifest.py` (contract loading + validation).
 
 ---
 

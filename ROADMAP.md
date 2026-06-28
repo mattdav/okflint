@@ -1,3 +1,11 @@
+---
+type: ProjectLifeCycle
+project: okflint
+status: active
+updated: 2026-06-28
+tags: [python, cli, linter, okf, open-source]
+---
+
 # okflint Roadmap
 
 This document outlines envisioned evolutions beyond v0.1. It does not commit to
@@ -128,3 +136,101 @@ nudging via skill + tool), not a guaranteed gate. A hard, every-time gate still
 lives where the documents ultimately land — CI or a pre-commit on the repository or
 vault — not in the chat app. okflint provides the check; the harness or the
 pipeline decides whether it is advisory or blocking.
+
+---
+
+## Track E — Vault manifest: union of heterogeneous manifests
+
+**Problem.** A real-world knowledge workspace spans multiple projects, each with its
+own `okf-base.yaml` — different `status_field` values (`statut` for a French Home
+Lab base, `status` for an English open-source project), different type vocabularies,
+different profiles. Track D covers multiple roots *under a single contract*. It
+cannot cover roots that live under *different* contracts.
+
+The missing abstraction is the VS Code workspace analogy: documents live in the
+arborescences of the projects they belong to (each validated against their own
+manifest), but the vault is the unified lens through which the whole knowledge base
+is consulted and navigated.
+
+**Direction.** A **vault manifest** — a lightweight descriptor that declares the
+set of manifests composing the vault:
+
+```yaml
+# mattdav-vault.yaml
+okf_vault_version: "0.1"
+name: "mattdav"
+manifests:
+  - path: "C:/Users/matth/Nextcloud/Obsidian-Vault/mattdav-base.yaml"  # FR, statut
+  - path: "C:/Users/matth/Documents/Dev/okflint/okf-base.yaml"          # EN, status
+  - path: "C:/Users/matth/.claude/claude-base.yaml"                     # EN, status
+```
+
+The vault manifest has no `profile` of its own — it delegates validation entirely
+to each child manifest. Its sole responsibility is to declare the union.
+
+**Two-level architecture:**
+
+- **Manifest level** — each manifest validates its own files against its own
+  contract (`status_field`, `types`, `profile`). Strict isolation: a file is never
+  validated against another manifest's rules.
+- **Vault level** — `build_file_index` operates on the union of all roots across
+  all manifests. A link is valid if its target exists anywhere in that union.
+  Resolution is purely structural — it does not re-validate the target file against
+  any contract.
+
+**New CLI surface:**
+
+```bash
+okflint audit  --vault-manifest mattdav-vault.yaml          # unified audit
+okflint validate --vault-manifest mattdav-vault.yaml         # all manifests, aggregated exit code
+okflint validate --vault-manifest mattdav-vault.yaml --manifest okflint/okf-base.yaml
+                                                             # one manifest only, cross-vault link resolution
+```
+
+**Boundary.** The vault manifest is a coordination layer, not a validation layer.
+It never overrides, merges, or relaxes any child manifest's contract. A conformance
+error under manifest A is still an error even if manifest B would allow it.
+Cross-manifest link resolution is structural only: the vault index knows a file
+exists; it does not know or care which contract governs it.
+
+---
+
+## Track F — Exclude patterns in the manifest
+
+**Problem.** A real-world root contains files that must never be validated: generated
+outputs (agent reports, session plans), vendored third-party dependencies, archived
+projects. Today there is no way to declare these exclusions — okflint either scans
+everything or requires N separate `--bundle` invocations scoped to clean subtrees.
+
+**Direction.** Add an `exclude_patterns` key under each root declaration in
+`base.roots`. Patterns are glob-style, relative to the root path. The scanner
+filters them before building the file index — excluded files are invisible to
+validation, link resolution, and audit statistics alike.
+
+```yaml
+base:
+  roots:
+    - path: "C:/Users/matth/Documents/Dev"
+      exclude_patterns:
+        - "*/src/**/data/reports/**"   # generated agent reports
+        - "*/src/**/data/plans/**"     # generated session plans
+        - "*/src/**/data/**"           # agent research outputs
+        - "*/resources/**"             # vendored third-party deps
+        - "archive/**"                 # frozen projects
+        - "*/{{cookiecutter.*}}/**"    # cookiecutter templates
+```
+
+**Design constraints:**
+
+- Patterns live in the manifest only — no `.okflintignore` sidecar files.
+  One source of truth, consistent with the project doctrine.
+- Exclusion is applied at index-build time, not at validation time: an excluded
+  file cannot be a valid link target either (it does not exist as far as okflint
+  is concerned).
+- A root with no `exclude_patterns` key behaves exactly as today (no regression).
+- Patterns are evaluated relative to the root they are declared under, not the
+  manifest's location.
+
+**Done criteria.** `inv lint && inv test` at ≥ 93% coverage. Exclusion must be
+verified both in audit (file absent from statistics) and in validate (excluded file
+not flagged as missing type, excluded path not flagged as broken link target).

@@ -12,23 +12,225 @@ import dataclasses
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from beartype import beartype
 
 from okflint.audit import run_audit
 from okflint.manifest import load_manifest
-from okflint.validate import ManifestError, run_validate
+from okflint.scanner import build_file_index
+from okflint.validate import Diagnostic, ManifestError, run_validate
+from okflint.vault import VaultConfig, VaultError, load_vault
+
+# ---------------------------------------------------------------------------
+# Shared printing helpers
+# ---------------------------------------------------------------------------
+
+
+def _print_audit_stats(stats: dict[str, Any], title: str | None = None) -> None:
+    """Print the standard audit stats block, optionally preceded by a title.
+
+    Args:
+        stats: Stats dict as returned by ``compute_stats``.
+        title: If set, prints ``=== title ===`` before the stats.
+    """
+    if title is not None:
+        print(f"\n=== {title} ===")
+    n_concepts = stats["total_concept_files"]
+    print(f"Files: {stats['total_files']} ({n_concepts} concepts)")
+    print(f"OKF status: {stats['by_okf_status']}")
+    wikilinks_broken = stats["broken_wikilinks"]
+    print(f"Wikilinks: {stats['total_wikilinks']} of which {wikilinks_broken} broken")
+    md_broken = stats["broken_markdown_links"]
+    print(f"MD links: {stats['total_markdown_links']} of which {md_broken} broken")
+    print(f"Split candidates: {stats['split_candidates']}")
+
+
+def _aggregate_audit_stats(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    """Aggregate stats from multiple per-bundle audit reports.
+
+    Args:
+        reports: List of individual bundle audit reports.
+
+    Returns:
+        Combined stats dict compatible with ``_print_audit_stats``.
+    """
+    by_status: dict[str, int] = {"conformant": 0, "partial": 0, "non_conformant": 0}
+    for r in reports:
+        for k, v in r["stats"]["by_okf_status"].items():
+            by_status[str(k)] = by_status.get(str(k), 0) + int(v)
+
+    return {
+        "total_files": sum(int(r["stats"]["total_files"]) for r in reports),
+        "total_concept_files": sum(
+            int(r["stats"]["total_concept_files"]) for r in reports
+        ),
+        "by_okf_status": by_status,
+        "total_wikilinks": sum(int(r["stats"]["total_wikilinks"]) for r in reports),
+        "broken_wikilinks": sum(int(r["stats"]["broken_wikilinks"]) for r in reports),
+        "total_markdown_links": sum(
+            int(r["stats"]["total_markdown_links"]) for r in reports
+        ),
+        "broken_markdown_links": sum(
+            int(r["stats"]["broken_markdown_links"]) for r in reports
+        ),
+        "split_candidates": sum(int(r["stats"]["split_candidates"]) for r in reports),
+    }
+
+
+def _write_audit_report(report: dict[str, Any], suffix: str = "audit") -> None:
+    """Write a dated audit JSON report to .okflint/ and print its path.
+
+    Args:
+        report: Audit report dict.
+        suffix: Filename infix (``audit`` or ``vault_audit``).
+    """
+    from datetime import date
+
+    outputs_dir = Path(".okflint")
+    outputs_dir.mkdir(exist_ok=True)
+    today = date.today().strftime("%Y-%m-%d")
+    v = 1
+    while (outputs_dir / f"{today}_{suffix}_v{v}.json").exists():
+        v += 1
+    out = outputs_dir / f"{today}_{suffix}_v{v}.json"
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Report: {out}")
+
+
+# ---------------------------------------------------------------------------
+# Full-vault sub-command implementations
+# ---------------------------------------------------------------------------
+
+
+def _cmd_audit_full_vault(
+    vault_cfg: VaultConfig,
+    vault_index: dict[str, list[str]],
+    args: argparse.Namespace,
+) -> int:
+    """Audit every bundle in the vault with the shared union index.
+
+    Args:
+        vault_cfg: Loaded vault configuration.
+        vault_index: Pre-built union file index for all vault bundles.
+        args: CLI namespace (apply).
+
+    Returns:
+        Exit code (0 on success).
+    """
+    all_reports: list[dict[str, Any]] = []
+
+    for bundle_entry in vault_cfg.bundles:
+        bundle_name = bundle_entry.path.name
+        try:
+            manifest = load_manifest(bundle_entry.manifest_path)
+        except ManifestError as exc:
+            print(
+                f"Warning: skipping bundle '{bundle_name}': {exc}",
+                file=sys.stderr,
+            )
+            continue
+
+        report = run_audit(manifest.base.roots, [], vault_index=vault_index)
+        all_reports.append(report)
+        _print_audit_stats(report["stats"], title=bundle_name)
+
+    if all_reports:
+        _print_audit_stats(_aggregate_audit_stats(all_reports), title="Total vault")
+
+    if args.apply and all_reports:
+        combined: dict[str, Any] = {"reports": all_reports}
+        _write_audit_report(combined, suffix="vault_audit")
+    elif not args.apply:
+        print("(dry-run — re-run with --apply to write the JSON report)")
+
+    return 0
+
+
+def _cmd_validate_full_vault(
+    vault_cfg: VaultConfig,
+    vault_index: dict[str, list[str]],
+    args: argparse.Namespace,
+) -> int:
+    """Validate every bundle in the vault with the shared union index.
+
+    Args:
+        vault_cfg: Loaded vault configuration.
+        vault_index: Pre-built union file index for all vault bundles.
+        args: CLI namespace (json_output).
+
+    Returns:
+        Aggregated exit code (max of all bundle exit codes).
+    """
+    all_errors: list[Diagnostic] = []
+    max_code = 0
+
+    for bundle_entry in vault_cfg.bundles:
+        bundle_name = bundle_entry.path.name
+        try:
+            manifest = load_manifest(bundle_entry.manifest_path)
+        except ManifestError as exc:
+            print(
+                f"Warning: skipping bundle '{bundle_name}': {exc}",
+                file=sys.stderr,
+            )
+            max_code = max(max_code, 2)
+            continue
+
+        try:
+            errors, code = run_validate(
+                bundle_entry.manifest_path,
+                manifest.base.roots,
+                vault_index=vault_index,
+            )
+        except ManifestError as exc:
+            print(
+                f"Warning: manifest error in bundle '{bundle_name}': {exc}",
+                file=sys.stderr,
+            )
+            max_code = max(max_code, 2)
+            continue
+
+        max_code = max(max_code, code)
+
+        if not args.json_output:
+            for e in errors:
+                icon = "❌" if e.severity == "error" else "⚠️"
+                print(f"{icon} [{e.code}] [{bundle_name}] {e.file} — {e.message}")
+        else:
+            all_errors.extend(errors)
+
+    if args.json_output:
+        payload = [dataclasses.asdict(e) for e in all_errors]
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    elif max_code == 0:
+        print("✅ All files are OKF-conformant.")
+
+    return max_code
+
+
+# ---------------------------------------------------------------------------
+# Sub-command handlers
+# ---------------------------------------------------------------------------
 
 
 def _cmd_audit(args: argparse.Namespace) -> int:
     """Execute the audit sub-command.
 
-    Resolves bundle and vault roots from --manifest, --bundle/--vault, or both.
-    Resolution rules (in priority order):
-    - --manifest only: multi-root from manifest.base.roots
-    - --bundle + --vault: single-root (backward compatible)
-    - --manifest + --bundle: manifest roots with --bundle as a sub-filter
-    - neither: error
+    When ``--vault`` points to a ``.json`` file the vault manifest is loaded
+    and the union index is built from all declared bundles.  Resolution
+    priority (most to least specific):
+
+    +----------------+----------+-------------+----------------------------------+
+    | ``--manifest`` | ``--bundle`` | ``--vault`` (json) | Behaviour          |
+    +----------------+----------+-------------+----------------------------------+
+    | ✗              | ✗        | ✓           | Full vault (each bundle)         |
+    | ✗              | ✓        | ✓           | ``--bundle`` only, union index   |
+    | ✓              | ✗        | ✓           | Manifest roots, union index      |
+    | ✓              | ✓        | ✓           | Manifest roots + bundle filter   |
+    | ✓              | ✗        | ✗           | Manifest multi-root (current)    |
+    | ✗              | ✓        | ✗ (folder)  | Single-root (current)            |
+    +----------------+----------+-------------+----------------------------------+
 
     Args:
         args: argparse Namespace (manifest, bundle, vault, apply).
@@ -39,29 +241,87 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     has_manifest = args.manifest is not None
     has_bundle = args.bundle is not None
     has_vault = args.vault is not None
+    vault_path = Path(args.vault) if has_vault else None
+    vault_is_json = vault_path is not None and vault_path.suffix.lower() == ".json"
 
-    bundle_paths: list[Path]
-    vault_paths: list[Path]
-    target_filter: Path | None = None
+    if vault_is_json:
+        assert vault_path is not None  # narrowing for mypy
+        try:
+            vault_cfg = load_vault(vault_path)
+        except VaultError as exc:
+            print(f"Vault error: {exc}", file=sys.stderr)
+            return 2
+
+        all_vault_paths = [b.path for b in vault_cfg.bundles]
+        print(f"🔎 Indexing vault: {len(vault_cfg.bundles)} bundles")
+        vault_index = build_file_index(all_vault_paths)
+        vault_total = sum(len(v) for v in vault_index.values())
+        print(f"   {vault_total} .md files indexed")
+
+        if not has_bundle and not has_manifest:
+            return _cmd_audit_full_vault(vault_cfg, vault_index, args)
+
+        bundle_paths: list[Path]
+        target_filter: Path | None = None
+
+        if has_manifest:
+            try:
+                manifest = load_manifest(Path(args.manifest))
+            except ManifestError as exc:
+                print(f"Manifest error: {exc}", file=sys.stderr)
+                return 2
+            bundle_paths = manifest.base.roots
+            if has_bundle:
+                print(
+                    "Warning: Both --manifest and --bundle provided; "
+                    "--bundle used as target filter over manifest roots.",
+                    file=sys.stderr,
+                )
+                target_filter = Path(args.bundle)
+        else:
+            bundle_paths = [Path(args.bundle)]
+
+        report = run_audit(
+            bundle_paths,
+            [],
+            target_filter=target_filter,
+            vault_index=vault_index,
+        )
+        _print_audit_stats(report["stats"])
+        roots: list[dict[str, object]] = report.get("roots", [])
+        if len(roots) > 1:
+            print("\nPer-root:")
+            for root_info in roots:
+                print(f"  {root_info['path']}   {root_info['file_count']} files")
+        if args.apply:
+            _write_audit_report(report)
+        else:
+            print("(dry-run — re-run with --apply to write the JSON report)")
+        return 0
+
+    # ── Original behaviour (vault is a folder or absent) ──────────────────────
+    bundle_paths_orig: list[Path]
+    vault_paths_orig: list[Path]
+    target_filter_orig: Path | None = None
 
     if has_manifest:
         try:
-            manifest = load_manifest(Path(args.manifest))
+            manifest_orig = load_manifest(Path(args.manifest))
         except ManifestError as exc:
             print(f"Manifest error: {exc}", file=sys.stderr)
             return 2
-        bundle_paths = manifest.base.roots
-        vault_paths = manifest.base.roots
+        bundle_paths_orig = manifest_orig.base.roots
+        vault_paths_orig = manifest_orig.base.roots
         if has_bundle:
             print(
                 "Warning: Both --manifest and --bundle provided; "
                 "--bundle used as target filter over manifest roots.",
                 file=sys.stderr,
             )
-            target_filter = Path(args.bundle)
+            target_filter_orig = Path(args.bundle)
     elif has_bundle and has_vault:
-        bundle_paths = [Path(args.bundle)]
-        vault_paths = [Path(args.vault)]
+        bundle_paths_orig = [Path(args.bundle)]
+        vault_paths_orig = [Path(args.vault)]
     else:
         print(
             "Error: Provide either --manifest or both --bundle and --vault.",
@@ -69,37 +329,35 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         )
         return 2
 
-    report = run_audit(bundle_paths, vault_paths, target_filter=target_filter)
-    stats = report["stats"]
-    n_concepts = stats["total_concept_files"]
-    print(f"Files: {stats['total_files']} ({n_concepts} concepts)")
-    print(f"OKF status: {stats['by_okf_status']}")
-    wikilinks_broken = stats["broken_wikilinks"]
-    print(f"Wikilinks: {stats['total_wikilinks']} of which {wikilinks_broken} broken")
-    md_broken = stats["broken_markdown_links"]
-    print(f"MD links: {stats['total_markdown_links']} of which {md_broken} broken")
-    print(f"Split candidates: {stats['split_candidates']}")
+    report_orig = run_audit(
+        bundle_paths_orig,
+        vault_paths_orig,
+        target_filter=target_filter_orig,
+    )
+    stats_orig = report_orig["stats"]
+    n_concepts_orig = stats_orig["total_concept_files"]
+    print(f"Files: {stats_orig['total_files']} ({n_concepts_orig} concepts)")
+    print(f"OKF status: {stats_orig['by_okf_status']}")
+    wikilinks_broken_orig = stats_orig["broken_wikilinks"]
+    print(
+        f"Wikilinks: {stats_orig['total_wikilinks']} "
+        f"of which {wikilinks_broken_orig} broken"
+    )
+    md_broken_orig = stats_orig["broken_markdown_links"]
+    print(
+        f"MD links: {stats_orig['total_markdown_links']} "
+        f"of which {md_broken_orig} broken"
+    )
+    print(f"Split candidates: {stats_orig['split_candidates']}")
 
-    roots: list[dict[str, object]] = report.get("roots", [])
-    if len(roots) > 1:
+    roots_orig: list[dict[str, object]] = report_orig.get("roots", [])
+    if len(roots_orig) > 1:
         print("\nPer-root:")
-        for root_info in roots:
+        for root_info in roots_orig:
             print(f"  {root_info['path']}   {root_info['file_count']} files")
 
     if args.apply:
-        from datetime import date
-
-        outputs_dir = Path(".okflint")
-        outputs_dir.mkdir(exist_ok=True)
-        today = date.today().strftime("%Y-%m-%d")
-        v = 1
-        while (outputs_dir / f"{today}_audit_v{v}.json").exists():
-            v += 1
-        out = outputs_dir / f"{today}_audit_v{v}.json"
-        out.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
-        print(f"Report: {out}")
+        _write_audit_report(report_orig)
     else:
         print("(dry-run — re-run with --apply to write the JSON report)")
     return 0
@@ -108,47 +366,119 @@ def _cmd_audit(args: argparse.Namespace) -> int:
 def _cmd_validate(args: argparse.Namespace) -> int:
     """Execute the validate sub-command.
 
-    When no targets are given, all roots declared in the manifest are validated.
-    The wikilink resolution index always spans all manifest roots.
+    When ``--vault`` points to a ``.json`` file:
+    - With explicit ``--manifest``: validate using that manifest and the vault
+      union index.
+    - Without ``--manifest`` and without targets: validate every bundle with
+      its own manifest using the vault union index; exit code is the max of
+      all bundle codes.
+    - Without ``--manifest`` but with explicit targets: error (ambiguous).
+
+    When ``--vault`` is absent or is a folder, behaviour is unchanged.
 
     Args:
-        args: argparse Namespace (manifest, json_output, targets).
+        args: argparse Namespace (manifest, vault, json_output, targets).
 
     Returns:
         Exit code (0 if conformant, 1 if at least one error, 2 on manifest error).
     """
-    manifest_path = Path(args.manifest)
+    has_vault = args.vault is not None
+    vault_path = Path(args.vault) if has_vault else None
+    vault_is_json = vault_path is not None and vault_path.suffix.lower() == ".json"
+    explicit_manifest = args.manifest is not None
+
+    if vault_is_json:
+        assert vault_path is not None  # narrowing for mypy
+        try:
+            vault_cfg = load_vault(vault_path)
+        except VaultError as exc:
+            print(f"Vault error: {exc}", file=sys.stderr)
+            return 2
+
+        all_vault_paths = [b.path for b in vault_cfg.bundles]
+        vault_index = build_file_index(all_vault_paths)
+
+        if not explicit_manifest:
+            if args.targets:
+                print(
+                    "Error: --vault without --manifest combined with explicit "
+                    "targets is ambiguous.",
+                    file=sys.stderr,
+                )
+                return 2
+            return _cmd_validate_full_vault(vault_cfg, vault_index, args)
+
+        # Explicit manifest + vault JSON → validate with union index
+        manifest_path = Path(args.manifest)
+        if args.targets:
+            targets: list[Path] = [Path(t) for t in args.targets]
+        else:
+            try:
+                manifest_for_roots = load_manifest(manifest_path)
+                targets = manifest_for_roots.base.roots
+            except ManifestError as exc:
+                print(f"Manifest error: {exc}", file=sys.stderr)
+                return 2
+
+        try:
+            errors, code = run_validate(manifest_path, targets, vault_index=vault_index)
+        except ManifestError as exc:
+            print(f"Manifest error: {exc}", file=sys.stderr)
+            return 2
+
+        if args.json_output:
+            payload = [dataclasses.asdict(e) for e in errors]
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            for e in errors:
+                icon = "❌" if e.severity == "error" else "⚠️"
+                print(f"{icon} [{e.code}] {e.file} — {e.message}")
+            if not errors:
+                print("✅ All files are OKF-conformant.")
+            else:
+                errs = sum(1 for e in errors if e.severity == "error")
+                warns = sum(1 for e in errors if e.severity == "warning")
+                print(f"\n{errs} error(s), {warns} warning(s).")
+        return code
+
+    # ── Original behaviour ────────────────────────────────────────────────────
+    manifest_path_orig = Path(args.manifest or "okf-base.yaml")
 
     if args.targets:
-        targets = [Path(t) for t in args.targets]
+        targets_orig: list[Path] = [Path(t) for t in args.targets]
     else:
         try:
-            manifest = load_manifest(manifest_path)
-            targets = manifest.base.roots
+            manifest_obj = load_manifest(manifest_path_orig)
+            targets_orig = manifest_obj.base.roots
         except ManifestError as exc:
             print(f"Manifest error: {exc}", file=sys.stderr)
             return 2
 
     try:
-        errors, code = run_validate(manifest_path, targets)
+        errors_orig, code_orig = run_validate(manifest_path_orig, targets_orig)
     except ManifestError as exc:
         print(f"Manifest error: {exc}", file=sys.stderr)
         return 2
 
     if args.json_output:
-        payload = [dataclasses.asdict(e) for e in errors]
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        payload_orig = [dataclasses.asdict(e) for e in errors_orig]
+        print(json.dumps(payload_orig, indent=2, ensure_ascii=False))
     else:
-        for e in errors:
+        for e in errors_orig:
             icon = "❌" if e.severity == "error" else "⚠️"
             print(f"{icon} [{e.code}] {e.file} — {e.message}")
-        if not errors:
+        if not errors_orig:
             print("✅ All files are OKF-conformant.")
         else:
-            errs = sum(1 for e in errors if e.severity == "error")
-            warns = sum(1 for e in errors if e.severity == "warning")
-            print(f"\n{errs} error(s), {warns} warning(s).")
-    return code
+            errs_orig = sum(1 for e in errors_orig if e.severity == "error")
+            warns_orig = sum(1 for e in errors_orig if e.severity == "warning")
+            print(f"\n{errs_orig} error(s), {warns_orig} warning(s).")
+    return code_orig
+
+
+# ---------------------------------------------------------------------------
+# Parser
+# ---------------------------------------------------------------------------
 
 
 @beartype
@@ -181,7 +511,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument(
         "--vault",
         default=None,
-        help="Root of the vault (for the wikilink resolution index).",
+        help=(
+            "Path to an okf-vault.json file (vault-wide mode) "
+            "or root of the vault folder (wikilink resolution index)."
+        ),
     )
     p_audit.add_argument(
         "--apply",
@@ -196,8 +529,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_validate.add_argument(
         "--manifest",
-        default="okf-base.yaml",
+        default=None,
         help="Path to the OKF manifest (default: okf-base.yaml).",
+    )
+    p_validate.add_argument(
+        "--vault",
+        default=None,
+        help=(
+            "Path to an okf-vault.json file.  Without --manifest, validates "
+            "every bundle with its own manifest using a vault-wide union index."
+        ),
     )
     p_validate.add_argument(
         "--json",
