@@ -113,25 +113,19 @@ conformance statistics, broken wikilinks, broken Markdown links, split candidate
 This command is **always exit 0** — it is an observation tool, not a gate.
 
 ```bash
-# Multi-root scan from the manifest (recommended)
-okflint audit --manifest /path/to/okf-base.yaml
-
-# Write the full JSON report to .okflint/
-okflint audit --manifest /path/to/okf-base.yaml --apply
+# Audit every bundle in a vault manifest (recommended)
+okflint audit --vault /path/to/okf-vault.json
+okflint audit --vault /path/to/okf-vault.json --apply
 
 # Single-root scan (legacy form, backward compatible)
 okflint audit --bundle /path/to/my-base --vault /path/to/my-vault
 
-# Manifest + --bundle as a sub-filter (scans only files under --bundle)
-okflint audit --manifest /path/to/okf-base.yaml --bundle /path/to/sub-folder
-
-# Audit every bundle in a vault manifest (union wikilink index)
-okflint audit --vault /path/to/okf-vault.json
-okflint audit --vault /path/to/okf-vault.json --apply
+# Vault JSON + --bundle as a sub-filter (scans only files under --bundle)
+okflint audit --vault /path/to/okf-vault.json --bundle /path/to/sub-folder
 ```
 
-Either `--manifest`, both `--bundle` and `--vault` (folder), or `--vault` pointing to
-an `okf-vault.json` file must be provided.
+Either `--vault` pointing to an `okf-vault.json` file, or both `--bundle` and `--vault`
+(folder) for single-root mode must be provided.
 
 **Options:**
 
@@ -153,11 +147,6 @@ okflint audit \
   --vault ~/Obsidian \
   --apply
 # Produces: .okflint/2026-06-28_audit_v1.json
-```
-
-**Concrete example — multi-root from manifest:**
-```bash
-okflint audit --manifest ./okf-base.yaml --apply
 ```
 
 **Concrete example — multi-bundle workspace:**
