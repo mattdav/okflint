@@ -323,3 +323,61 @@ class TestRunAudit:
         assert "files" in report
         assert report["stats"]["total_files"] == 2
         assert report["stats"]["total_concept_files"] == 1
+
+
+# ---------------------------------------------------------------------------
+# run_audit — multi-root and backward compatibility
+# ---------------------------------------------------------------------------
+
+
+class TestRunAuditMultiRoot:
+    def test_multi_root_report_structure(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        root1 = tmp_path / "root1"
+        root1.mkdir()
+        root2 = tmp_path / "root2"
+        root2.mkdir()
+        make_md(root1 / "a.md", "---\ntype: Reference\n---\n")
+        make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
+        make_md(root2 / "c.md", "---\ntype: Reference\n---\n")
+        report = run_audit([root1, root2], [root1, root2])
+        assert "bundle_paths" in report
+        assert len(report["bundle_paths"]) == 2
+        assert "roots" in report
+        counts = {r["path"]: r["file_count"] for r in report["roots"]}
+        assert counts[root1.as_posix()] == 1
+        assert counts[root2.as_posix()] == 2
+        assert report["stats"]["total_files"] == 3
+
+    def test_single_path_backward_compat(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "doc.md", "---\ntype: Reference\n---\n")
+        report = run_audit(bundle, bundle)
+        assert "bundle_paths" in report
+        assert len(report["bundle_paths"]) == 1
+        assert report["stats"]["total_files"] == 1
+
+    def test_target_filter_restricts_scan(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        root1 = tmp_path / "root1"
+        root1.mkdir()
+        root2 = tmp_path / "root2"
+        root2.mkdir()
+        make_md(root1 / "a.md", "---\ntype: Reference\n---\n")
+        make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
+        report = run_audit([root1, root2], [root1, root2], target_filter=root1)
+        assert report["stats"]["total_files"] == 1

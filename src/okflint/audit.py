@@ -372,38 +372,77 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
 
 
 @beartype
-def run_audit(bundle_path: Path, vault_path: Path) -> dict[str, Any]:
-    """Orchestrate the full audit of an OKF bundle.
+def run_audit(
+    bundle_paths: list[Path] | Path,
+    vault_paths: list[Path] | Path,
+    *,
+    target_filter: Path | None = None,
+) -> dict[str, Any]:
+    """Orchestrate the full audit of one or more OKF bundle roots.
+
+    Accepts a single Path or a list of Paths for both bundle_paths and
+    vault_paths (single-Path form maintained for backward compatibility).
 
     Args:
-        bundle_path: Root of the bundle to audit.
-        vault_path: Root of the Obsidian vault (for the wikilinks index).
+        bundle_paths: Root(s) of the bundle(s) to audit.
+        vault_paths: Root(s) of the Obsidian vault(s) (for the wikilinks index).
+        target_filter: If set, restrict scanning to files under this path.
+            Used when --bundle is combined with --manifest as a sub-filter.
 
     Returns:
         Full audit report serialisable as JSON.
     """
-    print(f"🔎 Indexing vault: {vault_path}")
-    vault_index = build_file_index([vault_path])
+    # Normalise single-Path callers to lists
+    _bundle_paths: list[Path] = (
+        [bundle_paths] if isinstance(bundle_paths, Path) else list(bundle_paths)
+    )
+    _vault_paths: list[Path] = (
+        [vault_paths] if isinstance(vault_paths, Path) else list(vault_paths)
+    )
+
+    n_vault = len(_vault_paths)
+    vault_label = f"{n_vault} root{'s' if n_vault > 1 else ''}"
+    print(f"🔎 Indexing vault: {vault_label}")
+    vault_index = build_file_index(_vault_paths)
     vault_total = sum(len(v) for v in vault_index.values())
     print(f"   {vault_total} .md files indexed")
 
-    print(f"📦 Scanning bundle: {bundle_path}")
-    md_files = sorted(bundle_path.rglob("*.md"))
-    print(f"   {len(md_files)} files found")
+    n_bundle = len(_bundle_paths)
+    bundle_label = f"{n_bundle} root{'s' if n_bundle > 1 else ''}"
+    print(f"📦 Scanning bundle: {bundle_label}")
+
+    # Collect (file, its_bundle_root) pairs across all roots
+    all_md_files: list[tuple[Path, Path]] = []
+    for bundle_root in _bundle_paths:
+        for md_file in sorted(bundle_root.rglob("*.md")):
+            if target_filter is None or md_file.is_relative_to(target_filter):
+                all_md_files.append((md_file, bundle_root))
+
+    print(f"   {len(all_md_files)} files found")
 
     files: list[FileReport] = []
-    for md_file in md_files:
-        report = analyze_file(md_file, bundle_path, vault_index)
+    for md_file, bundle_root in all_md_files:
+        report = analyze_file(md_file, bundle_root, vault_index)
         files.append(report)
 
     stats = compute_stats(files, vault_total)
+
+    # Per-root file counts for CI consumers
+    root_counts: dict[str, int] = {r.as_posix(): 0 for r in _bundle_paths}
+    for _, bundle_root in all_md_files:
+        root_counts[bundle_root.as_posix()] += 1
+    roots_info = [
+        {"path": path_str, "file_count": count}
+        for path_str, count in root_counts.items()
+    ]
 
     return {
         "generated_at": datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%S"
         ),
-        "bundle_path": bundle_path.as_posix(),
-        "vault_path": vault_path.as_posix(),
+        "bundle_paths": [p.as_posix() for p in _bundle_paths],
+        "vault_paths": [p.as_posix() for p in _vault_paths],
+        "roots": roots_info,
         "stats": stats,
         "files": [dataclasses.asdict(f) for f in files],
     }

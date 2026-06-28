@@ -8,8 +8,23 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+import yaml
 
 from okflint.cli import _cmd_audit, _cmd_validate, build_parser, main
+
+
+def _write_manifest(path: Path, roots: list[Path]) -> None:
+    """Write a minimal OKF manifest with the given roots."""
+    data = {
+        "okf_version": "0.1",
+        "base": {
+            "name": "test-base",
+            "roots": [{"path": r.as_posix()} for r in roots],
+            "reserved_files": {"index": "index.md", "log": "log.md"},
+            "status_field": "statut",
+        },
+    }
+    path.write_text(yaml.dump(data, allow_unicode=True), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -161,3 +176,135 @@ class TestMain:
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 1
+
+
+# ---------------------------------------------------------------------------
+# build_parser — audit manifest options
+# ---------------------------------------------------------------------------
+
+
+class TestBuildParserAudit:
+    def test_audit_manifest_only_parsed(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["audit", "--manifest", "m.yaml"])
+        assert args.manifest == "m.yaml"
+        assert args.bundle is None
+        assert args.vault is None
+
+    def test_audit_no_args_parsed(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["audit"])
+        assert args.manifest is None
+        assert args.bundle is None
+        assert args.vault is None
+
+    def test_validate_no_targets_defaults_to_empty(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["validate", "--manifest", "m.yaml"])
+        assert args.targets == []
+
+
+# ---------------------------------------------------------------------------
+# _cmd_audit — manifest resolution rules
+# ---------------------------------------------------------------------------
+
+
+class TestCmdAuditManifest:
+    def test_manifest_only_exit_0(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        make_md(root / "doc.md", "---\ntype: Reference\n---\n# Title\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [root])
+        parser = build_parser()
+        args = parser.parse_args(["audit", "--manifest", str(manifest_path)])
+        assert _cmd_audit(args) == 0
+
+    def test_no_args_exit_2(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["audit"])
+        assert _cmd_audit(args) == 2
+        assert "Error:" in capsys.readouterr().err
+
+    def test_bundle_without_vault_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        parser = build_parser()
+        args = parser.parse_args(["audit", "--bundle", str(bundle)])
+        assert _cmd_audit(args) == 2
+        assert "Error:" in capsys.readouterr().err
+
+    def test_manifest_and_bundle_warns_and_exits_0(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        make_md(root / "doc.md", "---\ntype: Reference\n---\n# Title\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [root])
+        parser = build_parser()
+        args = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", str(root)]
+        )
+        assert _cmd_audit(args) == 0
+        assert "Warning:" in capsys.readouterr().err
+
+    def test_multi_root_manifest_scan(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root1 = tmp_path / "root1"
+        root1.mkdir()
+        root2 = tmp_path / "root2"
+        root2.mkdir()
+        make_md(root1 / "a.md", "---\ntype: Reference\n---\n")
+        make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [root1, root2])
+        parser = build_parser()
+        args = parser.parse_args(["audit", "--manifest", str(manifest_path)])
+        assert _cmd_audit(args) == 0
+
+
+# ---------------------------------------------------------------------------
+# _cmd_validate — optional targets
+# ---------------------------------------------------------------------------
+
+
+class TestCmdValidateNoTargets:
+    def test_no_targets_uses_manifest_roots_exit_0(
+        self,
+        minimal_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        make_md(root / "doc.md", "---\ntype: Reference\n---\n# Title\n")
+        parser = build_parser()
+        args = parser.parse_args(["validate", "--manifest", str(manifest_path)])
+        assert _cmd_validate(args) == 0
+
+    def test_no_targets_exit_1_on_errors(
+        self,
+        minimal_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        make_md(root / "bad.md", "# No frontmatter\n")
+        parser = build_parser()
+        args = parser.parse_args(["validate", "--manifest", str(manifest_path)])
+        assert _cmd_validate(args) == 1

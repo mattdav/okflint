@@ -89,10 +89,10 @@ Each type declares its required/optional fields and its status policy:
 
 | Term | Definition |
 |---|---|
-| **bundle** | The root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. |
-| **vault** | The root folder of all your Markdown (which may be larger than the bundle). Used only to resolve `[[...]]` wikilinks: a link is considered valid if the target exists anywhere in the vault, even outside the bundle. If you do not use Obsidian wikilinks, pass the same path as the bundle. |
-| **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. See `okf-base.example.yaml` for an annotated template. |
-| **target** | For `validate` only: one or more paths to folders or `.md` files to validate. If you pass a folder, all `.md` files it contains (recursively) are validated. If you pass a file, only that file is validated. |
+| **bundle** | A root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. Multiple bundles can be declared via `base.roots` in the manifest. |
+| **vault** | The root folder(s) of all your Markdown (may be larger than the bundle). Used only to resolve `[[...]]` wikilinks. When using `--manifest`, all roots serve as the vault automatically. |
+| **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. Declares one or more roots via `base.roots`. See `okf-base.example.yaml` for an annotated template. |
+| **target** | For `validate` only: one or more paths to folders or `.md` files to validate. If omitted, all roots declared in the manifest are validated. |
 
 ---
 
@@ -100,25 +100,36 @@ Each type declares its required/optional fields and its status policy:
 
 ### `okflint audit` — Inventory and diagnostic
 
-`audit` scans a bundle and produces a descriptive report: OKF conformance statistics,
-broken wikilinks, broken Markdown links, split candidates. This command is
-**always exit 0** — it is an observation tool, not a gate.
+`audit` scans one or more bundle roots and produces a descriptive report: OKF
+conformance statistics, broken wikilinks, broken Markdown links, split candidates.
+This command is **always exit 0** — it is an observation tool, not a gate.
 
 ```bash
-# Console report (dry-run)
+# Multi-root scan from the manifest (recommended)
+okflint audit --manifest /path/to/okf-base.yaml
+
+# Write the full JSON report to .okflint/
+okflint audit --manifest /path/to/okf-base.yaml --apply
+
+# Single-root scan (legacy form, backward compatible)
 okflint audit --bundle /path/to/my-base --vault /path/to/my-vault
 
-# Write the full JSON report to .okflint/ (dated, auto-incremented report)
-okflint audit --bundle /path/to/my-base --vault /path/to/my-vault --apply
+# Manifest + --bundle as a sub-filter (scans only files under --bundle)
+okflint audit --manifest /path/to/okf-base.yaml --bundle /path/to/sub-folder
 ```
+
+Either `--manifest` or both `--bundle` and `--vault` must be provided.
 
 **Options:**
 
 | Option | Required | Description |
 |---|---|---|
-| `--bundle <path>` | yes | Root folder of the base to audit |
-| `--vault <path>` | yes | Root folder of the vault for wikilink resolution |
+| `--manifest <path>` | conditional | OKF manifest; `base.roots` defines the bundle and vault roots |
+| `--bundle <path>` | conditional | Root folder to audit; acts as a sub-filter when `--manifest` is also set |
+| `--vault <path>` | conditional | Vault root for wikilink resolution (required when using `--bundle` alone) |
 | `--apply` | no | Writes the full JSON report to `.okflint/YYYY-MM-DD_audit_vN.json` |
+
+When scanning multiple roots, the console output includes per-root file counts.
 
 **Concrete example — Obsidian vault:**
 ```bash
@@ -126,12 +137,12 @@ okflint audit \
   --bundle ~/Obsidian/My-project/docs \
   --vault ~/Obsidian \
   --apply
-# Produces: .okflint/2026-06-27_audit_v1.json
+# Produces: .okflint/2026-06-28_audit_v1.json
 ```
 
-**Concrete example — bundle = vault (no wikilinks):**
+**Concrete example — multi-root from manifest:**
 ```bash
-okflint audit --bundle ./docs --vault ./docs
+okflint audit --manifest ./okf-base.yaml --apply
 ```
 
 ---
@@ -143,6 +154,9 @@ declared in your manifest. Returns **exit 0** if no errors, **exit 1** otherwise
 Designed for pre-commit hooks and CI.
 
 ```bash
+# Validate all roots declared in the manifest (no explicit targets)
+okflint validate --manifest okf-base.yaml
+
 # Validate an entire base
 okflint validate --manifest okf-base.yaml /path/to/my-base
 
@@ -162,7 +176,7 @@ okflint validate --manifest okf-base.yaml --json /path/to/my-base
 |---|---|---|---|
 | `--manifest <path>` | no | `okf-base.yaml` | Path to the OKF manifest |
 | `--json` | no | — | JSON output instead of human-readable text |
-| `<targets...>` | yes | — | One or more paths (folders or `.md` files) to validate |
+| `<targets...>` | no | all manifest roots | One or more paths (folders or `.md` files) to validate |
 
 **Exit codes:**
 

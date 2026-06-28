@@ -16,21 +16,60 @@ from pathlib import Path
 from beartype import beartype
 
 from okflint.audit import run_audit
+from okflint.manifest import load_manifest
 from okflint.validate import ManifestError, run_validate
 
 
 def _cmd_audit(args: argparse.Namespace) -> int:
     """Execute the audit sub-command.
 
+    Resolves bundle and vault roots from --manifest, --bundle/--vault, or both.
+    Resolution rules (in priority order):
+    - --manifest only: multi-root from manifest.base.roots
+    - --bundle + --vault: single-root (backward compatible)
+    - --manifest + --bundle: manifest roots with --bundle as a sub-filter
+    - neither: error
+
     Args:
-        args: argparse Namespace (bundle, vault, apply).
+        args: argparse Namespace (manifest, bundle, vault, apply).
 
     Returns:
-        Exit code (always 0: audit is descriptive).
+        Exit code (0 on success, 2 on configuration error).
     """
-    bundle_path = Path(args.bundle)
-    vault_path = Path(args.vault)
-    report = run_audit(bundle_path, vault_path)
+    has_manifest = args.manifest is not None
+    has_bundle = args.bundle is not None
+    has_vault = args.vault is not None
+
+    bundle_paths: list[Path]
+    vault_paths: list[Path]
+    target_filter: Path | None = None
+
+    if has_manifest:
+        try:
+            manifest = load_manifest(Path(args.manifest))
+        except ManifestError as exc:
+            print(f"Manifest error: {exc}", file=sys.stderr)
+            return 2
+        bundle_paths = manifest.base.roots
+        vault_paths = manifest.base.roots
+        if has_bundle:
+            print(
+                "Warning: Both --manifest and --bundle provided; "
+                "--bundle used as target filter over manifest roots.",
+                file=sys.stderr,
+            )
+            target_filter = Path(args.bundle)
+    elif has_bundle and has_vault:
+        bundle_paths = [Path(args.bundle)]
+        vault_paths = [Path(args.vault)]
+    else:
+        print(
+            "Error: Provide either --manifest or both --bundle and --vault.",
+            file=sys.stderr,
+        )
+        return 2
+
+    report = run_audit(bundle_paths, vault_paths, target_filter=target_filter)
     stats = report["stats"]
     n_concepts = stats["total_concept_files"]
     print(f"Files: {stats['total_files']} ({n_concepts} concepts)")
@@ -40,6 +79,12 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     md_broken = stats["broken_markdown_links"]
     print(f"MD links: {stats['total_markdown_links']} of which {md_broken} broken")
     print(f"Split candidates: {stats['split_candidates']}")
+
+    roots: list[dict[str, object]] = report.get("roots", [])
+    if len(roots) > 1:
+        print("\nPer-root:")
+        for root_info in roots:
+            print(f"  {root_info['path']}   {root_info['file_count']} files")
 
     if args.apply:
         from datetime import date
@@ -63,14 +108,27 @@ def _cmd_audit(args: argparse.Namespace) -> int:
 def _cmd_validate(args: argparse.Namespace) -> int:
     """Execute the validate sub-command.
 
+    When no targets are given, all roots declared in the manifest are validated.
+    The wikilink resolution index always spans all manifest roots.
+
     Args:
         args: argparse Namespace (manifest, json_output, targets).
 
     Returns:
-        Exit code (0 if conformant, 1 if at least one error).
+        Exit code (0 if conformant, 1 if at least one error, 2 on manifest error).
     """
     manifest_path = Path(args.manifest)
-    targets = [Path(t) for t in args.targets]
+
+    if args.targets:
+        targets = [Path(t) for t in args.targets]
+    else:
+        try:
+            manifest = load_manifest(manifest_path)
+            targets = manifest.base.roots
+        except ManifestError as exc:
+            print(f"Manifest error: {exc}", file=sys.stderr)
+            return 2
+
     try:
         errors, code = run_validate(manifest_path, targets)
     except ManifestError as exc:
@@ -111,13 +169,18 @@ def build_parser() -> argparse.ArgumentParser:
         "audit", help="Inventory and descriptive diagnostic of a base."
     )
     p_audit.add_argument(
+        "--manifest",
+        default=None,
+        help="Path to the OKF manifest (use base.roots for multi-root scanning).",
+    )
+    p_audit.add_argument(
         "--bundle",
-        required=True,
-        help="Root of the bundle to audit.",
+        default=None,
+        help="Root of the bundle to audit (or sub-filter when --manifest is used).",
     )
     p_audit.add_argument(
         "--vault",
-        required=True,
+        default=None,
         help="Root of the vault (for the wikilink resolution index).",
     )
     p_audit.add_argument(
@@ -144,8 +207,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_validate.add_argument(
         "targets",
-        nargs="+",
-        help="Files or directories to validate.",
+        nargs="*",
+        help="Files or directories to validate (default: all manifest roots).",
     )
     p_validate.set_defaults(func=_cmd_validate)
 

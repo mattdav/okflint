@@ -116,8 +116,8 @@ def index(c: Context) -> None:
     print("🧠 Indexing codebase in codebase-memory-mcp...")
     print(f"   Project: {repo_path}")
     result = subprocess.run(
-        f'"{binary}" cli index_repository \'{payload}\'',
-        shell=True,
+        [str(binary), "cli", "index_repository", payload],
+        shell=False,
     )
     if result.returncode == 0:
         print("✅ Index updated. Claude Code can now query the knowledge graph.")
