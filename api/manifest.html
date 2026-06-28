@@ -80,6 +80,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.ProfileConfig.types"><code class="docutils literal notranslate"><span class="pre">ProfileConfig.types</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#okflint.manifest.RootConfig"><code class="docutils literal notranslate"><span class="pre">RootConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.RootConfig.exclude_patterns"><code class="docutils literal notranslate"><span class="pre">RootConfig.exclude_patterns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.RootConfig.path"><code class="docutils literal notranslate"><span class="pre">RootConfig.path</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.manifest.TypeConfig"><code class="docutils literal notranslate"><span class="pre">TypeConfig</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.aliases"><code class="docutils literal notranslate"><span class="pre">TypeConfig.aliases</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.optional"><code class="docutils literal notranslate"><span class="pre">TypeConfig.optional</span></code></a></li>
@@ -149,7 +154,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.BaseConfig.roots">
-<span class="sig-name descname"><span class="pre">roots</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.BaseConfig.roots" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">roots</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><span class="pre">RootConfig</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.BaseConfig.roots" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -233,6 +238,23 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.ProfileConfig.types">
 <span class="sig-name descname"><span class="pre">types</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#okflint.manifest.TypeConfig" title="okflint.manifest.TypeConfig"><span class="pre">TypeConfig</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.ProfileConfig.types" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="okflint.manifest.RootConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">RootConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_patterns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#RootConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.RootConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Configuration of a single root in the documentary base.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.manifest.RootConfig.exclude_patterns">
+<span class="sig-name descname"><span class="pre">exclude_patterns</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.RootConfig.exclude_patterns" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.manifest.RootConfig.path">
+<span class="sig-name descname"><span class="pre">path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span><a class="headerlink" href="#okflint.manifest.RootConfig.path" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

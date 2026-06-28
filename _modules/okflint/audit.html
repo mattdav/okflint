@@ -91,15 +91,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MarkdownLink</span><span class="p">,</span>
     <span class="n">WikiLink</span><span class="p">,</span>
+    <span class="n">_is_excluded</span><span class="p">,</span>
     <span class="n">blank_code_spans</span><span class="p">,</span>
     <span class="n">build_file_index</span><span class="p">,</span>
     <span class="n">extract_markdown_links</span><span class="p">,</span>
@@ -478,62 +481,87 @@
 <a class="viewcode-back" href="../../api/audit.html#okflint.audit.run_audit">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_audit</span><span class="p">(</span>
-    <span class="n">bundle_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">bundle_paths</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RootConfig</span> <span class="o">|</span> <span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="n">RootConfig</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">vault_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">target_filter</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate the full audit of one or more OKF bundle roots.</span>
 
-<span class="sd">    Accepts a single Path or a list of Paths for both bundle_paths and</span>
-<span class="sd">    vault_paths (single-Path form maintained for backward compatibility).</span>
+<span class="sd">    Accepts RootConfig objects (with exclusion patterns), plain Paths, or a</span>
+<span class="sd">    mix thereof. Single-value forms are accepted for backward compatibility.</span>
+
+<span class="sd">    When ``vault_index`` is provided it is reused directly and ``vault_paths``</span>
+<span class="sd">    is ignored, allowing the caller to build the index union once for a whole</span>
+<span class="sd">    vault and then call ``run_audit`` per-bundle without rebuilding.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        bundle_paths: Root(s) of the bundle(s) to audit.</span>
+<span class="sd">        bundle_paths: Root(s) of the bundle(s) to audit. RootConfig carries</span>
+<span class="sd">            per-root exclusion patterns; plain Path implies no exclusions.</span>
 <span class="sd">        vault_paths: Root(s) of the Obsidian vault(s) (for the wikilinks index).</span>
+<span class="sd">            Ignored when ``vault_index`` is supplied.</span>
 <span class="sd">        target_filter: If set, restrict scanning to files under this path.</span>
 <span class="sd">            Used when --bundle is combined with --manifest as a sub-filter.</span>
+<span class="sd">        vault_index: Pre-built file index (stem → list of relative paths).</span>
+<span class="sd">            When provided, vault indexing is skipped entirely.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Full audit report serialisable as JSON.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Normalise single-Path callers to lists</span>
-    <span class="n">_bundle_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">[</span><span class="n">bundle_paths</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bundle_paths</span><span class="p">,</span> <span class="n">Path</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">bundle_paths</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="c1"># Normalise bundle_paths to list[RootConfig]</span>
+    <span class="n">_bundle_roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RootConfig</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bundle_paths</span><span class="p">,</span> <span class="n">RootConfig</span><span class="p">):</span>
+        <span class="n">_bundle_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">bundle_paths</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bundle_paths</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="n">_bundle_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">bundle_paths</span><span class="p">,</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_bundle_roots</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">p</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">RootConfig</span><span class="p">)</span> <span class="k">else</span> <span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">bundle_paths</span>
+        <span class="p">]</span>
+
     <span class="n">_vault_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">[</span><span class="n">vault_paths</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vault_paths</span><span class="p">,</span> <span class="n">Path</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">vault_paths</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">n_vault</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_vault_paths</span><span class="p">)</span>
-    <span class="n">vault_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_vault</span><span class="si">}</span><span class="s2"> root</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">n_vault</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔎 Indexing vault: </span><span class="si">{</span><span class="n">vault_label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">vault_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">_vault_paths</span><span class="p">)</span>
-    <span class="n">vault_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vault_index</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">vault_total</span><span class="si">}</span><span class="s2"> .md files indexed&quot;</span><span class="p">)</span>
+    <span class="n">_vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">vault_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_vault</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_vault_paths</span><span class="p">)</span>
+        <span class="n">vault_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_vault</span><span class="si">}</span><span class="s2"> root</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">n_vault</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔎 Indexing vault: </span><span class="si">{</span><span class="n">vault_label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_vault_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">_vault_paths</span><span class="p">)</span>
+        <span class="n">vault_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_vault_index</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">vault_total</span><span class="si">}</span><span class="s2"> .md files indexed&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_vault_index</span> <span class="o">=</span> <span class="n">vault_index</span>
+        <span class="n">vault_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_vault_index</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
-    <span class="n">n_bundle</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_bundle_paths</span><span class="p">)</span>
+    <span class="n">n_bundle</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_bundle_roots</span><span class="p">)</span>
     <span class="n">bundle_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_bundle</span><span class="si">}</span><span class="s2"> root</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">n_bundle</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📦 Scanning bundle: </span><span class="si">{</span><span class="n">bundle_label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Collect (file, its_bundle_root) pairs across all roots</span>
+    <span class="c1"># Collect (file, its_bundle_root) pairs across all roots, respecting exclusions</span>
     <span class="n">all_md_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">bundle_root</span> <span class="ow">in</span> <span class="n">_bundle_paths</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">bundle_root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">root_cfg</span> <span class="ow">in</span> <span class="n">_bundle_roots</span><span class="p">:</span>
+        <span class="n">patterns</span> <span class="o">=</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">exclude_patterns</span>
+        <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">patterns</span> <span class="ow">and</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">patterns</span><span class="p">):</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">target_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">md_file</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">target_filter</span><span class="p">):</span>
-                <span class="n">all_md_files</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span><span class="p">))</span>
+                <span class="n">all_md_files</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">md_file</span><span class="p">,</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_md_files</span><span class="p">)</span><span class="si">}</span><span class="s2"> files found&quot;</span><span class="p">)</span>
 
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileReport</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span> <span class="ow">in</span> <span class="n">all_md_files</span><span class="p">:</span>
-        <span class="n">report</span> <span class="o">=</span> <span class="n">analyze_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">)</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">analyze_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span><span class="p">,</span> <span class="n">_vault_index</span><span class="p">)</span>
         <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
 
     <span class="n">stats</span> <span class="o">=</span> <span class="n">compute_stats</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">vault_total</span><span class="p">)</span>
 
     <span class="c1"># Per-root file counts for CI consumers</span>
-    <span class="n">root_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">as_posix</span><span class="p">():</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">_bundle_paths</span><span class="p">}</span>
+    <span class="n">root_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">():</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">_bundle_roots</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">bundle_root</span> <span class="ow">in</span> <span class="n">all_md_files</span><span class="p">:</span>
         <span class="n">root_counts</span><span class="p">[</span><span class="n">bundle_root</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="n">roots_info</span> <span class="o">=</span> <span class="p">[</span>
@@ -545,7 +573,7 @@
         <span class="s2">&quot;generated_at&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span>
             <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span>
         <span class="p">),</span>
-        <span class="s2">&quot;bundle_paths&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_bundle_paths</span><span class="p">],</span>
+        <span class="s2">&quot;bundle_paths&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">_bundle_roots</span><span class="p">],</span>
         <span class="s2">&quot;vault_paths&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_vault_paths</span><span class="p">],</span>
         <span class="s2">&quot;roots&quot;</span><span class="p">:</span> <span class="n">roots_info</span><span class="p">,</span>
         <span class="s2">&quot;stats&quot;</span><span class="p">:</span> <span class="n">stats</span><span class="p">,</span>

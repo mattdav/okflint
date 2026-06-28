@@ -97,23 +97,225 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_audit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.validate</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestError</span><span class="p">,</span> <span class="n">run_validate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootConfig</span><span class="p">,</span> <span class="n">load_manifest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_file_index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.validate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Diagnostic</span><span class="p">,</span> <span class="n">ManifestError</span><span class="p">,</span> <span class="n">run_validate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.vault</span><span class="w"> </span><span class="kn">import</span> <span class="n">VaultConfig</span><span class="p">,</span> <span class="n">VaultError</span><span class="p">,</span> <span class="n">load_vault</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Shared printing helpers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_print_audit_stats</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print the standard audit stats block, optionally preceded by a title.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        stats: Stats dict as returned by ``compute_stats``.</span>
+<span class="sd">        title: If set, prints ``=== title ===`` before the stats.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+    <span class="n">n_concepts</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;total_concept_files&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_files&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_concepts</span><span class="si">}</span><span class="s2"> concepts)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OKF status: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;by_okf_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">wikilinks_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wikilinks: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_wikilinks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">wikilinks_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
+    <span class="n">md_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MD links: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_markdown_links&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">md_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split candidates: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;split_candidates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_audit_stats</span><span class="p">(</span><span class="n">reports</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate stats from multiple per-bundle audit reports.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reports: List of individual bundle audit reports.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Combined stats dict compatible with ``_print_audit_stats``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">by_status</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;conformant&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;partial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;non_conformant&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;by_okf_status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">by_status</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">by_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;total_files&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;total_files&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">),</span>
+        <span class="s2">&quot;total_concept_files&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;total_concept_files&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;by_okf_status&quot;</span><span class="p">:</span> <span class="n">by_status</span><span class="p">,</span>
+        <span class="s2">&quot;total_wikilinks&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;total_wikilinks&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">),</span>
+        <span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">),</span>
+        <span class="s2">&quot;total_markdown_links&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;total_markdown_links&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;split_candidates&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">][</span><span class="s2">&quot;split_candidates&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_audit_report</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;audit&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a dated audit JSON report to .okflint/ and print its path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        report: Audit report dict.</span>
+<span class="sd">        suffix: Filename infix (``audit`` or ``vault_audit``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+
+    <span class="n">outputs_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.okflint&quot;</span><span class="p">)</span>
+    <span class="n">outputs_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">outputs_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">today</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">v</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">outputs_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">today</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">.json&quot;</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Report: </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Full-vault sub-command implementations</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cmd_audit_full_vault</span><span class="p">(</span>
+    <span class="n">vault_cfg</span><span class="p">:</span> <span class="n">VaultConfig</span><span class="p">,</span>
+    <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audit every bundle in the vault with the shared union index.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vault_cfg: Loaded vault configuration.</span>
+<span class="sd">        vault_index: Pre-built union file index for all vault bundles.</span>
+<span class="sd">        args: CLI namespace (apply).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Exit code (0 on success).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_reports</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">bundle_entry</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">:</span>
+        <span class="n">bundle_name</span> <span class="o">=</span> <span class="n">bundle_entry</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">bundle_entry</span><span class="o">.</span><span class="n">manifest_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Warning: skipping bundle &#39;</span><span class="si">{</span><span class="n">bundle_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">,</span> <span class="p">[],</span> <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">)</span>
+        <span class="n">all_reports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+        <span class="n">_print_audit_stats</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">],</span> <span class="n">title</span><span class="o">=</span><span class="n">bundle_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">all_reports</span><span class="p">:</span>
+        <span class="n">_print_audit_stats</span><span class="p">(</span><span class="n">_aggregate_audit_stats</span><span class="p">(</span><span class="n">all_reports</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Total vault&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">apply</span> <span class="ow">and</span> <span class="n">all_reports</span><span class="p">:</span>
+        <span class="n">combined</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reports&quot;</span><span class="p">:</span> <span class="n">all_reports</span><span class="p">}</span>
+        <span class="n">_write_audit_report</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;vault_audit&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">apply</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(dry-run — re-run with --apply to write the JSON report)&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cmd_validate_full_vault</span><span class="p">(</span>
+    <span class="n">vault_cfg</span><span class="p">:</span> <span class="n">VaultConfig</span><span class="p">,</span>
+    <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate every bundle in the vault with the shared union index.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vault_cfg: Loaded vault configuration.</span>
+<span class="sd">        vault_index: Pre-built union file index for all vault bundles.</span>
+<span class="sd">        args: CLI namespace (json_output).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Aggregated exit code (max of all bundle exit codes).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">max_code</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">bundle_entry</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">:</span>
+        <span class="n">bundle_name</span> <span class="o">=</span> <span class="n">bundle_entry</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">bundle_entry</span><span class="o">.</span><span class="n">manifest_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Warning: skipping bundle &#39;</span><span class="si">{</span><span class="n">bundle_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">max_code</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_code</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">errors</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">run_validate</span><span class="p">(</span>
+                <span class="n">bundle_entry</span><span class="o">.</span><span class="n">manifest_path</span><span class="p">,</span>
+                <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">],</span>
+                <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Warning: manifest error in bundle &#39;</span><span class="si">{</span><span class="n">bundle_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">max_code</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_code</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">max_code</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_code</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="n">icon</span> <span class="o">=</span> <span class="s2">&quot;❌&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠️&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">] [</span><span class="si">{</span><span class="n">bundle_name</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">all_errors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">all_errors</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">max_code</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All files are OKF-conformant.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">max_code</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Sub-command handlers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_audit</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the audit sub-command.</span>
 
-<span class="sd">    Resolves bundle and vault roots from --manifest, --bundle/--vault, or both.</span>
-<span class="sd">    Resolution rules (in priority order):</span>
-<span class="sd">    - --manifest only: multi-root from manifest.base.roots</span>
-<span class="sd">    - --bundle + --vault: single-root (backward compatible)</span>
-<span class="sd">    - --manifest + --bundle: manifest roots with --bundle as a sub-filter</span>
-<span class="sd">    - neither: error</span>
+<span class="sd">    When ``--vault`` points to a ``.json`` file the vault manifest is loaded</span>
+<span class="sd">    and the union index is built from all declared bundles.  Resolution</span>
+<span class="sd">    priority (most to least specific):</span>
+
+<span class="sd">    +----------------+----------+-------------+----------------------------------+</span>
+<span class="sd">    | ``--manifest`` | ``--bundle`` | ``--vault`` (json) | Behaviour          |</span>
+<span class="sd">    +----------------+----------+-------------+----------------------------------+</span>
+<span class="sd">    | ✗              | ✗        | ✓           | Full vault (each bundle)         |</span>
+<span class="sd">    | ✗              | ✓        | ✓           | ``--bundle`` only, union index   |</span>
+<span class="sd">    | ✓              | ✗        | ✓           | Manifest roots, union index      |</span>
+<span class="sd">    | ✓              | ✓        | ✓           | Manifest roots + bundle filter   |</span>
+<span class="sd">    | ✓              | ✗        | ✗           | Manifest multi-root (current)    |</span>
+<span class="sd">    | ✗              | ✓        | ✗ (folder)  | Single-root (current)            |</span>
+<span class="sd">    +----------------+----------+-------------+----------------------------------+</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        args: argparse Namespace (manifest, bundle, vault, apply).</span>
@@ -124,29 +326,94 @@
     <span class="n">has_manifest</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="n">has_bundle</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="n">has_vault</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">vault</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">vault_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_vault</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">vault_is_json</span> <span class="o">=</span> <span class="n">vault_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">vault_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span>
 
-    <span class="n">bundle_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
-    <span class="n">vault_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
-    <span class="n">target_filter</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">vault_is_json</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">vault_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrowing for mypy</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">vault_cfg</span> <span class="o">=</span> <span class="n">load_vault</span><span class="p">(</span><span class="n">vault_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">VaultError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vault error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">2</span>
+
+        <span class="n">all_vault_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔎 Indexing vault: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">)</span><span class="si">}</span><span class="s2"> bundles&quot;</span><span class="p">)</span>
+        <span class="n">vault_excl</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">_be</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_m</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">_be</span><span class="o">.</span><span class="n">manifest_path</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="n">_m</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">_r</span><span class="o">.</span><span class="n">exclude_patterns</span><span class="p">:</span>
+                        <span class="n">vault_excl</span><span class="p">[</span><span class="n">_r</span><span class="o">.</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">_r</span><span class="o">.</span><span class="n">exclude_patterns</span>
+            <span class="k">except</span> <span class="n">ManifestError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="n">vault_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">all_vault_paths</span><span class="p">,</span> <span class="n">vault_excl</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">vault_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vault_index</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">vault_total</span><span class="si">}</span><span class="s2"> .md files indexed&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_bundle</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_manifest</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_cmd_audit_full_vault</span><span class="p">(</span><span class="n">vault_cfg</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="n">target_filter</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">has_manifest</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+                <span class="k">return</span> <span class="mi">2</span>
+            <span class="n">bundle_paths</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span>
+            <span class="k">if</span> <span class="n">has_bundle</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;Warning: Both --manifest and --bundle provided; &quot;</span>
+                    <span class="s2">&quot;--bundle used as target filter over manifest roots.&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">target_filter</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bundle_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">),</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])]</span>
+
+        <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
+            <span class="n">bundle_paths</span><span class="p">,</span>
+            <span class="p">[],</span>
+            <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter</span><span class="p">,</span>
+            <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_print_audit_stats</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">])</span>
+        <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roots&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Per-root:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">root_info</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">root_info</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">root_info</span><span class="p">[</span><span class="s1">&#39;file_count&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> files&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">apply</span><span class="p">:</span>
+            <span class="n">_write_audit_report</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(dry-run — re-run with --apply to write the JSON report)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="c1"># ── Original behaviour (vault is a folder or absent) ──────────────────────</span>
+    <span class="n">vault_paths_orig</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+    <span class="n">target_filter_orig</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">if</span> <span class="n">has_manifest</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+            <span class="n">manifest_orig</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
         <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
             <span class="k">return</span> <span class="mi">2</span>
-        <span class="n">bundle_paths</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span>
-        <span class="n">vault_paths</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span>
+        <span class="n">bundle_paths_orig</span> <span class="o">=</span> <span class="n">manifest_orig</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span>
+        <span class="n">vault_paths_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest_orig</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">has_bundle</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="s2">&quot;Warning: Both --manifest and --bundle provided; &quot;</span>
                 <span class="s2">&quot;--bundle used as target filter over manifest roots.&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">target_filter</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
+            <span class="n">target_filter_orig</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">has_bundle</span> <span class="ow">and</span> <span class="n">has_vault</span><span class="p">:</span>
-        <span class="n">bundle_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)]</span>
-        <span class="n">vault_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)]</span>
+        <span class="n">bundle_paths_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">),</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])]</span>
+        <span class="n">vault_paths_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="s2">&quot;Error: Provide either --manifest or both --bundle and --vault.&quot;</span><span class="p">,</span>
@@ -154,37 +421,35 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="mi">2</span>
 
-    <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span><span class="n">bundle_paths</span><span class="p">,</span> <span class="n">vault_paths</span><span class="p">,</span> <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter</span><span class="p">)</span>
-    <span class="n">stats</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">]</span>
-    <span class="n">n_concepts</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;total_concept_files&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_files&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_concepts</span><span class="si">}</span><span class="s2"> concepts)&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OKF status: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;by_okf_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">wikilinks_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wikilinks: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_wikilinks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">wikilinks_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
-    <span class="n">md_broken</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MD links: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_markdown_links&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of which </span><span class="si">{</span><span class="n">md_broken</span><span class="si">}</span><span class="s2"> broken&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split candidates: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;split_candidates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">report_orig</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
+        <span class="n">bundle_paths_orig</span><span class="p">,</span>
+        <span class="n">vault_paths_orig</span><span class="p">,</span>
+        <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter_orig</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">stats_orig</span> <span class="o">=</span> <span class="n">report_orig</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">]</span>
+    <span class="n">n_concepts_orig</span> <span class="o">=</span> <span class="n">stats_orig</span><span class="p">[</span><span class="s2">&quot;total_concept_files&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="n">stats_orig</span><span class="p">[</span><span class="s1">&#39;total_files&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_concepts_orig</span><span class="si">}</span><span class="s2"> concepts)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;OKF status: </span><span class="si">{</span><span class="n">stats_orig</span><span class="p">[</span><span class="s1">&#39;by_okf_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">wikilinks_broken_orig</span> <span class="o">=</span> <span class="n">stats_orig</span><span class="p">[</span><span class="s2">&quot;broken_wikilinks&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Wikilinks: </span><span class="si">{</span><span class="n">stats_orig</span><span class="p">[</span><span class="s1">&#39;total_wikilinks&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;of which </span><span class="si">{</span><span class="n">wikilinks_broken_orig</span><span class="si">}</span><span class="s2"> broken&quot;</span>
+    <span class="p">)</span>
+    <span class="n">md_broken_orig</span> <span class="o">=</span> <span class="n">stats_orig</span><span class="p">[</span><span class="s2">&quot;broken_markdown_links&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;MD links: </span><span class="si">{</span><span class="n">stats_orig</span><span class="p">[</span><span class="s1">&#39;total_markdown_links&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;of which </span><span class="si">{</span><span class="n">md_broken_orig</span><span class="si">}</span><span class="s2"> broken&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Split candidates: </span><span class="si">{</span><span class="n">stats_orig</span><span class="p">[</span><span class="s1">&#39;split_candidates&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roots&quot;</span><span class="p">,</span> <span class="p">[])</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">roots_orig</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="n">report_orig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;roots&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roots_orig</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Per-root:&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">root_info</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">root_info</span> <span class="ow">in</span> <span class="n">roots_orig</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">root_info</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">root_info</span><span class="p">[</span><span class="s1">&#39;file_count&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> files&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">apply</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
-
-        <span class="n">outputs_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.okflint&quot;</span><span class="p">)</span>
-        <span class="n">outputs_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">while</span> <span class="p">(</span><span class="n">outputs_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">today</span><span class="si">}</span><span class="s2">_audit_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">v</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">outputs_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">today</span><span class="si">}</span><span class="s2">_audit_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">.json&quot;</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span>
-        <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Report: </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_write_audit_report</span><span class="p">(</span><span class="n">report_orig</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(dry-run — re-run with --apply to write the JSON report)&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="mi">0</span>
@@ -193,47 +458,128 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_validate</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the validate sub-command.</span>
 
-<span class="sd">    When no targets are given, all roots declared in the manifest are validated.</span>
-<span class="sd">    The wikilink resolution index always spans all manifest roots.</span>
+<span class="sd">    When ``--vault`` points to a ``.json`` file:</span>
+<span class="sd">    - With explicit ``--manifest``: validate using that manifest and the vault</span>
+<span class="sd">      union index.</span>
+<span class="sd">    - Without ``--manifest`` and without targets: validate every bundle with</span>
+<span class="sd">      its own manifest using the vault union index; exit code is the max of</span>
+<span class="sd">      all bundle codes.</span>
+<span class="sd">    - Without ``--manifest`` but with explicit targets: error (ambiguous).</span>
+
+<span class="sd">    When ``--vault`` is absent or is a folder, behaviour is unchanged.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        args: argparse Namespace (manifest, json_output, targets).</span>
+<span class="sd">        args: argparse Namespace (manifest, vault, json_output, targets).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Exit code (0 if conformant, 1 if at least one error, 2 on manifest error).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">)</span>
+    <span class="n">has_vault</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">vault</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">vault_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_vault</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">vault_is_json</span> <span class="o">=</span> <span class="n">vault_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">vault_path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span>
+    <span class="n">explicit_manifest</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">vault_is_json</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">vault_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrowing for mypy</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">vault_cfg</span> <span class="o">=</span> <span class="n">load_vault</span><span class="p">(</span><span class="n">vault_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">VaultError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vault error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">2</span>
+
+        <span class="n">all_vault_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">]</span>
+        <span class="n">vault_excl_v</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">_be</span> <span class="ow">in</span> <span class="n">vault_cfg</span><span class="o">.</span><span class="n">bundles</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_m</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">_be</span><span class="o">.</span><span class="n">manifest_path</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_r</span> <span class="ow">in</span> <span class="n">_m</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">_r</span><span class="o">.</span><span class="n">exclude_patterns</span><span class="p">:</span>
+                        <span class="n">vault_excl_v</span><span class="p">[</span><span class="n">_r</span><span class="o">.</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">_r</span><span class="o">.</span><span class="n">exclude_patterns</span>
+            <span class="k">except</span> <span class="n">ManifestError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="n">vault_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">all_vault_paths</span><span class="p">,</span> <span class="n">vault_excl_v</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">explicit_manifest</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;Error: --vault without --manifest combined with explicit &quot;</span>
+                    <span class="s2">&quot;targets is ambiguous.&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="mi">2</span>
+            <span class="k">return</span> <span class="n">_cmd_validate_full_vault</span><span class="p">(</span><span class="n">vault_cfg</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="c1"># Explicit manifest + vault JSON → validate with union index</span>
+        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="n">targets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">manifest_for_roots</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
+                <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest_for_roots</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
+            <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+                <span class="k">return</span> <span class="mi">2</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">errors</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">run_validate</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">2</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="n">icon</span> <span class="o">=</span> <span class="s2">&quot;❌&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠️&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All files are OKF-conformant.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">errs</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+                <span class="n">warns</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">errs</span><span class="si">}</span><span class="s2"> error(s), </span><span class="si">{</span><span class="n">warns</span><span class="si">}</span><span class="s2"> warning(s).&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">code</span>
+
+    <span class="c1"># ── Original behaviour ────────────────────────────────────────────────────</span>
+    <span class="n">manifest_path_orig</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span> <span class="ow">or</span> <span class="s2">&quot;okf-base.yaml&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-        <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
+        <span class="n">targets_orig</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span>
+            <span class="n">manifest_obj</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path_orig</span><span class="p">)</span>
+            <span class="n">targets_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest_obj</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
         <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
             <span class="k">return</span> <span class="mi">2</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">errors</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">run_validate</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="n">errors_orig</span><span class="p">,</span> <span class="n">code_orig</span> <span class="o">=</span> <span class="n">run_validate</span><span class="p">(</span><span class="n">manifest_path_orig</span><span class="p">,</span> <span class="n">targets_orig</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Manifest error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
-        <span class="n">payload</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">payload_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors_orig</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload_orig</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors_orig</span><span class="p">:</span>
             <span class="n">icon</span> <span class="o">=</span> <span class="s2">&quot;❌&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠️&quot;</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">errors_orig</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All files are OKF-conformant.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">errs</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
-            <span class="n">warns</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">errs</span><span class="si">}</span><span class="s2"> error(s), </span><span class="si">{</span><span class="n">warns</span><span class="si">}</span><span class="s2"> warning(s).&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">code</span>
+            <span class="n">errs_orig</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors_orig</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+            <span class="n">warns_orig</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors_orig</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">errs_orig</span><span class="si">}</span><span class="s2"> error(s), </span><span class="si">{</span><span class="n">warns_orig</span><span class="si">}</span><span class="s2"> warning(s).&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">code_orig</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Parser</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="build_parser">
@@ -268,7 +614,10 @@
     <span class="n">p_audit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--vault&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Root of the vault (for the wikilink resolution index).&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Path to an okf-vault.json file (vault-wide mode) &quot;</span>
+            <span class="s2">&quot;or root of the vault folder (wikilink resolution index).&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">p_audit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--apply&quot;</span><span class="p">,</span>
@@ -283,8 +632,16 @@
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--manifest&quot;</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;okf-base.yaml&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the OKF manifest (default: okf-base.yaml).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--vault&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Path to an okf-vault.json file.  Without --manifest, validates &quot;</span>
+            <span class="s2">&quot;every bundle with its own manifest using a vault-wide union index.&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--json&quot;</span><span class="p">,</span>

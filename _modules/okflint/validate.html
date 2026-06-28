@@ -106,6 +106,7 @@
     <span class="n">Header</span><span class="p">,</span>
     <span class="n">MarkdownLink</span><span class="p">,</span>
     <span class="n">WikiLink</span><span class="p">,</span>
+    <span class="n">_is_excluded</span><span class="p">,</span>
     <span class="n">blank_code_spans</span><span class="p">,</span>
     <span class="n">build_file_index</span><span class="p">,</span>
     <span class="n">evaluate_split</span><span class="p">,</span>
@@ -668,11 +669,11 @@
     <span class="n">content</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
     <span class="c1"># Determine the applicable root</span>
-    <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+    <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">path</span>
+    <span class="k">for</span> <span class="n">root_cfg</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-            <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">root</span>
+            <span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span>
             <span class="k">break</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -684,7 +685,7 @@
 
     <span class="c1"># Reserved files: specific handling, no concept check</span>
     <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_idx</span><span class="p">:</span>
-        <span class="n">is_root</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
+        <span class="n">is_root</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">check_core_reserved_index</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">is_root</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_log</span><span class="p">:</span>
@@ -759,12 +760,20 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">run_validate</span><span class="p">(</span>
     <span class="n">manifest_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">targets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Orchestrate OKF validation over a list of targets.</span>
+
+<span class="sd">    When ``vault_index`` is provided it is used as the wikilink resolution</span>
+<span class="sd">    index instead of rebuilding one from the manifest roots, allowing the</span>
+<span class="sd">    caller to pass a vault-wide union index built once for all bundles.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        manifest_path: Path to the OKF YAML manifest.</span>
 <span class="sd">        targets: Files or directories to validate.</span>
+<span class="sd">        vault_index: Pre-built file index (stem → list of relative paths).</span>
+<span class="sd">            When provided, the per-manifest index build is skipped.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple (list of diagnostics, exit code 0 or 1).</span>
@@ -773,18 +782,46 @@
 <span class="sd">        ManifestError: If the manifest is invalid or unreadable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
-    <span class="n">base_index</span> <span class="o">=</span> <span class="n">build_file_index</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
+    <span class="n">_root_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
+    <span class="n">_excl_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">path</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">exclude_patterns</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">exclude_patterns</span>
+    <span class="p">}</span>
+    <span class="n">_base_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">vault_index</span>
+        <span class="k">if</span> <span class="n">vault_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="n">build_file_index</span><span class="p">(</span>
+            <span class="n">_root_paths</span><span class="p">,</span>
+            <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">path</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">exclude_patterns</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="n">all_diagnostics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="n">md_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">))</span>
+            <span class="c1"># Find the manifest root this target belongs to (for exclusion patterns)</span>
+            <span class="n">applicable_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">root_path</span> <span class="ow">in</span> <span class="n">_root_paths</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">target</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root_path</span><span class="p">)</span>
+                    <span class="n">applicable_root</span> <span class="o">=</span> <span class="n">root_path</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="n">patterns</span> <span class="o">=</span> <span class="n">_excl_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">applicable_root</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">applicable_root</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">patterns</span> <span class="ow">and</span> <span class="n">applicable_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">md_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">f</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">target</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">,</span> <span class="n">patterns</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">md_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">md_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">target</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="n">md_files</span><span class="p">:</span>
-            <span class="n">all_diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">validate_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">base_index</span><span class="p">))</span>
+            <span class="n">all_diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">validate_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">_base_index</span><span class="p">))</span>
 
     <span class="c1"># Reserved hygiene (global check on roots)</span>
     <span class="n">reserved_level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -792,7 +829,7 @@
     <span class="p">)</span>
     <span class="n">all_diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
         <span class="n">check_hygiene_reserved</span><span class="p">(</span>
-            <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">,</span>
+            <span class="n">_root_paths</span><span class="p">,</span>
             <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="p">,</span>
             <span class="n">reserved_level</span><span class="p">,</span>
         <span class="p">)</span>

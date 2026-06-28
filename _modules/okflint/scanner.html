@@ -88,6 +88,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">fnmatch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -293,21 +294,44 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_excluded</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">patterns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if the file matches any exclusion pattern relative to root.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file: Absolute path of the file to test.</span>
+<span class="sd">        root: Root from which the relative path is computed.</span>
+<span class="sd">        patterns: Glob patterns (fnmatch-style, supports **).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the file should be excluded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rel</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="build_file_index">
 <a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.build_file_index">[docs]</a>
 <span class="nd">@beartype</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_file_index</span><span class="p">(</span><span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_file_index</span><span class="p">(</span>
+    <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">exclude_patterns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Index all .md files under a list of roots for wikilink resolution.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        roots: List of roots to index.</span>
+<span class="sd">        exclude_patterns: Optional per-root exclusion globs. Files matching any</span>
+<span class="sd">            pattern for their root are omitted from the index.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dictionary stem → list of paths relative to the first root.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+        <span class="n">patterns</span> <span class="o">=</span> <span class="p">(</span><span class="n">exclude_patterns</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">patterns</span> <span class="ow">and</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">patterns</span><span class="p">):</span>
+                <span class="k">continue</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">md_file</span><span class="o">.</span><span class="n">stem</span>
             <span class="n">rel</span> <span class="o">=</span> <span class="n">md_file</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
