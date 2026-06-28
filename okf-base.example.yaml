@@ -21,6 +21,10 @@ base:
   # resolved against the full base index, not against an isolated folder.
   roots:
     - path: "."
+      exclude_patterns:      # optional: glob patterns (fnmatch) to skip
+        - ".venv/**"         # Python virtual environments
+        - "node_modules/**"  # JS/TS dependencies
+        - ".git/**"          # git internals
 
   # OKF reserved files (exempt from type validation).
   reserved_files:

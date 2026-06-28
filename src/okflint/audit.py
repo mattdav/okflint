@@ -6,15 +6,18 @@ import dataclasses
 import datetime
 import re
 import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
 from beartype import beartype
 
+from okflint.manifest import RootConfig
 from okflint.scanner import (
     MarkdownLink,
     WikiLink,
+    _is_excluded,
     blank_code_spans,
     build_file_index,
     extract_markdown_links,
@@ -373,7 +376,7 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
 
 @beartype
 def run_audit(
-    bundle_paths: list[Path] | Path,
+    bundle_paths: Sequence[RootConfig | Path] | RootConfig | Path,
     vault_paths: list[Path] | Path,
     *,
     target_filter: Path | None = None,
@@ -381,15 +384,16 @@ def run_audit(
 ) -> dict[str, Any]:
     """Orchestrate the full audit of one or more OKF bundle roots.
 
-    Accepts a single Path or a list of Paths for both bundle_paths and
-    vault_paths (single-Path form maintained for backward compatibility).
+    Accepts RootConfig objects (with exclusion patterns), plain Paths, or a
+    mix thereof. Single-value forms are accepted for backward compatibility.
 
     When ``vault_index`` is provided it is reused directly and ``vault_paths``
     is ignored, allowing the caller to build the index union once for a whole
     vault and then call ``run_audit`` per-bundle without rebuilding.
 
     Args:
-        bundle_paths: Root(s) of the bundle(s) to audit.
+        bundle_paths: Root(s) of the bundle(s) to audit. RootConfig carries
+            per-root exclusion patterns; plain Path implies no exclusions.
         vault_paths: Root(s) of the Obsidian vault(s) (for the wikilinks index).
             Ignored when ``vault_index`` is supplied.
         target_filter: If set, restrict scanning to files under this path.
@@ -400,10 +404,18 @@ def run_audit(
     Returns:
         Full audit report serialisable as JSON.
     """
-    # Normalise single-Path callers to lists
-    _bundle_paths: list[Path] = (
-        [bundle_paths] if isinstance(bundle_paths, Path) else list(bundle_paths)
-    )
+    # Normalise bundle_paths to list[RootConfig]
+    _bundle_roots: list[RootConfig]
+    if isinstance(bundle_paths, RootConfig):
+        _bundle_roots = [bundle_paths]
+    elif isinstance(bundle_paths, Path):
+        _bundle_roots = [RootConfig(path=bundle_paths, exclude_patterns=[])]
+    else:
+        _bundle_roots = [
+            p if isinstance(p, RootConfig) else RootConfig(path=p, exclude_patterns=[])
+            for p in bundle_paths
+        ]
+
     _vault_paths: list[Path] = (
         [vault_paths] if isinstance(vault_paths, Path) else list(vault_paths)
     )
@@ -420,16 +432,19 @@ def run_audit(
         _vault_index = vault_index
         vault_total = sum(len(v) for v in _vault_index.values())
 
-    n_bundle = len(_bundle_paths)
+    n_bundle = len(_bundle_roots)
     bundle_label = f"{n_bundle} root{'s' if n_bundle > 1 else ''}"
     print(f"📦 Scanning bundle: {bundle_label}")
 
-    # Collect (file, its_bundle_root) pairs across all roots
+    # Collect (file, its_bundle_root) pairs across all roots, respecting exclusions
     all_md_files: list[tuple[Path, Path]] = []
-    for bundle_root in _bundle_paths:
-        for md_file in sorted(bundle_root.rglob("*.md")):
+    for root_cfg in _bundle_roots:
+        patterns = root_cfg.exclude_patterns
+        for md_file in sorted(root_cfg.path.rglob("*.md")):
+            if patterns and _is_excluded(md_file, root_cfg.path, patterns):
+                continue
             if target_filter is None or md_file.is_relative_to(target_filter):
-                all_md_files.append((md_file, bundle_root))
+                all_md_files.append((md_file, root_cfg.path))
 
     print(f"   {len(all_md_files)} files found")
 
@@ -441,7 +456,7 @@ def run_audit(
     stats = compute_stats(files, vault_total)
 
     # Per-root file counts for CI consumers
-    root_counts: dict[str, int] = {r.as_posix(): 0 for r in _bundle_paths}
+    root_counts: dict[str, int] = {r.path.as_posix(): 0 for r in _bundle_roots}
     for _, bundle_root in all_md_files:
         root_counts[bundle_root.as_posix()] += 1
     roots_info = [
@@ -453,7 +468,7 @@ def run_audit(
         "generated_at": datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%S"
         ),
-        "bundle_paths": [p.as_posix() for p in _bundle_paths],
+        "bundle_paths": [r.path.as_posix() for r in _bundle_roots],
         "vault_paths": [p.as_posix() for p in _vault_paths],
         "roots": roots_info,
         "stats": stats,

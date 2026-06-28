@@ -17,7 +17,7 @@ from typing import Any
 from beartype import beartype
 
 from okflint.audit import run_audit
-from okflint.manifest import load_manifest
+from okflint.manifest import RootConfig, load_manifest
 from okflint.scanner import build_file_index
 from okflint.validate import Diagnostic, ManifestError, run_validate
 from okflint.vault import VaultConfig, VaultError, load_vault
@@ -180,7 +180,7 @@ def _cmd_validate_full_vault(
         try:
             errors, code = run_validate(
                 bundle_entry.manifest_path,
-                manifest.base.roots,
+                [r.path for r in manifest.base.roots],
                 vault_index=vault_index,
             )
         except ManifestError as exc:
@@ -254,14 +254,22 @@ def _cmd_audit(args: argparse.Namespace) -> int:
 
         all_vault_paths = [b.path for b in vault_cfg.bundles]
         print(f"🔎 Indexing vault: {len(vault_cfg.bundles)} bundles")
-        vault_index = build_file_index(all_vault_paths)
+        vault_excl: dict[Path, list[str]] = {}
+        for _be in vault_cfg.bundles:
+            try:
+                _m = load_manifest(_be.manifest_path)
+                for _r in _m.base.roots:
+                    if _r.exclude_patterns:
+                        vault_excl[_r.path] = _r.exclude_patterns
+            except ManifestError:
+                pass
+        vault_index = build_file_index(all_vault_paths, vault_excl or None)
         vault_total = sum(len(v) for v in vault_index.values())
         print(f"   {vault_total} .md files indexed")
 
         if not has_bundle and not has_manifest:
             return _cmd_audit_full_vault(vault_cfg, vault_index, args)
 
-        bundle_paths: list[Path]
         target_filter: Path | None = None
 
         if has_manifest:
@@ -279,7 +287,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
                 )
                 target_filter = Path(args.bundle)
         else:
-            bundle_paths = [Path(args.bundle)]
+            bundle_paths = [RootConfig(path=Path(args.bundle), exclude_patterns=[])]
 
         report = run_audit(
             bundle_paths,
@@ -300,7 +308,6 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         return 0
 
     # ── Original behaviour (vault is a folder or absent) ──────────────────────
-    bundle_paths_orig: list[Path]
     vault_paths_orig: list[Path]
     target_filter_orig: Path | None = None
 
@@ -311,7 +318,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             print(f"Manifest error: {exc}", file=sys.stderr)
             return 2
         bundle_paths_orig = manifest_orig.base.roots
-        vault_paths_orig = manifest_orig.base.roots
+        vault_paths_orig = [r.path for r in manifest_orig.base.roots]
         if has_bundle:
             print(
                 "Warning: Both --manifest and --bundle provided; "
@@ -320,7 +327,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             )
             target_filter_orig = Path(args.bundle)
     elif has_bundle and has_vault:
-        bundle_paths_orig = [Path(args.bundle)]
+        bundle_paths_orig = [RootConfig(path=Path(args.bundle), exclude_patterns=[])]
         vault_paths_orig = [Path(args.vault)]
     else:
         print(
@@ -396,7 +403,16 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             return 2
 
         all_vault_paths = [b.path for b in vault_cfg.bundles]
-        vault_index = build_file_index(all_vault_paths)
+        vault_excl_v: dict[Path, list[str]] = {}
+        for _be in vault_cfg.bundles:
+            try:
+                _m = load_manifest(_be.manifest_path)
+                for _r in _m.base.roots:
+                    if _r.exclude_patterns:
+                        vault_excl_v[_r.path] = _r.exclude_patterns
+            except ManifestError:
+                pass
+        vault_index = build_file_index(all_vault_paths, vault_excl_v or None)
 
         if not explicit_manifest:
             if args.targets:
@@ -415,7 +431,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         else:
             try:
                 manifest_for_roots = load_manifest(manifest_path)
-                targets = manifest_for_roots.base.roots
+                targets = [r.path for r in manifest_for_roots.base.roots]
             except ManifestError as exc:
                 print(f"Manifest error: {exc}", file=sys.stderr)
                 return 2
@@ -449,7 +465,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     else:
         try:
             manifest_obj = load_manifest(manifest_path_orig)
-            targets_orig = manifest_obj.base.roots
+            targets_orig = [r.path for r in manifest_obj.base.roots]
         except ManifestError as exc:
             print(f"Manifest error: {exc}", file=sys.stderr)
             return 2

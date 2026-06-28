@@ -21,6 +21,7 @@ from okflint.scanner import (
     Header,
     MarkdownLink,
     WikiLink,
+    _is_excluded,
     blank_code_spans,
     build_file_index,
     evaluate_split,
@@ -580,11 +581,11 @@ def validate_file(
     content = file_path.read_text(encoding="utf-8")
 
     # Determine the applicable root
-    applicable_root = manifest.base.roots[0]
-    for root in manifest.base.roots:
+    applicable_root = manifest.base.roots[0].path
+    for root_cfg in manifest.base.roots:
         try:
-            file_path.relative_to(root)
-            applicable_root = root
+            file_path.relative_to(root_cfg.path)
+            applicable_root = root_cfg.path
             break
         except ValueError:
             continue
@@ -596,7 +597,7 @@ def validate_file(
 
     # Reserved files: specific handling, no concept check
     if file_path.name == reserved_idx:
-        is_root = any(file_path.parent == r for r in manifest.base.roots)
+        is_root = any(file_path.parent == r.path for r in manifest.base.roots)
         return check_core_reserved_index(rel, content, is_root)
 
     if file_path.name == reserved_log:
@@ -691,17 +692,41 @@ def run_validate(
         ManifestError: If the manifest is invalid or unreadable.
     """
     manifest = load_manifest(manifest_path)
+    _root_paths = [r.path for r in manifest.base.roots]
+    _excl_map: dict[Path, list[str]] = {
+        r.path: r.exclude_patterns for r in manifest.base.roots if r.exclude_patterns
+    }
     _base_index: dict[str, list[str]] = (
         vault_index
         if vault_index is not None
-        else build_file_index(manifest.base.roots)
+        else build_file_index(
+            _root_paths,
+            {r.path: r.exclude_patterns for r in manifest.base.roots},
+        )
     )
 
     all_diagnostics: list[Diagnostic] = []
 
     for target in targets:
         if target.is_dir():
-            md_files: list[Path] = list(target.rglob("*.md"))
+            # Find the manifest root this target belongs to (for exclusion patterns)
+            applicable_root: Path | None = None
+            for root_path in _root_paths:
+                try:
+                    target.relative_to(root_path)
+                    applicable_root = root_path
+                    break
+                except ValueError:
+                    continue
+            patterns = _excl_map.get(applicable_root, []) if applicable_root else []
+            if patterns and applicable_root is not None:
+                md_files: list[Path] = [
+                    f
+                    for f in target.rglob("*.md")
+                    if not _is_excluded(f, applicable_root, patterns)
+                ]
+            else:
+                md_files = list(target.rglob("*.md"))
         else:
             md_files = [target]
 
@@ -714,7 +739,7 @@ def run_validate(
     )
     all_diagnostics.extend(
         check_hygiene_reserved(
-            manifest.base.roots,
+            _root_paths,
             manifest.base.reserved_files,
             reserved_level,
         )

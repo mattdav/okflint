@@ -77,6 +77,21 @@ okflint validate --manifest /path/to/my-base/okf-base.yaml /path/to/my-base
 The `okf-base.yaml` manifest defines your standard. See
 [`okf-base.example.yaml`](okf-base.example.yaml) for an annotated template.
 
+Each root entry under `base.roots` accepts an optional `exclude_patterns` list
+of [fnmatch](https://docs.python.org/3/library/fnmatch.html) glob patterns.
+Files whose path (relative to the root) matches any pattern are skipped during
+scanning, auditing, and validation:
+
+```yaml
+base:
+  roots:
+    - path: "."
+      exclude_patterns:
+        - ".venv/**"        # Python virtual environments
+        - "node_modules/**" # JS/TS dependencies
+        - "src/**/data/**"  # generated data directories
+```
+
 Each type declares its required/optional fields and its status policy:
 
 | `status_values` | Semantics |

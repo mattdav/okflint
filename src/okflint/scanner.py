@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import fnmatch
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -193,19 +194,42 @@ def parse_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
         return None, content
 
 
+def _is_excluded(file: Path, root: Path, patterns: list[str]) -> bool:
+    """Return True if the file matches any exclusion pattern relative to root.
+
+    Args:
+        file: Absolute path of the file to test.
+        root: Root from which the relative path is computed.
+        patterns: Glob patterns (fnmatch-style, supports **).
+
+    Returns:
+        True if the file should be excluded.
+    """
+    rel = file.relative_to(root).as_posix()
+    return any(fnmatch.fnmatch(rel, p) for p in patterns)
+
+
 @beartype
-def build_file_index(roots: list[Path]) -> dict[str, list[str]]:
+def build_file_index(
+    roots: list[Path],
+    exclude_patterns: dict[Path, list[str]] | None = None,
+) -> dict[str, list[str]]:
     """Index all .md files under a list of roots for wikilink resolution.
 
     Args:
         roots: List of roots to index.
+        exclude_patterns: Optional per-root exclusion globs. Files matching any
+            pattern for their root are omitted from the index.
 
     Returns:
         Dictionary stem → list of paths relative to the first root.
     """
     index: dict[str, list[str]] = {}
     for root in roots:
+        patterns = (exclude_patterns or {}).get(root, [])
         for md_file in root.rglob("*.md"):
+            if patterns and _is_excluded(md_file, root, patterns):
+                continue
             name = md_file.stem
             rel = md_file.relative_to(root).as_posix()
             if name not in index:

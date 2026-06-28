@@ -614,7 +614,7 @@ class TestValidateFile:
     ) -> None:
         manifest_path, root = profile_manifest
         m = load_manifest(manifest_path)
-        base_index = build_file_index(m.base.roots)
+        base_index = build_file_index([r.path for r in m.base.roots])
         f = make_md(
             root / "concept.md",
             "---\ntype: Decision\nstatut: Accepté\ncreated: 2026-01-01\n---\n# Title\n",
@@ -629,7 +629,7 @@ class TestValidateFile:
     ) -> None:
         manifest_path, root = minimal_manifest
         m = load_manifest(manifest_path)
-        base_index = build_file_index(m.base.roots)
+        base_index = build_file_index([r.path for r in m.base.roots])
         f = make_md(root / "bare.md", "# No frontmatter\n")
         diags = validate_file(f, m, base_index)
         assert "F001" in _codes(diags)

@@ -44,11 +44,19 @@ class HygieneConfig:
 
 
 @dataclass
+class RootConfig:
+    """Configuration of a single root in the documentary base."""
+
+    path: Path
+    exclude_patterns: list[str]
+
+
+@dataclass
 class BaseConfig:
     """Documentary base configuration."""
 
     name: str
-    roots: list[Path]
+    roots: list[RootConfig]
     reserved_files: dict[str, str]
     status_field: str | None
     external_refs: set[str]
@@ -287,7 +295,7 @@ def load_manifest(path: Path) -> Manifest:
     raw_roots = raw_base.get("roots")
     if not raw_roots or not isinstance(raw_roots, list):
         raise ManifestError("base.roots must be a non-empty list.")
-    roots: list[Path] = []
+    roots: list[RootConfig] = []
     for entry in raw_roots:
         if not isinstance(entry, dict) or "path" not in entry:
             raise ManifestError(
@@ -301,7 +309,16 @@ def load_manifest(path: Path) -> Manifest:
         resolved_root = (
             raw_root if raw_root.is_absolute() else (path.parent / raw_root).resolve()
         )
-        roots.append(resolved_root)
+        raw_patterns = entry.get("exclude_patterns", [])
+        if not isinstance(raw_patterns, list) or not all(
+            isinstance(s, str) for s in raw_patterns
+        ):
+            raise ManifestError(
+                "base.roots[].exclude_patterns must be a list of strings."
+            )
+        roots.append(
+            RootConfig(path=resolved_root, exclude_patterns=list(raw_patterns))
+        )
 
     # base.reserved_files
     raw_reserved = raw_base.get("reserved_files")

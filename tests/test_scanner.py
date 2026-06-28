@@ -183,6 +183,70 @@ class TestBuildFileIndex:
         assert len(index["Note"]) == 2
 
 
+class TestBuildFileIndexExclude:
+    def _make_tree(self, root: Path) -> None:
+        (root / ".venv" / "lib").mkdir(parents=True)
+        (root / ".venv" / "lib" / "x.md").write_text("x", encoding="utf-8")
+        (root / "src" / "pkg" / "data").mkdir(parents=True)
+        (root / "src" / "pkg" / "data" / "report.md").write_text("r", encoding="utf-8")
+        (root / "src" / "pkg" / "data" / "plans").mkdir()
+        (root / "src" / "pkg" / "data" / "plans" / "plan.md").write_text(
+            "p", encoding="utf-8"
+        )
+        (root / "src" / "venv_utils.md").write_text("v", encoding="utf-8")
+        (root / "notes.md").write_text("n", encoding="utf-8")
+
+    def test_venv_pattern_excludes_nested_file(self, tmp_path: Path) -> None:
+        self._make_tree(tmp_path)
+        index = build_file_index([tmp_path], {tmp_path: [".venv/**"]})
+        assert "x" not in index
+
+    def test_venv_pattern_keeps_non_venv_file(self, tmp_path: Path) -> None:
+        self._make_tree(tmp_path)
+        index = build_file_index([tmp_path], {tmp_path: [".venv/**"]})
+        assert "venv_utils" in index
+        assert "notes" in index
+
+    def test_data_glob_excludes_nested_files(self, tmp_path: Path) -> None:
+        self._make_tree(tmp_path)
+        index = build_file_index([tmp_path], {tmp_path: ["src/**/data/**"]})
+        assert "report" not in index
+        assert "plan" not in index
+
+    def test_data_glob_keeps_root_note(self, tmp_path: Path) -> None:
+        self._make_tree(tmp_path)
+        index = build_file_index([tmp_path], {tmp_path: ["src/**/data/**"]})
+        assert "notes" in index
+
+    def test_cookiecutter_pattern_excludes_template(self, tmp_path: Path) -> None:
+        tpl = tmp_path / "{{cookiecutter.project_name}}"
+        tpl.mkdir()
+        (tpl / "README.md").write_text("r", encoding="utf-8")
+        (tmp_path / "outside.md").write_text("o", encoding="utf-8")
+        index = build_file_index([tmp_path], {tmp_path: ["{{cookiecutter.*}}/**"]})
+        assert "README" not in index
+        assert "outside" in index
+
+    def test_no_exclude_patterns_unchanged(self, tmp_path: Path) -> None:
+        self._make_tree(tmp_path)
+        index_plain = build_file_index([tmp_path])
+        index_empty = build_file_index([tmp_path], {tmp_path: []})
+        assert set(index_plain.keys()) == set(index_empty.keys())
+
+    def test_root_without_patterns_unaffected(self, tmp_path: Path) -> None:
+        root_a = tmp_path / "a"
+        root_b = tmp_path / "b"
+        root_a.mkdir()
+        root_b.mkdir()
+        (root_a / ".venv").mkdir()
+        (root_a / ".venv" / "x.md").write_text("x", encoding="utf-8")
+        (root_b / "note.md").write_text("n", encoding="utf-8")
+        # Only root_a has exclusion; root_b should be fully indexed
+        index = build_file_index([root_a, root_b], {root_a: [".venv/**"]})
+        assert "x" not in index
+        assert "note" in index
+
+
 # ---------------------------------------------------------------------------
 # extract_headers
 # ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from okflint.manifest import ManifestError, _coerce_level, load_manifest
+from okflint.manifest import ManifestError, RootConfig, _coerce_level, load_manifest
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +139,7 @@ class TestLoadManifestSuccess:
     def test_minimal_manifest_loads(self, minimal_manifest: tuple[Path, Path]) -> None:
         manifest_path, root = minimal_manifest
         m = load_manifest(manifest_path)
-        assert m.base.roots == [root]
+        assert m.base.roots == [RootConfig(path=root, exclude_patterns=[])]
         assert m.profile is None
         assert m.hygiene is None
 
@@ -206,3 +206,45 @@ class TestLoadManifestSuccess:
         m = load_manifest(f)
         assert "wikipedia" in m.base.external_refs
         assert "github" in m.base.external_refs
+
+
+# ---------------------------------------------------------------------------
+# load_manifest — exclude_patterns
+# ---------------------------------------------------------------------------
+
+
+class TestLoadManifestExcludePatterns:
+    def _write(self, tmp_path: Path, patterns_yaml: str) -> Path:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        patterns_block = f"      {patterns_yaml}" if patterns_yaml else ""
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            f"{patterns_block}"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n",
+            encoding="utf-8",
+        )
+        return f
+
+    def test_exclude_patterns_loaded(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path, "exclude_patterns:\n        - .venv/**\n        - src/**/data/**\n"
+        )
+        m = load_manifest(f)
+        assert m.base.roots[0].exclude_patterns == [".venv/**", "src/**/data/**"]
+
+    def test_no_exclude_patterns_defaults_to_empty(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "")
+        m = load_manifest(f)
+        assert m.base.roots[0].exclude_patterns == []
+
+    def test_invalid_exclude_patterns_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "exclude_patterns: not-a-list\n")
+        with pytest.raises(ManifestError, match="exclude_patterns must be a list"):
+            load_manifest(f)
+
+    def test_exclude_patterns_non_string_element_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "exclude_patterns:\n        - 42\n")
+        with pytest.raises(ManifestError, match="exclude_patterns must be a list"):
+            load_manifest(f)

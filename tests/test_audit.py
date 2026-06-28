@@ -21,6 +21,7 @@ from okflint.audit import (
     get_okf_status,
     run_audit,
 )
+from okflint.manifest import RootConfig
 
 
 # ---------------------------------------------------------------------------
@@ -366,6 +367,51 @@ class TestRunAuditMultiRoot:
         assert "bundle_paths" in report
         assert len(report["bundle_paths"]) == 1
         assert report["stats"]["total_files"] == 1
+
+
+# ---------------------------------------------------------------------------
+# run_audit — exclude_patterns
+# ---------------------------------------------------------------------------
+
+
+class TestRunAuditExclude:
+    def test_excluded_files_absent_from_stats_and_files(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "note.md", "---\ntype: Reference\n---\n# Keep\n")
+        (bundle / "src" / "pkg" / "data").mkdir(parents=True)
+        make_md(
+            bundle / "src" / "pkg" / "data" / "report.md",
+            "---\ntype: Reference\n---\n# Excluded\n",
+        )
+        root_cfg = RootConfig(path=bundle, exclude_patterns=["src/**/data/**"])
+        report = run_audit(root_cfg, bundle)
+        file_paths = [f["path"] for f in report["files"]]
+        assert "note.md" in file_paths
+        assert not any("report" in p for p in file_paths)
+        assert report["stats"]["total_files"] == 1
+
+    def test_venv_excluded_from_stats(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        (bundle / ".venv" / "lib").mkdir(parents=True)
+        make_md(bundle / ".venv" / "lib" / "x.md", "# venv file\n")
+        make_md(bundle / "real.md", "---\ntype: Reference\n---\n# Real\n")
+        root_cfg = RootConfig(path=bundle, exclude_patterns=[".venv/**"])
+        report = run_audit(root_cfg, bundle)
+        assert report["stats"]["total_files"] == 1
+        file_paths = [f["path"] for f in report["files"]]
+        assert not any(".venv" in p for p in file_paths)
 
     def test_target_filter_restricts_scan(
         self,
