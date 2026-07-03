@@ -219,7 +219,6 @@ def check_profile(
     path: str,
     frontmatter: dict[str, Any],
     profile: ProfileConfig,
-    status_field: str | None,
 ) -> list[Diagnostic]:
     """Check profile rules on a concept file.
 
@@ -227,10 +226,9 @@ def check_profile(
         path: Relative file path.
         frontmatter: Parsed frontmatter (not None).
         profile: Profile configuration.
-        status_field: Name of the status field declared in base (may be None).
 
     Returns:
-        List of Diagnostic (F101-F106, S101, S102).
+        List of Diagnostic (F101, F102, F105, F106, S102).
     """
     diags: list[Diagnostic] = []
     val_type = str(frontmatter.get("type", ""))
@@ -277,39 +275,13 @@ def check_profile(
                 )
             )
 
-    # F103/F104/F105 — status
-    # CRITICAL: distinguish is False from is None
-    sv = type_cfg.status_values
-    sf = status_field or "status"  # name of the status field
-
-    if sv is False:
-        # status forbidden for this type
-        if sf in frontmatter:
-            diags.append(
-                Diagnostic(
-                    code="F103",
-                    tier="profile",
-                    severity="error",
-                    file=path,
-                    message=(
-                        f"status field `{sf}` present but forbidden "
-                        f"for type `{type_key}`"
-                    ),
-                )
-            )
-    elif isinstance(sv, list):
-        # status required and value constrained
-        if sf not in frontmatter:
-            diags.append(
-                Diagnostic(
-                    code="F104",
-                    tier="profile",
-                    severity="error",
-                    file=path,
-                    message=f"status field `{sf}` required for type `{type_key}`",
-                )
-            )
-        elif frontmatter[sf] not in sv:
+    # F105 — controlled vocabulary violation (any property declaring `<prop>_values`)
+    for prop, allowed in type_cfg.controlled_values.items():
+        if prop not in frontmatter:
+            continue
+        raw_value = frontmatter[prop]
+        values = raw_value if isinstance(raw_value, list) else [raw_value]
+        if any(v not in allowed for v in values):
             diags.append(
                 Diagnostic(
                     code="F105",
@@ -317,40 +289,8 @@ def check_profile(
                     severity="error",
                     file=path,
                     message=(
-                        f"status value outside vocabulary: "
-                        f"`{sf}={frontmatter[sf]}` (allowed: {sv})"
-                    ),
-                )
-            )
-    # sv is None → optional, no check
-
-    # S101 — incorrectly named status field
-    if status_field is not None:
-        # Check "status" (English) if status_field != "status"
-        if status_field != "status" and "status" in frontmatter:
-            diags.append(
-                Diagnostic(
-                    code="S101",
-                    tier="profile",
-                    severity="error",
-                    file=path,
-                    message=(
-                        f"incorrectly named status field: `status`"
-                        f" → use `{status_field}`"
-                    ),
-                )
-            )
-        # Check "statut" (French) if status_field != "statut"
-        if status_field != "statut" and "statut" in frontmatter:
-            diags.append(
-                Diagnostic(
-                    code="S101",
-                    tier="profile",
-                    severity="error",
-                    file=path,
-                    message=(
-                        f"incorrectly named status field: `statut`"
-                        f" → use `{status_field}`"
+                        f"value outside vocabulary: "
+                        f"`{prop}={raw_value}` (allowed: {allowed})"
                     ),
                 )
             )
@@ -626,9 +566,7 @@ def validate_file(
     # Profile
     resolved_type_cfg: TypeConfig | None = None
     if manifest.profile is not None:
-        profile_diags = check_profile(
-            rel, fm, manifest.profile, manifest.base.status_field
-        )
+        profile_diags = check_profile(rel, fm, manifest.profile)
         diagnostics.extend(profile_diags)
         # Resolve type_cfg for F201 (hygiene unknown fields)
         type_key, _ = _resolve_type(str(fm.get("type", "")), manifest.profile)

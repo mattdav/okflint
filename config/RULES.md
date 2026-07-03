@@ -134,7 +134,7 @@ In a `log.md`, date headings must be in ISO 8601 `YYYY-MM-DD` format.
 ## Stage 2 — Profile
 
 Only fired when the manifest declares a `profile` block. These rules encode
-**your** framework: your types, your fields, your status vocabulary.
+**your** framework: your types, your fields, your controlled vocabularies.
 They are not OKF in the strict sense — they are the contractual refinement you
 chose, and that `okflint` helps you uphold.
 
@@ -165,31 +165,21 @@ status: Accepted
 
 **Fix**: add the missing field.
 
-### `F103` — Status present but forbidden
+### `F105` — Value outside controlled vocabulary
 
 **Severity**: error
 
-When a type declares `status_values: false`, the status field must not exist
-on its concepts (e.g. a dated journal entry has no status).
-
-**Fix**: remove the status field from the concept.
-
-### `F104` — Required status missing
-
-**Severity**: error
-
-When a type declares `status_values: [list]`, the status field is required.
-
-**Fix**: add the status field with a value from the list.
-
-### `F105` — Status value outside vocabulary
-
-**Severity**: error
-
-The value of the status field must belong to the list declared for that type.
+Any property may declare a controlled vocabulary by adding a `<prop>_values`
+key alongside `required`/`optional` in the type's configuration (e.g.
+`status_values` constrains a `status` property). When the property is present
+on a concept of that type, its value must belong to the declared list. This is
+orthogonal to presence: whether the property is required, optional, or absent
+from a concept is governed solely by `required`/`optional` (and, for unlisted
+fields, by the `unknown_fields` hygiene setting).
 
 ```yaml
-# profile.types.Procedure.status_values = [draft, prod, obsolete]
+# profile.types.Procedure: required/optional include `status`,
+# and status_values = [draft, prod, obsolete]
 # ❌ F105
 ---
 type: Procedure
@@ -208,16 +198,6 @@ but flagged for normalisation (e.g. `adr` → `Decision`).
 
 **Fix**: replace the spelling with the type's canonical name. Auto-fixable
 (see `okflint fix`, coming soon).
-
-### `S101` — Incorrectly named status field
-
-**Severity**: error
-
-The status field must use the name declared in `base.status_field`. For
-example, if a base declared `status_field: "status"`, a concept using
-`statut` instead of `status` is a contract deviation.
-
-**Fix**: rename the field to the declared name. Auto-fixable.
 
 ### `S102` — Non-ISO date field
 
@@ -329,11 +309,8 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 | `R002` | OKF core | error | non-ISO date in `log.md` |
 | `F101` | Profile | error | `type` not in declared types |
 | `F102` | Profile | error | missing required field |
-| `F103` | Profile | error | status present but forbidden |
-| `F104` | Profile | error | required status missing |
-| `F105` | Profile | error | status value outside vocabulary |
+| `F105` | Profile | error | value outside controlled vocabulary |
 | `F106` | Profile | error | non-normalised `type` spelling |
-| `S101` | Profile | error | incorrectly named status field |
 | `S102` | Profile | error | non-ISO date field |
 | `L001` | Hygiene | warning | broken wikilink |
 | `L002` | Hygiene | warning | broken markdown link |

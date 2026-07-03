@@ -142,7 +142,7 @@ conforming case. Tests must never be deleted to make CI pass.
 
 ```
 feat: add S202 semantic cohesion rule
-fix: correct False/None distinction for status_values
+fix: correct exclude_patterns matching on nested roots
 chore: update dependencies
 docs: complete the rules catalogue
 test: cover manifest parsing edge cases
@@ -182,7 +182,7 @@ Accepted types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`, `ci`
 Valid examples:
 ```
 feat: add S202 semantic cohesion rule
-fix(manifest): correct False/None distinction for status_values
+fix(manifest): correct exclude_patterns matching on nested roots
 docs: update README
 chore: update dependencies
 ```

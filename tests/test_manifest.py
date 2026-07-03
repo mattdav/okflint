@@ -85,11 +85,10 @@ class TestLoadManifestErrors:
         f.write_text(
             f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
             "  reserved_files:\n    index: index.md\n    log: log.md\n"
-            "  status_field: statut\n"
             "profile:\n  types:\n    Decision:\n"
             "      required: [type, statut]\n"
             "      optional: [statut]\n"
-            "      status_values: [Accepté]\n"
+            "      statut_values: [Accepté]\n"
             "      aliases: []\n"
             "  date_fields: []\n",
             encoding="utf-8",
@@ -97,23 +96,25 @@ class TestLoadManifestErrors:
         with pytest.raises(ManifestError, match="required and optional"):
             load_manifest(f)
 
-    def test_status_values_without_status_field_raises(self, tmp_path: Path) -> None:
+    def test_values_suffix_for_undeclared_property_raises(
+        self, tmp_path: Path
+    ) -> None:
         root = tmp_path / "root"
         root.mkdir()
         f = tmp_path / "m.yaml"
-        # base has no status_field, but profile type uses status_values list
+        # "statut" is not in required nor optional — statut_values is invalid.
         f.write_text(
             f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
             "  reserved_files:\n    index: index.md\n    log: log.md\n"
             "profile:\n  types:\n    Decision:\n"
             "      required: [type]\n"
             "      optional: []\n"
-            "      status_values: [Accepté]\n"
+            "      statut_values: [Accepté]\n"
             "      aliases: []\n"
             "  date_fields: []\n",
             encoding="utf-8",
         )
-        with pytest.raises(ManifestError, match="base.status_field"):
+        with pytest.raises(ManifestError, match="undeclared"):
             load_manifest(f)
 
     def test_invalid_hygiene_value_raises(self, tmp_path: Path) -> None:
@@ -127,6 +128,79 @@ class TestLoadManifestErrors:
             encoding="utf-8",
         )
         with pytest.raises(ManifestError, match="broken_links"):
+            load_manifest(f)
+
+
+# ---------------------------------------------------------------------------
+# load_manifest — profile/type structural errors
+# ---------------------------------------------------------------------------
+
+
+class TestParseTypeConfigErrors:
+    def _write(self, tmp_path: Path, profile_yaml: str) -> Path:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            f"{profile_yaml}",
+            encoding="utf-8",
+        )
+        return f
+
+    def test_profile_not_a_mapping_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "profile: not-a-mapping\n")
+        with pytest.raises(ManifestError, match="profile must be a mapping"):
+            load_manifest(f)
+
+    def test_types_not_a_mapping_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "profile:\n  types: not-a-mapping\n")
+        with pytest.raises(ManifestError, match="profile.types must be a mapping"):
+            load_manifest(f)
+
+    def test_type_config_not_a_mapping_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "profile:\n  types:\n    Decision: not-a-mapping\n")
+        with pytest.raises(ManifestError, match="must be a mapping"):
+            load_manifest(f)
+
+    def test_required_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path, "profile:\n  types:\n    Decision:\n      required: not-a-list\n"
+        )
+        with pytest.raises(ManifestError, match="required must be a list"):
+            load_manifest(f)
+
+    def test_optional_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path,
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type]\n"
+            "      optional: not-a-list\n",
+        )
+        with pytest.raises(ManifestError, match="optional must be a list"):
+            load_manifest(f)
+
+    def test_values_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path,
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type, statut]\n"
+            "      optional: []\n"
+            "      statut_values: not-a-list\n",
+        )
+        with pytest.raises(ManifestError, match="statut_values must be a list"):
+            load_manifest(f)
+
+    def test_aliases_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path,
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type]\n"
+            "      optional: []\n"
+            "      aliases: not-a-list\n",
+        )
+        with pytest.raises(ManifestError, match="aliases must be a list"):
             load_manifest(f)
 
 
@@ -152,15 +226,25 @@ class TestLoadManifestSuccess:
         assert "Decision" in m.profile.types
         assert "JournalEntry" in m.profile.types
 
-    def test_journal_entry_status_values_is_false(
+    def test_journal_entry_has_no_controlled_values(
         self, profile_manifest: tuple[Path, Path]
     ) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
         je = m.profile.types["JournalEntry"]
-        # CRITICAL: must be exactly False (bool), not None
-        assert je.status_values is False
+        assert je.controlled_values == {}
+
+    def test_decision_controlled_values_loaded(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        decision = m.profile.types["Decision"]
+        assert decision.controlled_values == {
+            "statut": ["Accepté", "Proposé", "Déprécié"]
+        }
 
     def test_decision_aliases_loaded(
         self, profile_manifest: tuple[Path, Path]

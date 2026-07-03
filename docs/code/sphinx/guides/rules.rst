@@ -8,8 +8,8 @@ Stages
 
 - **OKF core** (``F001``, ``F002``, ``R001``, ``R002``) — always active, checks
   minimal conformance to OKF standard §9.
-- **Profile** (``F101``–``F106``, ``S101``, ``S102``) — active when a ``profile``
-  block is declared in the manifest.
+- **Profile** (``F101``, ``F102``, ``F105``, ``F106``, ``S102``) — active when a
+  ``profile`` block is declared in the manifest.
 - **Hygiene** (``F201``, ``L001``–``L003``, ``S201``, ``R201``) — opt-in via the
   ``hygiene`` key in the manifest, level ``warn`` or ``error``.
 

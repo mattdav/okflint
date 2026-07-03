@@ -21,7 +21,6 @@ def _write_manifest(path: Path, roots: list[Path]) -> None:
             "name": "test-base",
             "roots": [{"path": r.as_posix()} for r in roots],
             "reserved_files": {"index": "index.md", "log": "log.md"},
-            "status_field": "statut",
         },
     }
     path.write_text(yaml.dump(data, allow_unicode=True), encoding="utf-8")

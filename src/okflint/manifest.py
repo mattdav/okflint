@@ -21,7 +21,7 @@ class TypeConfig:
 
     required: list[str]
     optional: list[str]
-    status_values: list[str] | Literal[False] | None
+    controlled_values: dict[str, list[str]]
     aliases: list[str]
 
 
@@ -58,7 +58,6 @@ class BaseConfig:
     name: str
     roots: list[RootConfig]
     reserved_files: dict[str, str]
-    status_field: str | None
     external_refs: set[str]
 
 
@@ -147,28 +146,27 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
             f"{sorted(overlap)}"
         )
 
-    # status_values: list, False (bool), None/absent — nothing else
-    # CRITICAL: distinguish is False from is None
-    if "status_values" not in raw:
-        status_values: list[str] | Literal[False] | None = None
-    else:
-        sv_raw = raw["status_values"]
-        if sv_raw is False:
-            # YAML `false` → Python False (bool)
-            status_values = False
-        elif sv_raw is None:
-            status_values = None
-        elif isinstance(sv_raw, list):
-            if not all(isinstance(s, str) for s in sv_raw):
-                raise ManifestError(
-                    f"profile.types.{name}.status_values must be a list of strings."
-                )
-            status_values = sv_raw
-        else:
+    known_props = set(required) | set(optional)
+
+    # Any key ending in `_values` declares a controlled vocabulary for the
+    # property named by its prefix (e.g. `priority_values` → property `priority`).
+    controlled_values: dict[str, list[str]] = {}
+    for key, raw_values in raw.items():
+        if not key.endswith("_values"):
+            continue
+        prop = key[: -len("_values")]
+        if prop not in known_props:
             raise ManifestError(
-                f"profile.types.{name}.status_values"
-                f" must be a list, false or null (received: {sv_raw!r})."
+                f"profile.types.{name}: _values declared for an undeclared "
+                f"property: {prop}"
             )
+        if not isinstance(raw_values, list) or not all(
+            isinstance(s, str) for s in raw_values
+        ):
+            raise ManifestError(
+                f"profile.types.{name}.{key} must be a list of strings."
+            )
+        controlled_values[prop] = list(raw_values)
 
     aliases = raw.get("aliases", [])
     if not isinstance(aliases, list) or not all(isinstance(s, str) for s in aliases):
@@ -177,17 +175,16 @@ def _parse_type_config(name: str, raw: Any) -> TypeConfig:
     return TypeConfig(
         required=list(required),
         optional=list(optional),
-        status_values=status_values,
+        controlled_values=controlled_values,
         aliases=list(aliases),
     )
 
 
-def _parse_profile(raw: Any, status_field: str | None) -> ProfileConfig:
+def _parse_profile(raw: Any) -> ProfileConfig:
     """Parse the profile configuration from raw YAML.
 
     Args:
         raw: Raw value of the profile block from the YAML.
-        status_field: Status field declared in base (may be None).
 
     Returns:
         Validated ProfileConfig.
@@ -202,22 +199,10 @@ def _parse_profile(raw: Any, status_field: str | None) -> ProfileConfig:
     if not isinstance(raw_types, dict):
         raise ManifestError("profile.types must be a mapping.")
 
-    types: dict[str, TypeConfig] = {}
-    # True if at least one type requires status_field to be declared
-    needs_status_field = False
-
-    for type_name, type_raw in raw_types.items():
-        cfg = _parse_type_config(str(type_name), type_raw)
-        types[str(type_name)] = cfg
-        # status_field required if at least one type has status_values list or False
-        if isinstance(cfg.status_values, list) or cfg.status_values is False:
-            needs_status_field = True
-
-    if needs_status_field and status_field is None:
-        raise ManifestError(
-            "base.status_field must be declared when at least one type "
-            "uses status_values (list or false)."
-        )
+    types: dict[str, TypeConfig] = {
+        str(type_name): _parse_type_config(str(type_name), type_raw)
+        for type_name, type_raw in raw_types.items()
+    }
 
     date_fields_raw = raw.get("date_fields", [])
     if not isinstance(date_fields_raw, list) or not all(
@@ -328,12 +313,6 @@ def load_manifest(path: Path) -> Manifest:
         raise ManifestError("base.reserved_files must contain keys 'index' and 'log'.")
     reserved_files: dict[str, str] = {str(k): str(v) for k, v in raw_reserved.items()}
 
-    # base.status_field (optional)
-    status_field_raw = raw_base.get("status_field")
-    status_field: str | None = (
-        str(status_field_raw) if status_field_raw is not None else None
-    )
-
     # base.external_refs (from link_resolution)
     link_res = raw_base.get("link_resolution", {})
     external_refs_raw = (
@@ -350,7 +329,6 @@ def load_manifest(path: Path) -> Manifest:
         name=name,
         roots=roots,
         reserved_files=reserved_files,
-        status_field=status_field,
         external_refs=external_refs,
     )
 
@@ -368,7 +346,7 @@ def load_manifest(path: Path) -> Manifest:
     # profile (optional)
     profile: ProfileConfig | None = None
     if "profile" in data:
-        profile = _parse_profile(data["profile"], status_field)
+        profile = _parse_profile(data["profile"])
 
     # hygiene (optional)
     hygiene: HygieneConfig | None = None

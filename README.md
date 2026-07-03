@@ -92,13 +92,22 @@ base:
         - "src/**/data/**"  # generated data directories
 ```
 
-Each type declares its required/optional fields and its status policy:
+Each type declares its `required`/`optional` fields. Any property may
+additionally declare a controlled vocabulary via a `<prop>_values` key
+(e.g. `status_values` for a `status` property) — this only constrains the
+*value* when the property is present, orthogonally to whether it is
+required, optional, or absent from the type:
 
-| `status_values` | Semantics |
-|---|---|
-| `[list]` | `status` field **required**, value constrained to the list |
-| `false` | `status` field **forbidden** for this type |
-| `null` (or absent) | `status` field **optional**, value free |
+```yaml
+types:
+  Decision:
+    required: [type, status, created]
+    optional: [updated, tags]
+    status_values: [Proposed, Accepted, Deprecated, Superseded]
+  Note:
+    required: [type, created]
+    optional: [updated, tags]
+```
 
 > **OKF resources** —
 > [Official Google Cloud spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)

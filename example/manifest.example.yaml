@@ -31,10 +31,6 @@ base:
     index: "index.md"
     log: "log.md"
 
-  # Name of the status field IN this base. This is an English KEY (status_field)
-  # whose VALUE is your convention: here "status", but it is free (e.g. "statut").
-  status_field: "status"
-
   # Link resolution.
   link_resolution:
     scope: base          # links resolve against the entire base
@@ -49,13 +45,14 @@ profile:
   date_fields: [created, updated]
 
   # Type-aware vocabulary. Each type declares:
-  #   - required      : mandatory frontmatter fields
-  #   - optional      : allowed frontmatter fields (optional)
-  #   - aliases       : tolerated spellings of the type, normalised to the canonical name
-  #   - status_values :
-  #       [list]   → status field REQUIRED, value constrained to the list
-  #       false    → status field FORBIDDEN for this type
-  #       null     → status field optional, value free (or key absent)
+  #   - required        : mandatory frontmatter fields
+  #   - optional        : allowed frontmatter fields (optional)
+  #   - aliases         : tolerated spellings of the type, normalised to the canonical name
+  #   - <prop>_values   : controlled vocabulary for the property named <prop>
+  #       (e.g. status_values constrains the `status` field). Orthogonal to
+  #       required/optional: it only constrains the VALUE, when the property
+  #       is present. Whether the property is required, optional, or simply
+  #       absent from a type is governed solely by required/optional above.
   types:
     Decision:
       aliases: [adr, ADR]
@@ -70,11 +67,9 @@ profile:
     Note:
       required: [type, created]
       optional: [updated, tags]
-      status_values: false
     Reference:
       required: [type]
       optional: [updated, tags]
-      status_values: false
 
 # ---------------------------------------------------------------------------
 # HYGIENE (optional) — checks stricter than OKF. Each key: off | warn | error.

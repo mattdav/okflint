@@ -1,5 +1,5 @@
-"""OKF validation tests — 18 rules (F001, F002, R001, R002,
-F101-F106, S101, S102, L001-L003, S201, R201, F201)."""
+"""OKF validation tests — 15 rules (F001, F002, R001, R002,
+F101, F102, F105, F106, S102, L001-L003, S201, R201, F201)."""
 
 from __future__ import annotations
 
@@ -132,9 +132,7 @@ class TestF101:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
-        diags = check_profile(
-            "doc.md", {"type": "Unknown"}, m.profile, m.base.status_field
-        )
+        diags = check_profile("doc.md", {"type": "Unknown"}, m.profile)
         assert "F101" in _codes(diags)
 
     def test_passes_on_known_type(
@@ -147,7 +145,6 @@ class TestF101:
             "doc.md",
             {"type": "JournalEntry", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "F101" not in _codes(diags)
 
@@ -169,7 +166,6 @@ class TestF102:
             "doc.md",
             {"type": "Decision", "statut": "Accepté"},
             m.profile,
-            m.base.status_field,
         )
         assert "F102" in _codes(diags)
 
@@ -183,93 +179,17 @@ class TestF102:
             "doc.md",
             {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "F102" not in _codes(diags)
 
 
 # ---------------------------------------------------------------------------
-# F103 — status present but forbidden
-# ---------------------------------------------------------------------------
-
-
-class TestF103:
-    def test_triggers_when_status_present_on_forbidden_type(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        # JournalEntry has status_values=False → statut forbidden
-        diags = check_profile(
-            "doc.md",
-            {
-                "type": "JournalEntry",
-                "created": "2026-01-01",
-                "statut": "Accepté",
-            },
-            m.profile,
-            m.base.status_field,
-        )
-        assert "F103" in _codes(diags)
-
-    def test_passes_when_status_absent_on_forbidden_type(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        diags = check_profile(
-            "doc.md",
-            {"type": "JournalEntry", "created": "2026-01-01"},
-            m.profile,
-            m.base.status_field,
-        )
-        assert "F103" not in _codes(diags)
-
-
-# ---------------------------------------------------------------------------
-# F104 — required status missing
-# ---------------------------------------------------------------------------
-
-
-class TestF104:
-    def test_triggers_when_status_required_but_absent(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        diags = check_profile(
-            "doc.md",
-            {"type": "Decision", "created": "2026-01-01"},
-            m.profile,
-            m.base.status_field,
-        )
-        assert "F104" in _codes(diags)
-
-    def test_passes_when_status_present(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        diags = check_profile(
-            "doc.md",
-            {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
-            m.profile,
-            m.base.status_field,
-        )
-        assert "F104" not in _codes(diags)
-
-
-# ---------------------------------------------------------------------------
-# F105 — status value outside vocabulary
+# F105 — value outside controlled vocabulary
 # ---------------------------------------------------------------------------
 
 
 class TestF105:
-    def test_triggers_on_invalid_status_value(
+    def test_triggers_on_invalid_value(
         self, profile_manifest: tuple[Path, Path]
     ) -> None:
         manifest_path, _ = profile_manifest
@@ -283,11 +203,10 @@ class TestF105:
                 "created": "2026-01-01",
             },
             m.profile,
-            m.base.status_field,
         )
         assert "F105" in _codes(diags)
 
-    def test_passes_on_valid_status_value(
+    def test_passes_on_valid_value(
         self, profile_manifest: tuple[Path, Path]
     ) -> None:
         manifest_path, _ = profile_manifest
@@ -297,9 +216,75 @@ class TestF105:
             "doc.md",
             {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "F105" not in _codes(diags)
+
+    def test_applies_to_optional_property(self, tmp_path: Path) -> None:
+        # The controlled-vocabulary mechanism is orthogonal to required/optional:
+        # an *optional* property carrying a `<prop>_values` declaration is still
+        # checked when present.
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Note:\n"
+            "      required: [type]\n"
+            "      optional: [priority]\n"
+            "      priority_values: [low, medium, high]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert m.profile is not None
+        diags = check_profile(
+            "doc.md", {"type": "Note", "priority": "urgent"}, m.profile
+        )
+        assert "F105" in _codes(diags)
+
+    def test_absent_optional_property_does_not_trigger(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Note:\n"
+            "      required: [type]\n"
+            "      optional: [priority]\n"
+            "      priority_values: [low, medium, high]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert m.profile is not None
+        diags = check_profile("doc.md", {"type": "Note"}, m.profile)
+        assert "F105" not in _codes(diags)
+
+    def test_triggers_on_invalid_element_in_list_value(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Note:\n"
+            "      required: [type]\n"
+            "      optional: [tags]\n"
+            "      tags_values: [python, rust]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert m.profile is not None
+        diags = check_profile(
+            "doc.md", {"type": "Note", "tags": ["python", "cobol"]}, m.profile
+        )
+        assert "F105" in _codes(diags)
 
 
 # ---------------------------------------------------------------------------
@@ -319,7 +304,6 @@ class TestF106:
             "doc.md",
             {"type": "adr", "statut": "Accepté", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "F106" in _codes(diags)
 
@@ -333,49 +317,8 @@ class TestF106:
             "doc.md",
             {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "F106" not in _codes(diags)
-
-
-# ---------------------------------------------------------------------------
-# S101 — incorrectly named status field
-# ---------------------------------------------------------------------------
-
-
-class TestS101:
-    def test_triggers_when_wrong_field_name_used(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        # status_field is "statut", doc uses "status"
-        diags = check_profile(
-            "doc.md",
-            {
-                "type": "Decision",
-                "status": "Accepté",
-                "created": "2026-01-01",
-            },
-            m.profile,
-            m.base.status_field,
-        )
-        assert "S101" in _codes(diags)
-
-    def test_passes_with_correct_field_name(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
-        manifest_path, _ = profile_manifest
-        m = load_manifest(manifest_path)
-        assert m.profile is not None
-        diags = check_profile(
-            "doc.md",
-            {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
-            m.profile,
-            m.base.status_field,
-        )
-        assert "S101" not in _codes(diags)
 
 
 # ---------------------------------------------------------------------------
@@ -398,7 +341,6 @@ class TestS102:
                 "created": "01/01/2026",
             },
             m.profile,
-            m.base.status_field,
         )
         assert "S102" in _codes(diags)
 
@@ -412,7 +354,6 @@ class TestS102:
             "doc.md",
             {"type": "Decision", "statut": "Accepté", "created": "2026-01-01"},
             m.profile,
-            m.base.status_field,
         )
         assert "S102" not in _codes(diags)
 

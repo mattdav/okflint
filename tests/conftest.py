@@ -16,7 +16,6 @@ def _base_manifest_dict(root: Path) -> dict:
             "name": "test-base",
             "roots": [{"path": root.as_posix()}],
             "reserved_files": {"index": "index.md", "log": "log.md"},
-            "status_field": "statut",
         },
     }
 
@@ -57,13 +56,12 @@ def profile_manifest(tmp_path: Path) -> tuple[Path, Path]:
             "Decision": {
                 "required": ["type", "statut", "created"],
                 "optional": ["updated", "tags"],
-                "status_values": ["Accepté", "Proposé", "Déprécié"],
+                "statut_values": ["Accepté", "Proposé", "Déprécié"],
                 "aliases": ["adr", "ADR"],
             },
             "JournalEntry": {
                 "required": ["type", "created"],
                 "optional": ["updated", "tags"],
-                "status_values": False,
                 "aliases": [],
             },
         },
@@ -85,13 +83,12 @@ def hygiene_manifest(tmp_path: Path) -> tuple[Path, Path]:
             "Decision": {
                 "required": ["type", "statut", "created"],
                 "optional": ["updated", "tags"],
-                "status_values": ["Accepté", "Proposé", "Déprécié"],
+                "statut_values": ["Accepté", "Proposé", "Déprécié"],
                 "aliases": ["adr", "ADR"],
             },
             "JournalEntry": {
                 "required": ["type", "created"],
                 "optional": ["updated", "tags"],
-                "status_values": False,
                 "aliases": [],
             },
         },
