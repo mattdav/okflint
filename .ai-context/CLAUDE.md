@@ -1,7 +1,7 @@
 ---
 type: ProjectStandards
 project: okflint
-updated: 2026-06-28
+updated: 2026-07-03
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -49,7 +49,7 @@ The engine is **generic**: no type vocabulary is hardcoded. Everything
 
 Doctrine: **deterministic first, never LLM in the engine.** What requires
 judgment (splitting, rewriting, routing) belongs to the consumer of the base, not the
-linter. See `ROADMAP.md` for the okflint / harness boundary.
+linter. See `docs/project/ROADMAP.md` for the okflint / harness boundary.
 
 ## Notable dependencies
 

@@ -1,7 +1,7 @@
 ---
 type: ProjectDescription
 project: okflint
-updated: 2026-06-28
+updated: 2026-07-03
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -58,7 +58,7 @@ uv pip install -e .
 1. Copy the example manifest to the root of your documentary base:
 
 ```bash
-cp okf-base.example.yaml /path/to/my-base/okf-base.yaml
+cp example/manifest.example.yaml /path/to/my-base/okf-base.yaml
 ```
 
 2. Adapt it to your taxonomy (types, required fields, status vocabulary).
@@ -75,7 +75,7 @@ okflint validate --manifest /path/to/my-base/okf-base.yaml /path/to/my-base
 
 `okflint` is a **generic engine**: it knows no type vocabulary in hard code.
 The `okf-base.yaml` manifest defines your standard. See
-[`okf-base.example.yaml`](okf-base.example.yaml) for an annotated template.
+[`manifest.example.yaml`](example/manifest.example.yaml) for an annotated template.
 
 Each root entry under `base.roots` accepts an optional `exclude_patterns` list
 of [fnmatch](https://docs.python.org/3/library/fnmatch.html) glob patterns.
@@ -123,7 +123,7 @@ types:
 | **bundle** | A root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. Multiple bundles can be declared via `base.roots` in the manifest. |
 | **vault** | The root folder(s) of all your Markdown (may be larger than the bundle). Used only to resolve `[[...]]` wikilinks. When using `--manifest`, all roots serve as the vault automatically. |
 | **vault manifest** | An `okf-vault.json` file listing multiple bundles in a workspace. Passing it to `--vault` enables audit/validate across all bundles at once, with a shared union wikilink-resolution index. |
-| **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. Declares one or more roots via `base.roots`. See `okf-base.example.yaml` for an annotated template. |
+| **manifest** | The `okf-base.yaml` file you write to describe your standard: which concept types you use, which fields are required, which status vocabulary applies. Declares one or more roots via `base.roots`. See `example/manifest.example.yaml` for an annotated template. |
 | **target** | For `validate` only: one or more paths to folders or `.md` files to validate. If omitted, all roots declared in the manifest are validated. |
 
 ---
@@ -298,7 +298,7 @@ Bundle manifest: `manifest.py` (contract loading + validation).
 ## Roadmap
 
 Envisioned evolutions beyond v0.1 (semantic cohesion for finer splitting,
-verifiable reading-grid expectations) are described in [ROADMAP.md](ROADMAP.md).
+verifiable reading-grid expectations) are described in [ROADMAP.md](docs/project/ROADMAP.md).
 
 ---
 

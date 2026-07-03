@@ -2,7 +2,7 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-06-28
+updated: 2026-07-03
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -23,7 +23,7 @@ linter.
 ## v0.1 — Current state
 
 - 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
-- 18 catalogued rules (see [`config/RULES.md`](config/RULES.md))
+- 15 catalogued rules (see [`config/RULES.md`](../../config/RULES.md))
 - Unified CLI `okflint audit | validate`
 - Generic engine driven by a YAML manifest (`okf-base.yaml`)
 - Manifest self-validation (`manifest.py`)

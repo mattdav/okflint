@@ -1,7 +1,7 @@
 ---
 type: ProjectStandards
 project: okflint
-updated: 2026-06-28
+updated: 2026-07-03
 tags: [python, contributing]
 ---
 
@@ -66,7 +66,7 @@ must be documented there with its code, stage, and severity.
 - **OKF honesty.** okflint distinguishes what is *truly* OKF (core, §9 of the
   spec) from what is a base convention (profile) or a stricter choice
   (hygiene). Never present a local convention as an OKF requirement.
-- See [`ROADMAP.md`](ROADMAP.md) for the boundary between okflint (static validation)
+- See [`ROADMAP.md`](docs/project/ROADMAP.md) for the boundary between okflint (static validation)
   and an agent harness (runtime orchestration).
 
 ---
