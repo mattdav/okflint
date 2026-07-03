@@ -1,11 +1,16 @@
+---
+type: ProjectStandards
+project: okflint
+updated: 2026-06-28
+tags: [lint, rules]
+---
+
+
 # okflint rules
 
-`okflint` verifies that a documentary base conforms to
-[OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
-**and** to the framework the base has itself declared in its manifest.
+`okflint` verifies that a documentary base conforms to [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) **and** to the framework the base has itself declared in its manifest.
 
-This document lists all check points, their code, their severity, and how to
-fix each case.
+This document lists all check points, their code, their severity, and how to fix each case.
 
 ---
 

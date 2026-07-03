@@ -1,6 +1,5 @@
 import shutil
 import subprocess
-from datetime import date
 from pathlib import Path
 
 from invoke import Context, task
@@ -8,14 +7,14 @@ from invoke import Context, task
 # ================ Config ================= #
 RELEASE_BRANCH = "main"  # reference branch for releases
 CLEAN_DIRS: list[str] = [
-    "build",          # Build artefacts
-    "dist",           # Packaged distributions
+    "build",  # Build artefacts
+    "dist",  # Packaged distributions
     ".pytest_cache",  # pytest cache
-    ".ruff_cache",    # Ruff cache
-    ".mypy_cache",    # mypy cache
-    ".okflint",       # JSON audit reports (regeneratable)
-    "htmlcov",        # HTML coverage report
-    "__pycache__",    # Python cache (root)
+    ".ruff_cache",  # Ruff cache
+    ".mypy_cache",  # mypy cache
+    ".okflint",  # JSON audit reports (regeneratable)
+    "htmlcov",  # HTML coverage report
+    "__pycache__",  # Python cache (root)
 ]
 
 CLEAN_FILES: list[str] = [
@@ -55,36 +54,6 @@ def clean(c: Context) -> None:
         path.unlink(missing_ok=True)
 
     print("🗑 Clean task Done!")
-
-
-@task
-def repomix(c: Context, output: str | None = None) -> None:
-    """Pack the codebase as an XML file for LLM consumption.
-
-    Default output: .repomix/YYYY-MM-DD_repomix_v<N>.xml (auto-incremented).
-    Use --output to force a filename in .repomix/.
-    """
-    outputs_dir: Path = Path(".repomix")
-    outputs_dir.mkdir(exist_ok=True)
-
-    if output is None:
-        today: str = date.today().strftime("%Y-%m-%d")
-        v: int = 1
-        while (outputs_dir / f"{today}_repomix_v{v}.xml").exists():
-            v += 1
-        output_path: Path = outputs_dir / f"{today}_repomix_v{v}.xml"
-    else:
-        output_path = outputs_dir / output
-
-    print(f"📦 Packing codebase to {output_path}...")
-    result = subprocess.run(
-        f'repomix --output "{output_path}"',
-        shell=True,
-    )
-    if result.returncode == 0:
-        print(f"✅ Repomix output saved to {output_path}")
-    else:
-        print("❌ Repomix failed!")
 
 
 # ================ Quality test ================= #

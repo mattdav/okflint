@@ -1,0 +1,14 @@
+{
+  "okf_vault_version": "0.1",
+  "name": "my openknowledge vault",
+  "bundles": [
+    {
+      "path": "bundle_1",
+      "manifest": "bundle_1.yaml"
+    },
+    {
+      "path": "bundle_2",
+      "manifest": "bundle_2.yaml"
+    }
+  ]
+}

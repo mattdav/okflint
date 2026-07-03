@@ -1,0 +1,55 @@
+okf_version: "0.1"
+
+base:
+  name: "okflint"
+  roots:
+    - path: "."
+      exclude_patterns:
+        - ".venv/**"
+        - ".git/**"
+        - "worktrees/**"
+        - ".claude/**"
+        - .pytest_cache/**
+        - tests/**
+  reserved_files:
+    index: "index.md"
+    log: "log.md"
+  link_resolution:
+    scope: base
+    external_refs: []
+
+profile:
+  date_fields: [created, updated]
+  types:
+
+    ProjectDescription:
+      # README.md — descriptive project documentation, human/consumer-facing.
+      # Answers "what is it, how to use it".
+      required: [project]
+      optional: [updated, tags]
+
+    ProjectStandards:
+      # CLAUDE.md, CONTRIBUTING.md — prescriptive project contract,
+      # agent/contributor-facing. Answers "how to work on it".
+      required: [project]
+      optional: [updated, tags]
+
+    ProjectLifeCycle:
+      # CHANGELOG.md, ROADMAP.md — project evolution documents.
+      # status required: active (living document) or archived (frozen project).
+      required: [project, status]
+      optional: [updated, tags]
+      status_values: [active, archived]
+
+    ProjectJournal:
+      # .claude/DECISIONS.md, .claude/LESSONS.md — project running log.
+      # Architectural decisions and lessons learned accumulated across sessions.
+      # No status: living document, never archived independently of the project.
+      required: [project]
+      optional: [updated, tags]
+
+hygiene:
+  broken_links: warn
+  split_candidates: off
+  reserved_files: error
+  unknown_fields: error

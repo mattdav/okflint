@@ -76,7 +76,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/sphinx/_build/
+docs/code/sphinx/_build/
 
 # PyBuilder
 .pybuilder/
@@ -139,10 +139,3 @@ cython_debug/
 
 # Outputs okflint (rapports d'audit JSON — toujours régénérables)
 .okflint/
-
-# Outputs repomix (pack codebase pour LLM — toujours régénérables)
-.repomix/
-
-# Manifest personnel (non versionné, propre à l'environnement local)
-okf-base.yaml
-okf-vault.json

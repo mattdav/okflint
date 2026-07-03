@@ -2,7 +2,7 @@
 type: ProjectStandards
 project: okflint
 updated: 2026-06-28
-tags: [python, cli, linter, okf, open-source]
+tags: [python, contributing]
 ---
 
 # Contribution guide — okflint
