@@ -2,7 +2,7 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-07-03
+updated: 2026-07-04
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -20,12 +20,15 @@ linter.
 
 ---
 
-## v0.1 — Current state
+## v0.2 — Current state
 
 - 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
 - 15 catalogued rules (see [`config/RULES.md`](../../config/RULES.md))
-- Unified CLI `okflint audit | validate`
-- Generic engine driven by a YAML manifest (`okf-base.yaml`)
+- Generic controlled-vocabulary model: any property constrained via `<prop>_values`, no hardcoded field names (shipped 0.2.0)
+- Unified CLI `okflint audit | validate | index`
+- `audit` aligned with `validate`: same checks, descriptive, always exit 0 (shipped 0.2.0)
+- `okflint index` — deterministic OKF §6 `index.md` generation, dry-run by default (shipped 0.2.0)
+- Generic engine driven by a YAML manifest
 - Manifest self-validation (`manifest.py`)
 
 ---
@@ -90,6 +93,12 @@ is runtime orchestration logic, executed by the agent in its harness. okflint is
 static; it validates a base at rest. The grid makes the base *routable*; the harness
 *routes*.
 
+**Update (0.2.0).** The « controlled vocabulary on an arbitrary field » example
+above is now shipped: the generic `<prop>_values` model constrains any declared
+property. What remains of Track B is the routing/grid layer proper — conditional
+required fields, presence rules, and the `routing`/`grid` manifest block still to be
+designed.
+
 ## Track C — Reaching agents beyond the Python toolchain (MCP server, bundles, standalone binary)
 
 **Problem**. Today okflint is a Python CLI on PyPI. That already serves users who
@@ -138,3 +147,54 @@ vault — not in the chat app. okflint provides the check; the harness or the
 pipeline decides whether it is advisory or blocking.
 
 ---
+
+## Track D — `okflint validate-manifest`: expose manifest validation as a command
+
+**Context.** `manifest.py` already validates a manifest's structure and raises
+`ManifestError` on virtually anything malformed (missing `base`, empty `roots`,
+`_values` on an undeclared property, `required ∩ optional ≠ ∅`, out-of-range
+hygiene levels, …). But that validation only fires as a side effect of
+`validate`/`audit`/`index`, surfacing as a muddled exit 2 — there is no way to
+check a manifest on its own, before scanning any base.
+
+**Direction.** Expose it as a dedicated command — `okflint validate-manifest
+<manifest>` — that checks a hand-written manifest **before** scanning anything,
+reports « valid » or lists its defects, and exits 0/2. No new validation logic:
+extract and surface what `manifest.py` already does.
+
+**Boundary.** Additive, non-breaking → candidate for 0.3.0 on its own. Static,
+deterministic, no engine change.
+
+---
+
+## Track E — Generic `okflint fix`: deterministic rewrites
+
+**Context.** Two catalogue rules are already marked auto-fixable (`F106` alias
+normalisation, `S102` date reformatting), and `okflint index` (0.2.0) is the first
+deterministic generator shipped. These deterministic rewrites currently have no
+shared home.
+
+**Direction.** A generic `fix` command hosting the deterministic, judgment-free
+rewrites: normalise `type` aliases (F106), reformat date fields (S102), (re)generate
+`index.md` (§6). Dry-run + diff by default, write on `--apply` — the `audit`/`index`
+convention.
+
+**Boundary — essential.** Deterministic rewrites only. Anything requiring judgment
+(what to split, how to rename, what a concept means) never enters `fix`; it stays
+with the human or the consuming agent. No LLM in the engine, ever.
+
+---
+
+## Maintenance / technical debt
+
+Small, bounded chores — not exploratory tracks, but tracked so they are not lost.
+
+- **`inv release --dry-run` is not a real dry-run.** `tasks.py` prints
+  `[dry-run] …` and then reports the *current* version instead of invoking
+  `cz bump --dry-run`; the safety net relied on throughout the 0.2.0 release was
+  in fact inert (the real check was done by calling `cz` directly). Fix: make it
+  actually run `cz bump --dry-run` and surface its output (target version +
+  changelog preview), or remove it rather than keep a lying dry-run.
+- **CI `setup-uv` version drift.** `docs.yml` still pins
+  `astral-sh/setup-uv@v5` while `release.yml` uses `@v6`. Align `docs.yml` to
+  `@v6` in a dedicated `chore(ci)`.
