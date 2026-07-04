@@ -23,12 +23,14 @@ to a standard — just as code is by a linter. `okflint` verifies, in a
 **deterministic, reproducible, LLM-free** way, that Markdown documents conform to
 an OKF standard declared in a YAML manifest.
 
-Two commands:
+Three commands:
 
 - **`okflint audit`** — inventory and descriptive diagnostic of a base (statistics,
   broken links, split candidates). Always `exit 0`.
 - **`okflint validate`** — normative compliance gate. `exit 0` if conformant,
   `exit 1` otherwise. Designed for pre-commit hooks and CI.
+- **`okflint index`** — generates OKF §6-conformant `index.md` files. Dry-run
+  (diff only) by default, writes only with `--apply`.
 
 ---
 
@@ -271,6 +273,43 @@ okflint validate --manifest okf-base.yaml docs/ || exit 1
 
 ---
 
+### `okflint index` — Generate index.md files
+
+`index` generates `index.md` files conforming to the OKF §6 format: one
+`index.md` per directory (progressive disclosure), listing the directory's
+`.md` files (title + optional description from frontmatter) and links to
+sub-directories that have their own index. No frontmatter is emitted, except
+that a root-level `index.md` may carry `okf_version` if you add it by hand
+(R001).
+
+By default `index` runs in **dry-run mode**: it prints a unified diff for
+each `index.md` that would change (or "index.md up to date" if none) and
+writes nothing. Pass `--apply` to actually write the files.
+
+```bash
+# Dry-run: show what would change
+okflint index --manifest okf-base.yaml
+
+# Write the index.md files
+okflint index --manifest okf-base.yaml --apply
+
+# Vault JSON: each bundle uses its own manifest
+okflint index --vault ./okf-vault.json --apply
+```
+
+**Options:**
+
+| Option | Required | Description |
+|---|---|---|
+| `--manifest <path>` | conditional | OKF manifest; required unless `--vault` resolves to an `okf-vault.json` |
+| `--vault <path>` | conditional | `okf-vault.json` file for multi-bundle mode (each bundle uses its own manifest) |
+| `--apply` | no | Write the `index.md` files whose content differs from the expected one |
+
+`index` is idempotent: running `--apply` twice in a row writes nothing the
+second time.
+
+---
+
 ## Development
 
 ```bash
@@ -291,15 +330,15 @@ The **full API documentation** (generated from docstrings) is available at
 
 ```
 src/okflint/
-├── cli.py        ← dispatcher: okflint audit | validate
+├── cli.py        ← dispatcher: okflint audit | validate | index
 ├── scanner.py    ← shared primitives (scan, frontmatter, links)
 ├── audit.py      ← audit command (descriptive)
 ├── validate.py   ← validate command (normative gate)
+├── index.py      ← index command (OKF §6 index.md generation)
 ├── vault.py      ← okf-vault.json loading (VaultConfig, load_vault)
+├── manifest.py   ← manifest loading + validation (Manifest, load_manifest)
 └── __main__.py   ← python -m okflint
 ```
-
-Bundle manifest: `manifest.py` (contract loading + validation).
 
 ---
 

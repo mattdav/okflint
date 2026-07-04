@@ -1,14 +1,16 @@
 """Unified CLI entry point for okflint.
 
-Exposes two sub-commands Ruff-style:
+Exposes three sub-commands Ruff-style:
     okflint audit     — inventory and descriptive diagnostic of a base
     okflint validate  — normative compliance gate (exit 0/1)
+    okflint index     — generate OKF §6 index.md files (dry-run by default)
 """
 
 from __future__ import annotations
 
 import argparse
 import dataclasses
+import difflib
 import json
 import sys
 from pathlib import Path
@@ -17,6 +19,7 @@ from typing import Any
 from beartype import beartype
 
 from okflint.audit import run_audit
+from okflint.index import generate_indexes
 from okflint.manifest import Manifest, RootConfig, load_manifest
 from okflint.scanner import build_file_index
 from okflint.validate import Diagnostic, ManifestError, run_validate
@@ -110,6 +113,65 @@ def _write_audit_report(report: dict[str, Any], suffix: str = "audit") -> None:
     out = outputs_dir / f"{today}_{suffix}_v{v}.json"
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Report: {out}")
+
+
+def _diff_indexes(indexes: dict[Path, str]) -> dict[Path, str]:
+    """Compute unified diffs between expected and on-disk index.md content.
+
+    Args:
+        indexes: Mapping index.md path → expected content, as returned by
+            ``generate_indexes``.
+
+    Returns:
+        Mapping restricted to paths whose expected content differs from
+        what is currently on disk (or that do not exist yet), each paired
+        with its unified diff text.
+    """
+    diffs: dict[Path, str] = {}
+    for path, expected in indexes.items():
+        current = path.read_text(encoding="utf-8") if path.exists() else ""
+        if current == expected:
+            continue
+        diff_lines = difflib.unified_diff(
+            current.splitlines(keepends=True),
+            expected.splitlines(keepends=True),
+            fromfile=str(path) if path.exists() else "/dev/null",
+            tofile=str(path),
+        )
+        diffs[path] = "".join(diff_lines)
+    return diffs
+
+
+def _index_one(manifest: Manifest, apply: bool, title: str | None = None) -> None:
+    """Generate, diff, and optionally write index.md files for one manifest.
+
+    Args:
+        manifest: Loaded and validated OKF manifest.
+        apply: If True, write files whose content differs; otherwise print
+            the diffs without writing.
+        title: If set, prints ``=== title ===`` before the report.
+    """
+    if title is not None:
+        print(f"\n=== {title} ===")
+
+    indexes = generate_indexes(manifest)
+    diffs = _diff_indexes(indexes)
+
+    if not diffs:
+        print("index.md up to date")
+        return
+
+    if apply:
+        for path in sorted(diffs):
+            path.write_text(indexes[path], encoding="utf-8")
+        print(f"Written {len(diffs)} index.md file(s):")
+        for path in sorted(diffs):
+            print(f"  {path}")
+    else:
+        for path in sorted(diffs):
+            print(f"--- {path} ---")
+            print(diffs[path] or "(new file)")
+        print(f"({len(diffs)} index.md to write — re-run with --apply)")
 
 
 # ---------------------------------------------------------------------------
@@ -507,6 +569,64 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return code_orig
 
 
+def _cmd_index(args: argparse.Namespace) -> int:
+    """Execute the index sub-command (OKF §6 index.md generation).
+
+    ``--manifest`` is required unless ``--vault`` points to an
+    ``okf-vault.json`` file, in which case every bundle is processed with
+    its own manifest (same discovery as ``audit``/``validate``). Unlike
+    ``audit``, there is no manifest-less mode: roots, exclusions, and
+    reserved file names all come from a manifest.
+
+    Args:
+        args: argparse Namespace (manifest, vault, apply).
+
+    Returns:
+        Exit code (0 on success, 2 on configuration/manifest error).
+    """
+    has_manifest = args.manifest is not None
+    has_vault = args.vault is not None
+    vault_path = Path(args.vault) if has_vault else None
+    vault_is_json = vault_path is not None and vault_path.suffix.lower() == ".json"
+
+    if vault_is_json and not has_manifest:
+        assert vault_path is not None  # narrowing for mypy
+        try:
+            vault_cfg = load_vault(vault_path)
+        except VaultError as exc:
+            print(f"Vault error: {exc}", file=sys.stderr)
+            return 2
+
+        for bundle_entry in vault_cfg.bundles:
+            bundle_name = bundle_entry.path.name
+            try:
+                manifest = load_manifest(bundle_entry.manifest_path)
+            except ManifestError as exc:
+                print(
+                    f"Warning: skipping bundle '{bundle_name}': {exc}",
+                    file=sys.stderr,
+                )
+                continue
+            _index_one(manifest, args.apply, title=bundle_name)
+        return 0
+
+    if not has_manifest:
+        print(
+            "Error: Provide --manifest, or --vault pointing to an okf-vault.json.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        manifest = load_manifest(Path(args.manifest))
+    except ManifestError as exc:
+        print(f"Manifest error: {exc}", file=sys.stderr)
+        return 2
+
+    _index_one(manifest, args.apply)
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # Parser
 # ---------------------------------------------------------------------------
@@ -583,6 +703,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Files or directories to validate (default: all manifest roots).",
     )
     p_validate.set_defaults(func=_cmd_validate)
+
+    # -- index ------------------------------------------------------------------
+    p_index = subparsers.add_parser(
+        "index", help="Generate OKF §6 index.md files (dry-run/diff by default)."
+    )
+    p_index.add_argument(
+        "--manifest",
+        default=None,
+        help=(
+            "Path to the OKF manifest. Required unless --vault points to an "
+            "okf-vault.json (each bundle then uses its own manifest)."
+        ),
+    )
+    p_index.add_argument(
+        "--vault",
+        default=None,
+        help="Path to an okf-vault.json file for multi-bundle mode.",
+    )
+    p_index.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write index.md files whose content differs from the expected one.",
+    )
+    p_index.set_defaults(func=_cmd_index)
 
     return parser
 

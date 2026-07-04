@@ -15,10 +15,11 @@ manifest. No LLM, no runtime state: a reproducible gate, Ruff-style.
 
 ```
 src/okflint/
-├── cli.py        ← CLI dispatcher: okflint audit | validate
+├── cli.py        ← CLI dispatcher: okflint audit | validate | index
 ├── scanner.py    ← shared primitives (scan, frontmatter, code-fence, links)
 ├── audit.py      ← audit command (descriptive, always exit 0)
 ├── validate.py   ← validate command (normative gate, exit 0/1)
+├── index.py      ← index command (OKF §6 index.md generation, dry-run default)
 ├── manifest.py   ← manifest loading + self-validation
 ├── __init__.py
 ├── __main__.py   ← python -m okflint
@@ -35,6 +36,7 @@ src/okflint/
 - `uv build` — build sdist + wheel in `dist/`.
 - `okflint audit --bundle <dir> --vault <dir> [--apply]` — descriptive audit.
 - `okflint validate --manifest <okf-base.yaml> <targets...>` — compliance gate.
+- `okflint index --manifest <okf-base.yaml> [--apply]` — OKF §6 index.md generation (dry-run by default).
 
 ## Architecture
 

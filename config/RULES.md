@@ -333,3 +333,8 @@ triggers no profile errors. `okflint validate` requires both to return `exit 0`.
 `okflint audit` applies these same checks in descriptive mode (`exit 0` always),
 with the severities declared in the manifest. The difference with `validate` is
 the exit code, not the checks.
+
+`okflint index` generates `index.md` files that are always `R001`-conformant
+(no frontmatter, except an optional hand-added `okf_version` at the bundle
+root): it introduces no new rule, it only produces output that satisfies the
+existing one.
