@@ -27,4 +27,4 @@ YAML manifest declaring the base's conventions.
    :maxdepth: 1
    :caption: Project
 
-   Roadmap <https://github.com/mattdav/okflint/blob/main/ROADMAP.md>
+   Roadmap <https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md>

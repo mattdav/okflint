@@ -57,7 +57,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.BaseConfig.name"><code class="docutils literal notranslate"><span class="pre">BaseConfig.name</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.BaseConfig.reserved_files"><code class="docutils literal notranslate"><span class="pre">BaseConfig.reserved_files</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.BaseConfig.roots"><code class="docutils literal notranslate"><span class="pre">BaseConfig.roots</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.BaseConfig.status_field"><code class="docutils literal notranslate"><span class="pre">BaseConfig.status_field</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.manifest.HygieneConfig"><code class="docutils literal notranslate"><span class="pre">HygieneConfig</span></code></a><ul>
@@ -87,9 +86,9 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.manifest.TypeConfig"><code class="docutils literal notranslate"><span class="pre">TypeConfig</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.aliases"><code class="docutils literal notranslate"><span class="pre">TypeConfig.aliases</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.controlled_values"><code class="docutils literal notranslate"><span class="pre">TypeConfig.controlled_values</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.optional"><code class="docutils literal notranslate"><span class="pre">TypeConfig.optional</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.required"><code class="docutils literal notranslate"><span class="pre">TypeConfig.required</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.manifest.TypeConfig.status_values"><code class="docutils literal notranslate"><span class="pre">TypeConfig.status_values</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
@@ -101,7 +100,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md">Roadmap</a></li>
 </ul>
 
         </div>
@@ -134,7 +133,7 @@
 <p id="module-okflint.manifest">OKF manifest loading and validation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.manifest.BaseConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">BaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external_refs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#BaseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.BaseConfig" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">BaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external_refs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#BaseConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.BaseConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Documentary base configuration.</p>
 <dl class="py attribute">
@@ -155,11 +154,6 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.BaseConfig.roots">
 <span class="sig-name descname"><span class="pre">roots</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><span class="pre">RootConfig</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.BaseConfig.roots" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.manifest.BaseConfig.status_field">
-<span class="sig-name descname"><span class="pre">status_field</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.manifest.BaseConfig.status_field" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -261,12 +255,17 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.manifest.TypeConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">TypeConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aliases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#TypeConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.TypeConfig" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.manifest.</span></span><span class="sig-name descname"><span class="pre">TypeConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controlled_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aliases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/manifest.html#TypeConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.manifest.TypeConfig" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Configuration of a concept type declared in the profile.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.TypeConfig.aliases">
 <span class="sig-name descname"><span class="pre">aliases</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.TypeConfig.aliases" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.manifest.TypeConfig.controlled_values">
+<span class="sig-name descname"><span class="pre">controlled_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.TypeConfig.controlled_values" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -277,11 +276,6 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.manifest.TypeConfig.required">
 <span class="sig-name descname"><span class="pre">required</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.manifest.TypeConfig.required" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.manifest.TypeConfig.status_values">
-<span class="sig-name descname"><span class="pre">status_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.14)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="k"><span class="pre">False</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.manifest.TypeConfig.status_values" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

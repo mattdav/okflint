@@ -55,7 +55,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md">Roadmap</a></li>
 </ul>
 
         </div>
@@ -307,7 +307,6 @@
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span><span class="p">,</span>
-    <span class="n">status_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check profile rules on a concept file.</span>
 
@@ -315,10 +314,9 @@
 <span class="sd">        path: Relative file path.</span>
 <span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
 <span class="sd">        profile: Profile configuration.</span>
-<span class="sd">        status_field: Name of the status field declared in base (may be None).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List of Diagnostic (F101-F106, S101, S102).</span>
+<span class="sd">        List of Diagnostic (F101, F102, F105, F106, S102).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">val_type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
@@ -365,39 +363,13 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># F103/F104/F105 — status</span>
-    <span class="c1"># CRITICAL: distinguish is False from is None</span>
-    <span class="n">sv</span> <span class="o">=</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">status_values</span>
-    <span class="n">sf</span> <span class="o">=</span> <span class="n">status_field</span> <span class="ow">or</span> <span class="s2">&quot;status&quot;</span>  <span class="c1"># name of the status field</span>
-
-    <span class="k">if</span> <span class="n">sv</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="c1"># status forbidden for this type</span>
-        <span class="k">if</span> <span class="n">sf</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
-            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F103&quot;</span><span class="p">,</span>
-                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
-                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;status field `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` present but forbidden &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;for type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sv</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="c1"># status required and value constrained</span>
-        <span class="k">if</span> <span class="n">sf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
-            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F104&quot;</span><span class="p">,</span>
-                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
-                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;status field `</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">` required for type `</span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">sf</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sv</span><span class="p">:</span>
+    <span class="c1"># F105 — controlled vocabulary violation (any property declaring `&lt;prop&gt;_values`)</span>
+    <span class="k">for</span> <span class="n">prop</span><span class="p">,</span> <span class="n">allowed</span> <span class="ow">in</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">controlled_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">prop</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">raw_value</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">prop</span><span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">raw_value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">raw_value</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
                     <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F105&quot;</span><span class="p">,</span>
@@ -405,40 +377,8 @@
                     <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;status value outside vocabulary: &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">sf</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">sf</span><span class="p">]</span><span class="si">}</span><span class="s2">` (allowed: </span><span class="si">{</span><span class="n">sv</span><span class="si">}</span><span class="s2">)&quot;</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-    <span class="c1"># sv is None → optional, no check</span>
-
-    <span class="c1"># S101 — incorrectly named status field</span>
-    <span class="k">if</span> <span class="n">status_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Check &quot;status&quot; (English) if status_field != &quot;status&quot;</span>
-        <span class="k">if</span> <span class="n">status_field</span> <span class="o">!=</span> <span class="s2">&quot;status&quot;</span> <span class="ow">and</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
-            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S101&quot;</span><span class="p">,</span>
-                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
-                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;incorrectly named status field: `status`&quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot; → use `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="c1"># Check &quot;statut&quot; (French) if status_field != &quot;statut&quot;</span>
-        <span class="k">if</span> <span class="n">status_field</span> <span class="o">!=</span> <span class="s2">&quot;statut&quot;</span> <span class="ow">and</span> <span class="s2">&quot;statut&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
-            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S101&quot;</span><span class="p">,</span>
-                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
-                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;incorrectly named status field: `statut`&quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot; → use `</span><span class="si">{</span><span class="n">status_field</span><span class="si">}</span><span class="s2">`&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;value outside vocabulary: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">raw_value</span><span class="si">}</span><span class="s2">` (allowed: </span><span class="si">{</span><span class="n">allowed</span><span class="si">}</span><span class="s2">)&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -714,9 +654,7 @@
     <span class="c1"># Profile</span>
     <span class="n">resolved_type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">profile_diags</span> <span class="o">=</span> <span class="n">check_profile</span><span class="p">(</span>
-            <span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">status_field</span>
-        <span class="p">)</span>
+        <span class="n">profile_diags</span> <span class="o">=</span> <span class="n">check_profile</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">profile_diags</span><span class="p">)</span>
         <span class="c1"># Resolve type_cfg for F201 (hygiene unknown fields)</span>
         <span class="n">type_key</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_resolve_type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>

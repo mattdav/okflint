@@ -17,7 +17,6 @@ Structure
      reserved_files:
        index: index.md
        log: log.md
-     status_field: status
      link_resolution:
        external_refs:
          - Wikipedia
@@ -30,7 +29,6 @@ Structure
          status_values: [draft, validated, archived]
        reference:
          required: [type]
-         status_values: false
      date_fields: [created, updated]
 
    hygiene:
@@ -43,11 +41,14 @@ Sections
 --------
 
 **base** (required)
-   Base roots, reserved files, status field, external references.
+   Base roots, reserved files, external references.
 
 **profile** (optional)
-   Concept types with their required/optional fields and status vocabularies.
-   ``status_values: false`` forbids the status field for that type.
+   Concept types with their required/optional fields. Any property may
+   declare a controlled vocabulary via a ``<prop>_values`` key (e.g.
+   ``status_values`` for a ``status`` property); this only constrains the
+   value when the property is present, independently of whether it is
+   required or optional.
 
 **hygiene** (optional)
    Control levels for each rule family: ``off`` | ``warn`` | ``error``.

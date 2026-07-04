@@ -62,7 +62,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/ROADMAP.md">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md">Roadmap</a></li>
 </ul>
 
         </div>
@@ -103,7 +103,6 @@
 <span class="w">  </span><span class="nt">reserved_files</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index.md</span>
 <span class="w">    </span><span class="nt">log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log.md</span>
-<span class="w">  </span><span class="nt">status_field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">status</span>
 <span class="w">  </span><span class="nt">link_resolution</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">external_refs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Wikipedia</span>
@@ -116,7 +115,6 @@
 <span class="w">      </span><span class="nt">status_values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">draft</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">validated</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">archived</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="nt">reference</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">type</span><span class="p p-Indicator">]</span>
-<span class="w">      </span><span class="nt">status_values</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">  </span><span class="nt">date_fields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">created</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">updated</span><span class="p p-Indicator">]</span>
 
 <span class="nt">hygiene</span><span class="p">:</span>
@@ -130,10 +128,13 @@
 <section id="sections">
 <h2>Sections<a class="headerlink" href="#sections" title="Link to this heading"></a></h2>
 <dl class="simple">
-<dt><strong>base</strong> (required)</dt><dd><p>Base roots, reserved files, status field, external references.</p>
+<dt><strong>base</strong> (required)</dt><dd><p>Base roots, reserved files, external references.</p>
 </dd>
-<dt><strong>profile</strong> (optional)</dt><dd><p>Concept types with their required/optional fields and status vocabularies.
-<code class="docutils literal notranslate"><span class="pre">status_values:</span> <span class="pre">false</span></code> forbids the status field for that type.</p>
+<dt><strong>profile</strong> (optional)</dt><dd><p>Concept types with their required/optional fields. Any property may
+declare a controlled vocabulary via a <code class="docutils literal notranslate"><span class="pre">&lt;prop&gt;_values</span></code> key (e.g.
+<code class="docutils literal notranslate"><span class="pre">status_values</span></code> for a <code class="docutils literal notranslate"><span class="pre">status</span></code> property); this only constrains the
+value when the property is present, independently of whether it is
+required or optional.</p>
 </dd>
 <dt><strong>hygiene</strong> (optional)</dt><dd><p>Control levels for each rule family: <code class="docutils literal notranslate"><span class="pre">off</span></code> | <code class="docutils literal notranslate"><span class="pre">warn</span></code> | <code class="docutils literal notranslate"><span class="pre">error</span></code>.</p>
 </dd>
