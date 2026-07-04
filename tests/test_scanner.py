@@ -159,6 +159,51 @@ class TestExtractMarkdownLinks:
         links = extract_markdown_links("[Section](#my-section)", src, tmp_path)
         assert len(links) == 0
 
+    def test_relative_link_with_anchor_existing(self, tmp_path: Path) -> None:
+        target = tmp_path / "other.md"
+        target.touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Other](other.md#anchor)", src, tmp_path)
+        assert not links[0].broken
+
+    def test_relative_link_with_anchor_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Other](other.md#anchor)", src, tmp_path)
+        assert links[0].broken
+
+    def test_absolute_link_with_anchor_existing(self, tmp_path: Path) -> None:
+        target = tmp_path / "abs" / "path.md"
+        target.parent.mkdir()
+        target.touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Abs](/abs/path.md#frag)", src, tmp_path)
+        assert not links[0].broken
+
+    def test_link_without_fragment_still_resolved(self, tmp_path: Path) -> None:
+        target = tmp_path / "existing.md"
+        target.touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Existing](existing.md)", src, tmp_path)
+        assert not links[0].broken
+
+    def test_ticket_case_anchor_with_special_chars(self, tmp_path: Path) -> None:
+        target = tmp_path / "fichier.md"
+        target.touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links(
+            "[A](fichier.md#dax001-use-simple-...-arguments) "
+            "[B](fichier.md#qry002-...-__valuefilterdm)",
+            src,
+            tmp_path,
+        )
+        assert not links[0].broken
+        assert not links[1].broken
+
 
 # ---------------------------------------------------------------------------
 # build_file_index

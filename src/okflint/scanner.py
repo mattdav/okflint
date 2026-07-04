@@ -299,20 +299,21 @@ def extract_markdown_links(
     for m in _MD_LINK_RE.finditer(content):
         text = m.group(1)
         target = m.group(2).strip()
-        # Ignore pure anchors (#section)
-        if target.startswith("#"):
+        path_part, _, _fragment = target.partition("#")
+        # Ignore same-file anchors (#section)
+        if path_part == "":
             continue
-        is_external = target.startswith(("http://", "https://", "ftp://"))
+        is_external = path_part.startswith(("http://", "https://", "ftp://"))
 
         if is_external:
             broken = False
-        elif target.startswith("/"):
+        elif path_part.startswith("/"):
             # Absolute path relative to the bundle
-            resolved = bundle_path / target.lstrip("/")
+            resolved = bundle_path / path_part.lstrip("/")
             broken = not resolved.exists()
         else:
             # Path relative to the current file
-            resolved = file_path.parent / target
+            resolved = file_path.parent / path_part
             broken = not resolved.exists()
 
         results.append(
