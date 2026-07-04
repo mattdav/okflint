@@ -18,6 +18,27 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.2.0 (2026-07-04)
+
+### BREAKING CHANGE
+
+- manifest schema changed. `base.status_field` removed; per-type
+`status_values` replaced by a generic `<prop>_values` on any declared property.
+Rules F103/F104/S101 removed (catalogue 18→15). Migration: drop `status_field`,
+rename `status_values` to `<statuskey>_values`, and remove `type` from `required`
+lists (now implicit, controlled by F002/F101).
+
+### Feat
+
+- **index**: add `okflint index` command (OKF §6 index.md generation, dry-run default)
+- **audit**: align audit checks with validate (descriptive, exit 0)
+- **manifest**: modèle de vocabulaire contrôlé générique via suffixe _values
+
+### Fix
+
+- **scanner**: strip URL fragment before markdown link resolution
+- **docs**: corrige les liens cassés après la réorganisation documentaire
+
 ## v0.1.3 (2026-06-28)
 
 ### Feat

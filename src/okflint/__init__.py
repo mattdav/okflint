@@ -7,4 +7,4 @@ that Markdown documents conform to the Open Knowledge Format standard.
 __project_name__ = "okflint"
 __author__ = "Matthieu Daviaud"
 __email__ = "matthieu.daviaud@gmail.com"
-__version__ = "0.1.3"
+__version__ = "0.2.0"
