@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from beartype import beartype
 
-from okflint.manifest import RootConfig
+from okflint.manifest import Manifest, RootConfig
 from okflint.scanner import (
     MarkdownLink,
     WikiLink,
@@ -24,6 +24,7 @@ from okflint.scanner import (
     extract_wikilinks,
     parse_frontmatter,
 )
+from okflint.validate import Diagnostic, check_core_concept, validate_file
 
 OkfStatus = Literal["conformant", "partial", "non_conformant"]
 
@@ -60,6 +61,7 @@ class FileReport:
     split_reason: str | None  # "multiple_h1" | "homogeneous_h2_list"
     split_entity_count: int | None
     headers: list[Header]
+    diagnostics: list[Diagnostic] = dataclasses.field(default_factory=list)
 
 
 # Structural section keywords (ADR, Runbook, Journal, meta-docs).
@@ -357,6 +359,15 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
     total_lines = sum(f.lines for f in files)
     total_chars = sum(f.chars for f in files)
 
+    by_severity: dict[str, int] = {"error": 0, "warning": 0}
+    by_tier: dict[str, int] = {"core": 0, "profile": 0, "hygiene": 0}
+    by_code: dict[str, int] = {}
+    for f in files:
+        for d in f.diagnostics:
+            by_severity[d.severity] = by_severity.get(d.severity, 0) + 1
+            by_tier[d.tier] = by_tier.get(d.tier, 0) + 1
+            by_code[d.code] = by_code.get(d.code, 0) + 1
+
     return {
         "total_files": len(files),
         "total_concept_files": len(concept_files),
@@ -371,6 +382,11 @@ def compute_stats(files: list[FileReport], vault_total: int) -> dict[str, Any]:
         "broken_markdown_links": broken_md_links,
         "split_candidates": split_candidates,
         "vault_total_files": vault_total,
+        "diagnostics_summary": {
+            "by_severity": by_severity,
+            "by_tier": by_tier,
+            "by_code": by_code,
+        },
     }
 
 
@@ -381,6 +397,7 @@ def run_audit(
     *,
     target_filter: Path | None = None,
     vault_index: dict[str, list[str]] | None = None,
+    manifest: Manifest | None = None,
 ) -> dict[str, Any]:
     """Orchestrate the full audit of one or more OKF bundle roots.
 
@@ -400,6 +417,9 @@ def run_audit(
             Used when --bundle is combined with --manifest as a sub-filter.
         vault_index: Pre-built file index (stem → list of relative paths).
             When provided, vault indexing is skipped entirely.
+        manifest: When provided, each file is validated through the same
+            engine as ``validate`` (core + profile + hygiene diagnostics).
+            When None, diagnostics are core-only (F001/F002).
 
     Returns:
         Full audit report serialisable as JSON.
@@ -451,9 +471,14 @@ def run_audit(
     files: list[FileReport] = []
     for md_file, bundle_root in all_md_files:
         report = analyze_file(md_file, bundle_root, _vault_index)
+        if manifest is not None:
+            report.diagnostics = validate_file(md_file, manifest, _vault_index)
+        else:
+            report.diagnostics = check_core_concept(report.path, report.frontmatter)
         files.append(report)
 
     stats = compute_stats(files, vault_total)
+    diagnostics_summary = stats.pop("diagnostics_summary")
 
     # Per-root file counts for CI consumers
     root_counts: dict[str, int] = {r.path.as_posix(): 0 for r in _bundle_roots}
@@ -472,5 +497,6 @@ def run_audit(
         "vault_paths": [p.as_posix() for p in _vault_paths],
         "roots": roots_info,
         "stats": stats,
+        "diagnostics_summary": diagnostics_summary,
         "files": [dataclasses.asdict(f) for f in files],
     }

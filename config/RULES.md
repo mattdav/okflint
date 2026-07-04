@@ -329,3 +329,7 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 A base is said to be **OKF-conformant** if it triggers no core errors
 (`F001`, `F002`, `R001`, `R002`). It is **profile-conformant** if it additionally
 triggers no profile errors. `okflint validate` requires both to return `exit 0`.
+
+`okflint audit` applies these same checks in descriptive mode (`exit 0` always),
+with the severities declared in the manifest. The difference with `validate` is
+the exit code, not the checks.

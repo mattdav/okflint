@@ -17,7 +17,7 @@ from typing import Any
 from beartype import beartype
 
 from okflint.audit import run_audit
-from okflint.manifest import RootConfig, load_manifest
+from okflint.manifest import Manifest, RootConfig, load_manifest
 from okflint.scanner import build_file_index
 from okflint.validate import Diagnostic, ManifestError, run_validate
 from okflint.vault import VaultConfig, VaultError, load_vault
@@ -27,12 +27,18 @@ from okflint.vault import VaultConfig, VaultError, load_vault
 # ---------------------------------------------------------------------------
 
 
-def _print_audit_stats(stats: dict[str, Any], title: str | None = None) -> None:
+def _print_audit_stats(
+    stats: dict[str, Any],
+    title: str | None = None,
+    diagnostics_summary: dict[str, Any] | None = None,
+) -> None:
     """Print the standard audit stats block, optionally preceded by a title.
 
     Args:
         stats: Stats dict as returned by ``compute_stats``.
         title: If set, prints ``=== title ===`` before the stats.
+        diagnostics_summary: If set and non-empty, prints a synthetic
+            errors/warnings line (full detail is carried by the JSON report).
     """
     if title is not None:
         print(f"\n=== {title} ===")
@@ -44,6 +50,14 @@ def _print_audit_stats(stats: dict[str, Any], title: str | None = None) -> None:
     md_broken = stats["broken_markdown_links"]
     print(f"MD links: {stats['total_markdown_links']} of which {md_broken} broken")
     print(f"Split candidates: {stats['split_candidates']}")
+    if diagnostics_summary:
+        by_severity = diagnostics_summary["by_severity"]
+        by_tier = diagnostics_summary["by_tier"]
+        tiers = "/".join(f"{k}={v}" for k, v in by_tier.items())
+        print(
+            f"Diagnostics: {by_severity['error']} errors, "
+            f"{by_severity['warning']} warnings ({tiers})"
+        )
 
 
 def _aggregate_audit_stats(reports: list[dict[str, Any]]) -> dict[str, Any]:
@@ -131,9 +145,15 @@ def _cmd_audit_full_vault(
             )
             continue
 
-        report = run_audit(manifest.base.roots, [], vault_index=vault_index)
+        report = run_audit(
+            manifest.base.roots, [], vault_index=vault_index, manifest=manifest
+        )
         all_reports.append(report)
-        _print_audit_stats(report["stats"], title=bundle_name)
+        _print_audit_stats(
+            report["stats"],
+            title=bundle_name,
+            diagnostics_summary=report.get("diagnostics_summary"),
+        )
 
     if all_reports:
         _print_audit_stats(_aggregate_audit_stats(all_reports), title="Total vault")
@@ -271,14 +291,15 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             return _cmd_audit_full_vault(vault_cfg, vault_index, args)
 
         target_filter: Path | None = None
+        manifest_obj: Manifest | None = None
 
         if has_manifest:
             try:
-                manifest = load_manifest(Path(args.manifest))
+                manifest_obj = load_manifest(Path(args.manifest))
             except ManifestError as exc:
                 print(f"Manifest error: {exc}", file=sys.stderr)
                 return 2
-            bundle_paths = manifest.base.roots
+            bundle_paths = manifest_obj.base.roots
             if has_bundle:
                 print(
                     "Warning: Both --manifest and --bundle provided; "
@@ -294,8 +315,11 @@ def _cmd_audit(args: argparse.Namespace) -> int:
             [],
             target_filter=target_filter,
             vault_index=vault_index,
+            manifest=manifest_obj,
         )
-        _print_audit_stats(report["stats"])
+        _print_audit_stats(
+            report["stats"], diagnostics_summary=report.get("diagnostics_summary")
+        )
         roots: list[dict[str, object]] = report.get("roots", [])
         if len(roots) > 1:
             print("\nPer-root:")
@@ -310,15 +334,16 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     # ── Original behaviour (vault is a folder or absent) ──────────────────────
     vault_paths_orig: list[Path]
     target_filter_orig: Path | None = None
+    manifest_obj_orig: Manifest | None = None
 
     if has_manifest:
         try:
-            manifest_orig = load_manifest(Path(args.manifest))
+            manifest_obj_orig = load_manifest(Path(args.manifest))
         except ManifestError as exc:
             print(f"Manifest error: {exc}", file=sys.stderr)
             return 2
-        bundle_paths_orig = manifest_orig.base.roots
-        vault_paths_orig = [r.path for r in manifest_orig.base.roots]
+        bundle_paths_orig = manifest_obj_orig.base.roots
+        vault_paths_orig = [r.path for r in manifest_obj_orig.base.roots]
         if has_bundle:
             print(
                 "Warning: Both --manifest and --bundle provided; "
@@ -340,22 +365,12 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         bundle_paths_orig,
         vault_paths_orig,
         target_filter=target_filter_orig,
+        manifest=manifest_obj_orig,
     )
-    stats_orig = report_orig["stats"]
-    n_concepts_orig = stats_orig["total_concept_files"]
-    print(f"Files: {stats_orig['total_files']} ({n_concepts_orig} concepts)")
-    print(f"OKF status: {stats_orig['by_okf_status']}")
-    wikilinks_broken_orig = stats_orig["broken_wikilinks"]
-    print(
-        f"Wikilinks: {stats_orig['total_wikilinks']} "
-        f"of which {wikilinks_broken_orig} broken"
+    _print_audit_stats(
+        report_orig["stats"],
+        diagnostics_summary=report_orig.get("diagnostics_summary"),
     )
-    md_broken_orig = stats_orig["broken_markdown_links"]
-    print(
-        f"MD links: {stats_orig['total_markdown_links']} "
-        f"of which {md_broken_orig} broken"
-    )
-    print(f"Split candidates: {stats_orig['split_candidates']}")
 
     roots_orig: list[dict[str, object]] = report_orig.get("roots", [])
     if len(roots_orig) > 1:

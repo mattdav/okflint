@@ -21,7 +21,8 @@ from okflint.audit import (
     get_okf_status,
     run_audit,
 )
-from okflint.manifest import RootConfig
+from okflint.manifest import RootConfig, load_manifest
+from okflint.validate import run_validate
 
 
 # ---------------------------------------------------------------------------
@@ -427,3 +428,98 @@ class TestRunAuditExclude:
         make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
         report = run_audit([root1, root2], [root1, root2], target_filter=root1)
         assert report["stats"]["total_files"] == 1
+
+
+# ---------------------------------------------------------------------------
+# run_audit — diagnostics alignment with validate (Track I)
+# ---------------------------------------------------------------------------
+
+
+class TestRunAuditWithManifest:
+    def test_manifest_diagnostics_present_without_gating(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        manifest_path, root = profile_manifest
+        manifest = load_manifest(manifest_path)
+        make_md(
+            root / "doc.md",
+            "---\ntype: Decision\nstatut: InProgress\ncreated: 2026-01-01\n---\n"
+            "# Decision\n",
+        )
+        report = run_audit(root, root, manifest=manifest)
+        file_codes = {d["code"] for f in report["files"] for d in f["diagnostics"]}
+        assert "F105" in file_codes
+        assert report["diagnostics_summary"]["by_code"]["F105"] == 1
+        # audit stays descriptive: it never returns an exit code
+        assert "code" not in report
+
+    def test_diagnostics_match_validate(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        manifest_path, root = profile_manifest
+        manifest = load_manifest(manifest_path)
+        make_md(
+            root / "ok.md",
+            "---\ntype: Decision\nstatut: Accepté\ncreated: 2026-01-01\n---\n"
+            "# Decision OK\n",
+        )
+        make_md(
+            root / "bad.md",
+            "---\ntype: Decision\nstatut: InProgress\ncreated: 2026-01-01\n---\n"
+            "# Decision Bad\n",
+        )
+        make_md(root / "bare.md", "# No frontmatter\n")
+
+        audit_report = run_audit(root, root, manifest=manifest)
+        audit_codes = sorted(
+            (d["file"], d["code"])
+            for f in audit_report["files"]
+            for d in f["diagnostics"]
+        )
+
+        validate_errors, _ = run_validate(manifest_path, [root])
+        validate_codes = sorted((d.file, d.code) for d in validate_errors)
+
+        assert audit_codes == validate_codes
+
+    def test_without_manifest_diagnostics_are_core_only(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "bare.md", "# Bare\n")
+        report = run_audit(bundle, bundle)
+        codes = {d["code"] for f in report["files"] for d in f["diagnostics"]}
+        assert codes == {"F001"}
+
+    def test_diagnostics_summary_consistent_with_per_file_sum(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        manifest_path, root = profile_manifest
+        manifest = load_manifest(manifest_path)
+        make_md(
+            root / "bad.md",
+            "---\ntype: Decision\nstatut: InProgress\ncreated: 2026-01-01\n---\n"
+            "# Decision Bad\n",
+        )
+        make_md(root / "bare.md", "# No frontmatter\n")
+
+        report = run_audit(root, root, manifest=manifest)
+        summary = report["diagnostics_summary"]
+        all_diags = [d for f in report["files"] for d in f["diagnostics"]]
+
+        assert sum(summary["by_severity"].values()) == len(all_diags)
+        assert sum(summary["by_tier"].values()) == len(all_diags)
+        assert sum(summary["by_code"].values()) == len(all_diags)

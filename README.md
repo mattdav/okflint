@@ -136,6 +136,14 @@ types:
 conformance statistics, broken wikilinks, broken Markdown links, split candidates.
 This command is **always exit 0** — it is an observation tool, not a gate.
 
+When a manifest is available (`--manifest`, or a bundle resolved through a vault
+entry with its own manifest), `audit` runs the same checks as `validate` — core,
+profile, and hygiene — according to the manifest's declared severities. The JSON
+report then includes `diagnostics` per file and a top-level `diagnostics_summary`
+(counts by severity, tier, and code). The difference with `validate` is the exit
+code, not the checks: `audit` never fails, it only reports. Without a manifest
+(`--bundle`/`--vault` folder mode), diagnostics stay core-only (F001/F002).
+
 ```bash
 # Audit every bundle in a vault manifest (recommended)
 okflint audit --vault /path/to/okf-vault.json
