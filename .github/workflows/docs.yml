@@ -37,12 +37,12 @@ jobs:
 
       - name: Build Sphinx documentation
         run: |
-          uv run sphinx-build -b html docs/sphinx docs/sphinx/_build/html
+          uv run sphinx-build -b html docs/code/sphinx docs/code/sphinx/_build/html
           # Fichier requis pour que GitHub Pages serve les dossiers _static/, _sources/, etc.
-          touch docs/sphinx/_build/html/.nojekyll
+          touch docs/code/sphinx/_build/html/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: docs/sphinx/_build/html/
+          folder: docs/code/sphinx/_build/html/
