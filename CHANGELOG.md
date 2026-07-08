@@ -18,6 +18,23 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.3.0 (2026-07-08)
+
+### BREAKING CHANGE
+
+- the S201 rule is removed. The split_candidates hygiene key is
+retained but now backs S202 with different (semantic) semantics. Bases relying
+on S201's structural detection will see different split diagnostics.
+
+### Feat
+
+- **rules**: replace S201 with S202 semantic-cohesion split candidate
+
+### Fix
+
+- **release**: make `inv release --dry-run` faithfully preview the bump
+- **ci**: update sphinx source path to docs/code/sphinx after docs reorg
+
 ## v0.2.0 (2026-07-04)
 
 ### BREAKING CHANGE
