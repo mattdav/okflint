@@ -76,7 +76,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.blank_code_spans"><code class="docutils literal notranslate"><span class="pre">blank_code_spans()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.build_file_index"><code class="docutils literal notranslate"><span class="pre">build_file_index()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.evaluate_split"><code class="docutils literal notranslate"><span class="pre">evaluate_split()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_markdown_links"><code class="docutils literal notranslate"><span class="pre">extract_markdown_links()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_wikilinks"><code class="docutils literal notranslate"><span class="pre">extract_wikilinks()</span></code></a></li>
@@ -250,33 +249,6 @@ pattern for their root are omitted from the index.</p></li>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Dictionary stem → list of paths relative to the first root.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="okflint.scanner.evaluate_split">
-<span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">evaluate_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#evaluate_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.evaluate_split" title="Link to this definition"></a></dt>
-<dd><p>Determine whether a file is a split candidate based on semantic criteria.</p>
-<p>Trigger criteria (in order):
-- multiple_h1: ≥ 2 H1 with distinct texts
-- homogeneous_h2_list: ≥ 4 H2 of which &lt; 2 are structural and &lt; 50% sequential</p>
-<p>Pre-exclusions:
-- journal/runbook/procedure frontmatter type
-- Session journal detected by dated H1
-- Duplicate H1s (same text, copy-paste anomaly)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>headers</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.scanner.Header" title="okflint.scanner.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span>) – List of headers extracted from the file.</p></li>
-<li><p><strong>frontmatter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Parsed frontmatter, or None if absent.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Tuple (split_candidate, split_reason, split_entity_count).</p>
 </dd>
 </dl>
 </dd></dl>

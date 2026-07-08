@@ -89,8 +89,6 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -117,21 +115,6 @@
 <span class="n">RESERVED_NAMES</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index.md&quot;</span><span class="p">,</span> <span class="s2">&quot;log.md&quot;</span><span class="p">}</span>
 
 
-<span class="n">_HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(#{1,2})\s+(.+)$&quot;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="Header">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.Header">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an H1 or H2 heading in a file.&quot;&quot;&quot;</span>
-
-    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">line</span><span class="p">:</span> <span class="nb">int</span></div>
-
-
-
 <div class="viewcode-block" id="FileReport">
 <a class="viewcode-back" href="../../api/audit.html#okflint.audit.FileReport">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -148,184 +131,8 @@
     <span class="n">wikilinks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WikiLink</span><span class="p">]</span>
     <span class="n">markdown_links</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]</span>
     <span class="n">split_candidate</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">split_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># &quot;multiple_h1&quot; | &quot;homogeneous_h2_list&quot;</span>
-    <span class="n">split_entity_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]</span>
     <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
 
-
-
-<span class="c1"># Structural section keywords (ADR, Runbook, Journal, meta-docs).</span>
-<span class="c1"># An H2 containing one of these words/phrases is a section of a single concept.</span>
-<span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="c1"># ADR / decision</span>
-        <span class="s2">&quot;context&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;options&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;considered&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;decision&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;consequences&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;alternatives&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;appendices&quot;</span><span class="p">,</span>
-        <span class="c1"># Runbook / procedure</span>
-        <span class="s2">&quot;prerequisites&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;dependencies&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;installation&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;configuration&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;usage&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;references&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;results&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;actions&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;performed&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;pitfalls&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;encountered&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;remaining&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;next steps&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;lessons&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;summary&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;diagnostic&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;symptoms&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;links&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;troubleshooting&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;rollback&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;verification&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;history&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;maintenance&quot;</span><span class="p">,</span>
-        <span class="c1"># Architecture / meta-document</span>
-        <span class="s2">&quot;architecture&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;navigation&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;objectives&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;inventory&quot;</span><span class="p">,</span>
-        <span class="c1"># Project statuses (kanban, TODO)</span>
-        <span class="s2">&quot;in progress&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;on hold&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;upcoming&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;resolved&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;ideas&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="c1"># Pattern for sequential H2s (numbered procedures, steps)</span>
-<span class="n">_SEQUENTIAL_H2_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;^(?:\d+[\s.\-—]|[Éé]tape\s|Step\s|Partie\s|Part\s|Phase\s)&quot;</span><span class="p">,</span>
-    <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Frontmatter types that indicate a non-splittable document</span>
-<span class="n">_NONSPLIT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;journal&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;journalentry&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;runbook&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;procedure&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="c1"># H1 starting with a date → session journal (even without frontmatter type)</span>
-<span class="n">_DATE_H1_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_structural_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether an H2 heading is a structural section (not a listable entity).</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        text: H2 heading text.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        True if the H2 is a document section (ADR, runbook, journal).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># NFC to neutralise accent encoding variants</span>
-    <span class="n">lower</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">lower</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_STRUCTURAL_H2_KEYWORDS</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_nonsplit_type</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether the frontmatter type excludes the file from splitting.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        frontmatter: Parsed frontmatter, or None if absent.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        True if the type indicates a sequential non-splittable document.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">frontmatter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="n">raw</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">_NONSPLIT_TYPES</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_sequential_h2</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether an H2 heading is a sequential list element (step, part).</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        text: H2 heading text.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        True if the H2 is a numbered or sequentially named step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">normalized</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFC&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SEQUENTIAL_H2_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">normalized</span><span class="p">))</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_session_journal</span><span class="p">(</span><span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Indicate whether the file is a session journal (H1 starts with a date).</span>
-
-<span class="sd">    Detects journals without a frontmatter type via their dated H1 (YYYY-MM-DD...).</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        headers: List of headers extracted from the file.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        True if the file is a session journal.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">h1s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_DATE_H1_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_split</span><span class="p">(</span>
-    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">],</span>
-    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine whether a file is a split candidate based on semantic criteria.</span>
-
-<span class="sd">    Trigger criteria (in order):</span>
-<span class="sd">    - multiple_h1: ≥ 2 H1 with distinct texts</span>
-<span class="sd">    - homogeneous_h2_list: ≥ 4 H2 of which &lt; 2 are structural and &lt; 50% sequential</span>
-
-<span class="sd">    Pre-exclusions:</span>
-<span class="sd">    - journal/runbook/procedure frontmatter type</span>
-<span class="sd">    - Session journal detected by dated H1</span>
-<span class="sd">    - Duplicate H1s (same text, copy-paste anomaly)</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        headers: List of headers extracted from the file.</span>
-<span class="sd">        frontmatter: Parsed frontmatter, or None if absent.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Tuple (split_candidate, split_reason, split_entity_count).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">_is_nonsplit_type</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-
-    <span class="k">if</span> <span class="n">_is_session_journal</span><span class="p">(</span><span class="n">headers</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-
-    <span class="n">h1s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="n">h2s</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">({</span><span class="n">h</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h1s</span><span class="p">})</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># Identical H1s: copy-paste anomaly, not a split</span>
-            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;multiple_h1&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">h1s</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">:</span>
-        <span class="n">structural_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h2s</span> <span class="k">if</span> <span class="n">_is_structural_h2</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
-        <span class="n">sequential_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">h2s</span> <span class="k">if</span> <span class="n">_is_sequential_h2</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">structural_count</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sequential_count</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;homogeneous_h2_list&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">h2s</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="get_okf_status">
@@ -345,32 +152,6 @@
     <span class="k">if</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;conformant&quot;</span>
     <span class="k">return</span> <span class="s2">&quot;partial&quot;</span></div>
-
-
-
-<div class="viewcode-block" id="extract_headers">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.extract_headers">[docs]</a>
-<span class="nd">@beartype</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_headers</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract H1 and H2 headings with their line number in the body.</span>
-
-<span class="sd">    Must receive content pre-blanked via blank_code_spans to ignore</span>
-<span class="sd">    `#` characters inside code blocks.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        content: File body with code blocks masked.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List of Header (levels 1 and 2 only).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">_HEADER_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Header</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">text</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">line</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">headers</span></div>
 
 
 
@@ -407,12 +188,6 @@
     <span class="n">wikilinks</span> <span class="o">=</span> <span class="n">extract_wikilinks</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">)</span>
     <span class="n">markdown_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">bundle_path</span><span class="p">)</span>
 
-    <span class="n">all_headers</span> <span class="o">=</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
-    <span class="n">split_candidate</span><span class="p">,</span> <span class="n">split_reason</span><span class="p">,</span> <span class="n">split_entity_count</span> <span class="o">=</span> <span class="n">_evaluate_split</span><span class="p">(</span>
-        <span class="n">all_headers</span><span class="p">,</span> <span class="n">frontmatter</span>
-    <span class="p">)</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="n">all_headers</span> <span class="k">if</span> <span class="n">split_candidate</span> <span class="k">else</span> <span class="p">[]</span>
-
     <span class="k">return</span> <span class="n">FileReport</span><span class="p">(</span>
         <span class="n">path</span><span class="o">=</span><span class="n">rel_path</span><span class="p">,</span>
         <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
@@ -423,10 +198,9 @@
         <span class="n">frontmatter</span><span class="o">=</span><span class="n">frontmatter</span><span class="p">,</span>
         <span class="n">wikilinks</span><span class="o">=</span><span class="n">wikilinks</span><span class="p">,</span>
         <span class="n">markdown_links</span><span class="o">=</span><span class="n">markdown_links</span><span class="p">,</span>
-        <span class="n">split_candidate</span><span class="o">=</span><span class="n">split_candidate</span><span class="p">,</span>
-        <span class="n">split_reason</span><span class="o">=</span><span class="n">split_reason</span><span class="p">,</span>
-        <span class="n">split_entity_count</span><span class="o">=</span><span class="n">split_entity_count</span><span class="p">,</span>
-        <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+        <span class="c1"># Overwritten in run_audit once diagnostics are known (S202 is</span>
+        <span class="c1"># gated by a manifest and derived from the emitted diagnostics).</span>
+        <span class="n">split_candidate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -580,6 +354,7 @@
             <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span> <span class="o">=</span> <span class="n">validate_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">_vault_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span> <span class="o">=</span> <span class="n">check_core_concept</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">frontmatter</span><span class="p">)</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">split_candidate</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;S202&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">)</span>
         <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
 
     <span class="n">stats</span> <span class="o">=</span> <span class="n">compute_stats</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">vault_total</span><span class="p">)</span>

@@ -127,6 +127,22 @@
 
 
 
+<div class="viewcode-block" id="SplitConfig">
+<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.SplitConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SplitConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gate configuration for the S202 semantic cohesion check.&quot;&quot;&quot;</span>
+
+    <span class="n">min_lines</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">exempt_types</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">exempt_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="c1"># Cosine similarity threshold for cohesion clustering. 0.15 default locked</span>
+    <span class="c1"># via the STEP 1 tau-sweep calibration (0.13-0.22 range on representative</span>
+    <span class="c1"># memos); manifest-overridable per base.</span>
+    <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span></div>
+
+
+
 <div class="viewcode-block" id="HygieneConfig">
 <a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.HygieneConfig">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -136,7 +152,8 @@
     <span class="n">broken_links</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">split_candidates</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">reserved_files</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
-    <span class="n">unknown_fields</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span></div>
+    <span class="n">unknown_fields</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
+    <span class="n">split</span><span class="p">:</span> <span class="n">SplitConfig</span></div>
 
 
 
@@ -183,12 +200,20 @@
 <span class="c1"># Known OKF version</span>
 <span class="n">_KNOWN_OKF_VERSION</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
 
+<span class="c1"># Default SplitConfig: no length gate, no exemptions</span>
+<span class="n">_DEFAULT_SPLIT_CONFIG</span> <span class="o">=</span> <span class="n">SplitConfig</span><span class="p">(</span>
+    <span class="n">min_lines</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">exempt_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">(),</span>
+    <span class="n">exempt_paths</span><span class="o">=</span><span class="p">[],</span>
+<span class="p">)</span>
+
 <span class="c1"># Default HygieneConfig values when the key is absent</span>
 <span class="n">_DEFAULT_HYGIENE</span> <span class="o">=</span> <span class="n">HygieneConfig</span><span class="p">(</span>
     <span class="n">broken_links</span><span class="o">=</span><span class="s2">&quot;warn&quot;</span><span class="p">,</span>
     <span class="n">split_candidates</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
     <span class="n">reserved_files</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
     <span class="n">unknown_fields</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
+    <span class="n">split</span><span class="o">=</span><span class="n">_DEFAULT_SPLIT_CONFIG</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -322,6 +347,59 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_split_config</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SplitConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the hygiene.split sub-block (S202 gate configuration) from raw YAML.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        raw: Raw value of the hygiene.split block, or None if absent.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Validated SplitConfig (defaults to no length gate, no exemptions,</span>
+<span class="sd">        tau=0.15).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ManifestError: If the block or one of its fields is malformed, or if</span>
+<span class="sd">            tau lies outside the open interval (0, 1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SplitConfig</span><span class="p">(</span><span class="n">min_lines</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">exempt_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">(),</span> <span class="n">exempt_paths</span><span class="o">=</span><span class="p">[])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene.split must be a mapping.&quot;</span><span class="p">)</span>
+
+    <span class="n">min_lines</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;min_lines&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">min_lines</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">min_lines</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">min_lines</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene.split.min_lines must be a non-negative integer.&quot;</span><span class="p">)</span>
+
+    <span class="n">exempt_types_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exempt_types&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exempt_types_raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">exempt_types_raw</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene.split.exempt_types must be a list of strings.&quot;</span><span class="p">)</span>
+
+    <span class="n">exempt_paths_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exempt_paths&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exempt_paths_raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">exempt_paths_raw</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span><span class="s2">&quot;hygiene.split.exempt_paths must be a list of strings.&quot;</span><span class="p">)</span>
+
+    <span class="n">tau_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tau&quot;</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tau_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tau_raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">tau_raw</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
+            <span class="s2">&quot;hygiene.split.tau must be a number in the open interval (0, 1).&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">SplitConfig</span><span class="p">(</span>
+        <span class="n">min_lines</span><span class="o">=</span><span class="n">min_lines</span><span class="p">,</span>
+        <span class="n">exempt_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">exempt_types_raw</span><span class="p">),</span>
+        <span class="n">exempt_paths</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">exempt_paths_raw</span><span class="p">),</span>
+        <span class="n">tau</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">tau_raw</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_hygiene</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HygieneConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse the hygiene configuration from raw YAML.</span>
 
@@ -345,6 +423,7 @@
         <span class="n">split_candidates</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;split_candidates&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
         <span class="n">reserved_files</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;reserved_files&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
         <span class="n">unknown_fields</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;unknown_fields&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
+        <span class="n">split</span><span class="o">=</span><span class="n">_parse_split_config</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;split&quot;</span><span class="p">)),</span>
     <span class="p">)</span>
 
 

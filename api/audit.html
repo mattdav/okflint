@@ -58,27 +58,17 @@
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.depth"><code class="docutils literal notranslate"><span class="pre">FileReport.depth</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.diagnostics"><code class="docutils literal notranslate"><span class="pre">FileReport.diagnostics</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.frontmatter"><code class="docutils literal notranslate"><span class="pre">FileReport.frontmatter</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.headers"><code class="docutils literal notranslate"><span class="pre">FileReport.headers</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.is_reserved"><code class="docutils literal notranslate"><span class="pre">FileReport.is_reserved</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.lines"><code class="docutils literal notranslate"><span class="pre">FileReport.lines</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.markdown_links"><code class="docutils literal notranslate"><span class="pre">FileReport.markdown_links</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.okf_status"><code class="docutils literal notranslate"><span class="pre">FileReport.okf_status</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.path"><code class="docutils literal notranslate"><span class="pre">FileReport.path</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.split_candidate"><code class="docutils literal notranslate"><span class="pre">FileReport.split_candidate</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.split_entity_count"><code class="docutils literal notranslate"><span class="pre">FileReport.split_entity_count</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.split_reason"><code class="docutils literal notranslate"><span class="pre">FileReport.split_reason</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.wikilinks"><code class="docutils literal notranslate"><span class="pre">FileReport.wikilinks</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.Header"><code class="docutils literal notranslate"><span class="pre">Header</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.Header.level"><code class="docutils literal notranslate"><span class="pre">Header.level</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.Header.line"><code class="docutils literal notranslate"><span class="pre">Header.line</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.Header.text"><code class="docutils literal notranslate"><span class="pre">Header.text</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.audit.analyze_file"><code class="docutils literal notranslate"><span class="pre">analyze_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.audit.compute_stats"><code class="docutils literal notranslate"><span class="pre">compute_stats()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.audit.get_okf_status"><code class="docutils literal notranslate"><span class="pre">get_okf_status()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.audit.run_audit"><code class="docutils literal notranslate"><span class="pre">run_audit()</span></code></a></li>
 </ul>
@@ -121,7 +111,7 @@
 <p id="module-okflint.audit">OKF bundle audit — inventory and conformance diagnostic.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.audit.FileReport">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">FileReport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reserved</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">okf_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wikilinks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markdown_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_candidate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_reason</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_entity_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#FileReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.FileReport" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">FileReport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reserved</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">okf_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wikilinks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markdown_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_candidate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#FileReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.FileReport" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Analysis report for a .md file in the bundle.</p>
 <dl class="py attribute">
@@ -142,11 +132,6 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.frontmatter">
 <span class="sig-name descname"><span class="pre">frontmatter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.audit.FileReport.frontmatter" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.FileReport.headers">
-<span class="sig-name descname"><span class="pre">headers</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#okflint.audit.Header" title="okflint.audit.Header"><span class="pre">Header</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.headers" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -180,40 +165,8 @@
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.FileReport.split_entity_count">
-<span class="sig-name descname"><span class="pre">split_entity_count</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.audit.FileReport.split_entity_count" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.FileReport.split_reason">
-<span class="sig-name descname"><span class="pre">split_reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.audit.FileReport.split_reason" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.wikilinks">
 <span class="sig-name descname"><span class="pre">wikilinks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="scanner.html#okflint.scanner.WikiLink" title="okflint.scanner.WikiLink"><span class="pre">WikiLink</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.wikilinks" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="okflint.audit.Header">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">Header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#Header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.Header" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Represents an H1 or H2 heading in a file.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.Header.level">
-<span class="sig-name descname"><span class="pre">level</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#okflint.audit.Header.level" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.Header.line">
-<span class="sig-name descname"><span class="pre">line</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#okflint.audit.Header.line" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="okflint.audit.Header.text">
-<span class="sig-name descname"><span class="pre">text</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#okflint.audit.Header.text" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -256,25 +209,6 @@
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Statistics dictionary.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="okflint.audit.extract_headers">
-<span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">extract_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#extract_headers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.extract_headers" title="Link to this definition"></a></dt>
-<dd><p>Extract H1 and H2 headings with their line number in the body.</p>
-<p>Must receive content pre-blanked via blank_code_spans to ignore
-<cite>#</cite> characters inside code blocks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – File body with code blocks masked.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.audit.Header" title="okflint.audit.Header"><code class="xref py py-class docutils literal notranslate"><span class="pre">Header</span></code></a>]</span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List of Header (levels 1 and 2 only).</p>
 </dd>
 </dl>
 </dd></dl>

@@ -94,22 +94,22 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.cohesion</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyze_cohesion</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">HygieneConfig</span><span class="p">,</span>
     <span class="n">Manifest</span><span class="p">,</span>
     <span class="n">ManifestError</span><span class="p">,</span>
     <span class="n">ProfileConfig</span><span class="p">,</span>
+    <span class="n">SplitConfig</span><span class="p">,</span>
     <span class="n">TypeConfig</span><span class="p">,</span>
     <span class="n">load_manifest</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Header</span><span class="p">,</span>
     <span class="n">MarkdownLink</span><span class="p">,</span>
     <span class="n">WikiLink</span><span class="p">,</span>
     <span class="n">_is_excluded</span><span class="p">,</span>
     <span class="n">blank_code_spans</span><span class="p">,</span>
     <span class="n">build_file_index</span><span class="p">,</span>
-    <span class="n">evaluate_split</span><span class="p">,</span>
     <span class="n">extract_headers</span><span class="p">,</span>
     <span class="n">extract_markdown_links</span><span class="p">,</span>
     <span class="n">extract_wikilinks</span><span class="p">,</span>
@@ -509,42 +509,78 @@
     <span class="k">return</span> <span class="n">diags</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_net_content_lines</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count non-blank body lines after stripping the frontmatter block.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: Full raw file content, frontmatter included.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Number of body lines that are not blank/whitespace-only.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">body</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_hygiene_structure</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">],</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">applicable_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">split_config</span><span class="p">:</span> <span class="n">SplitConfig</span><span class="p">,</span>
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the file is a split candidate (S201).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the file is a semantic-cohesion split candidate (S202).</span>
+
+<span class="sd">    Gates (all must pass for the check to fire):</span>
+<span class="sd">    - length: net content lines &gt; split_config.min_lines</span>
+<span class="sd">    - type: declared `type` not in split_config.exempt_types</span>
+<span class="sd">    - path: not matched by split_config.exempt_paths</span>
+<span class="sd">    - cohesion: more than one connected component at split_config.tau</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Relative file path.</span>
-<span class="sd">        headers: List of extracted headers.</span>
+<span class="sd">        file_path: Absolute path of the file (for path-exemption matching).</span>
+<span class="sd">        applicable_root: Manifest root the file belongs to.</span>
+<span class="sd">        content: Full raw file content, frontmatter included.</span>
 <span class="sd">        frontmatter: Parsed frontmatter or None.</span>
+<span class="sd">        split_config: S202 gate configuration (min_lines, exemptions, tau).</span>
 <span class="sd">        level: Control level (off | warn | error).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List of Diagnostic (S201).</span>
+<span class="sd">        List of Diagnostic (S202).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
+    <span class="k">if</span> <span class="n">frontmatter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="n">split_config</span><span class="o">.</span><span class="n">exempt_types</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">,</span> <span class="n">split_config</span><span class="o">.</span><span class="n">exempt_paths</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">_net_content_lines</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">split_config</span><span class="o">.</span><span class="n">min_lines</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">analyze_cohesion</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">split_config</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">components</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
     <span class="n">severity</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;warn&quot;</span> <span class="k">else</span> <span class="s2">&quot;error&quot;</span>
-    <span class="n">split</span><span class="p">,</span> <span class="n">reason</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">evaluate_split</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">split</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">Diagnostic</span><span class="p">(</span>
-                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S201&quot;</span><span class="p">,</span>
-                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
-                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
-                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;split candidate (</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> sections)&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">]</span>
-
-    <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">Diagnostic</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S202&quot;</span><span class="p">,</span>
+            <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+            <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+            <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;S202 — split candidate (</span><span class="si">{</span><span class="n">n_clusters</span><span class="si">}</span><span class="s2"> cohesion clusters)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
 
 
 <span class="nd">@beartype</span>
@@ -649,7 +685,6 @@
     <span class="n">safe_body</span> <span class="o">=</span> <span class="n">blank_code_spans</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="n">wikilinks</span> <span class="o">=</span> <span class="n">extract_wikilinks</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">base_index</span><span class="p">)</span>
     <span class="n">md_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">)</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
 
     <span class="c1"># Profile</span>
     <span class="n">resolved_type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -678,7 +713,15 @@
 
         <span class="c1"># Structure</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="n">check_hygiene_structure</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">hygiene</span><span class="o">.</span><span class="n">split_candidates</span><span class="p">)</span>
+            <span class="n">check_hygiene_structure</span><span class="p">(</span>
+                <span class="n">rel</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="p">,</span>
+                <span class="n">applicable_root</span><span class="p">,</span>
+                <span class="n">content</span><span class="p">,</span>
+                <span class="n">fm</span><span class="p">,</span>
+                <span class="n">hygiene</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
+                <span class="n">hygiene</span><span class="o">.</span><span class="n">split_candidates</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
         <span class="c1"># Unknown fields (only if profile AND resolved type)</span>
