@@ -43,7 +43,7 @@ src/okflint/
 Validation in **3 stages** (full catalogue in `config/RULES.md`):
 1. **OKF core** — hardcoded, the §9 compliance clause of the spec (F001, F002, R001, R002).
 2. **Profile** — manifest-driven, type-aware rules for the base (F101, F102, F105, F106, S102).
-3. **Hygiene** — opt-in, stricter than OKF, as warnings (L001-L003, S201, R201, F201).
+3. **Hygiene** — opt-in, stricter than OKF, as warnings (L001-L003, S202, R201, F201).
 
 The engine is **generic**: no type vocabulary is hardcoded. Everything
 (types, fields, controlled vocabularies) lives in the `okf-base.yaml` manifest.

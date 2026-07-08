@@ -2,7 +2,7 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-07-04
+updated: 2026-07-08
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -20,7 +20,7 @@ linter.
 
 ---
 
-## v0.2 — Current state
+## v0.3 — Current state
 
 - 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
 - 15 catalogued rules (see [`config/RULES.md`](../../config/RULES.md))
@@ -28,38 +28,9 @@ linter.
 - Unified CLI `okflint audit | validate | index`
 - `audit` aligned with `validate`: same checks, descriptive, always exit 0 (shipped 0.2.0)
 - `okflint index` — deterministic OKF §6 `index.md` generation, dry-run by default (shipped 0.2.0)
+- `S202` — deterministic semantic-cohesion split candidate (TF-IDF section clustering), replacing the coarse structural `S201` (shipped 0.3.0)
 - Generic engine driven by a YAML manifest
 - Manifest self-validation (`manifest.py`)
-
----
-
-## Track A — Semantic cohesion for finer deterministic splitting
-
-**Problem.** The current `S201` rule (split candidate) relies on coarse structural
-signals: presence of multiple `# H1` headings, or a homogeneous list of `## H2`
-headings. It misses files that look structurally coherent but mix **thematically
-distant topics** — the kind of file that causes agents to react poorly (wrong skills
-activated, superfluous context loaded).
-
-**Direction.** Add semantic cohesion rules **measured deterministically**,
-without an LLM, for example:
-
-- **Inter-section lexical cohesion**: TF-IDF vectorisation per section, inter-section
-  similarity measure. Low cohesion (sections with disjoint vocabularies) flags a
-  heterogeneous file → split candidate. Reproducible, auditable.
-- **Incoming link family divergence**: if different sections of a file are cited by
-  disjoint concept families (section A pointed to by `Decision` nodes, section B by
-  `Procedure` nodes), it is probably two concepts.
-- **Intra-file tag divergence**: if a file carries (or its sections carry)
-  thematically distant tags.
-
-These signals would yield one or more additional hygiene rules
-(e.g. `S202` — high thematic heterogeneity). The **final judgment** (should we
-split, how to name the pieces) remains outside okflint: it belongs to the human or
-to an agent that consumes the diagnostic.
-
-**Boundary.** okflint *signals* a split candidate with metrics; it does not
-*decide* or *execute* the split.
 
 ---
 

@@ -7,17 +7,10 @@ from pathlib import Path
 
 from okflint.audit import (
     FileReport,
-    Header,
     MarkdownLink,
     WikiLink,
-    _evaluate_split,
-    _is_nonsplit_type,
-    _is_sequential_h2,
-    _is_session_journal,
-    _is_structural_h2,
     analyze_file,
     compute_stats,
-    extract_headers,
     get_okf_status,
     run_audit,
 )
@@ -39,136 +32,6 @@ class TestGetOkfStatus:
 
     def test_without_type_returns_partial(self) -> None:
         assert get_okf_status({"title": "No type"}) == "partial"
-
-
-# ---------------------------------------------------------------------------
-# _is_structural_h2
-# ---------------------------------------------------------------------------
-
-
-class TestIsStructuralH2:
-    def test_structural_keyword_detected(self) -> None:
-        assert _is_structural_h2("Context")
-        assert _is_structural_h2("Decision")
-        assert _is_structural_h2("Prerequisites")
-
-    def test_non_structural_h2(self) -> None:
-        assert not _is_structural_h2("My Alpha Service")
-        assert not _is_structural_h2("Kubernetes Project")
-
-
-# ---------------------------------------------------------------------------
-# _is_nonsplit_type
-# ---------------------------------------------------------------------------
-
-
-class TestIsNonsplitType:
-    def test_procedure_type_excluded(self) -> None:
-        assert _is_nonsplit_type({"type": "Procedure"})
-        assert _is_nonsplit_type({"type": "JournalEntry"})
-
-    def test_unknown_type_not_excluded(self) -> None:
-        assert not _is_nonsplit_type({"type": "Reference"})
-
-    def test_none_frontmatter_not_excluded(self) -> None:
-        assert not _is_nonsplit_type(None)
-
-
-# ---------------------------------------------------------------------------
-# _is_sequential_h2
-# ---------------------------------------------------------------------------
-
-
-class TestIsSequentialH2:
-    def test_numbered_step_is_sequential(self) -> None:
-        assert _is_sequential_h2("1. Installation")
-        assert _is_sequential_h2("2 - Configuration")
-
-    def test_step_prefix_is_sequential(self) -> None:
-        assert _is_sequential_h2("Step 1: init")
-
-    def test_regular_h2_not_sequential(self) -> None:
-        assert not _is_sequential_h2("My Service")
-        assert not _is_sequential_h2("General Overview")
-
-
-# ---------------------------------------------------------------------------
-# _is_session_journal
-# ---------------------------------------------------------------------------
-
-
-class TestIsSessionJournal:
-    def test_dated_h1_is_journal(self) -> None:
-        headers = [Header(1, "2026-05-01 Session", 1)]
-        assert _is_session_journal(headers)
-
-    def test_non_dated_h1_not_journal(self) -> None:
-        headers = [Header(1, "Introduction", 1)]
-        assert not _is_session_journal(headers)
-
-    def test_empty_headers_not_journal(self) -> None:
-        assert not _is_session_journal([])
-
-
-# ---------------------------------------------------------------------------
-# extract_headers (local version in audit.py)
-# ---------------------------------------------------------------------------
-
-
-class TestExtractHeadersAudit:
-    def test_extracts_h1_and_h2(self) -> None:
-        content = "# Title\n## Section\n### Ignored\n"
-        headers = extract_headers(content)
-        assert len(headers) == 2
-        assert headers[0].level == 1
-        assert headers[1].level == 2
-
-
-# ---------------------------------------------------------------------------
-# _evaluate_split
-# ---------------------------------------------------------------------------
-
-
-class TestEvaluateSplitAudit:
-    def test_multiple_h1_triggers(self) -> None:
-        headers = [Header(1, "Alpha", 1), Header(1, "Beta", 2)]
-        split, reason, count = _evaluate_split(headers, None)
-        assert split
-        assert reason == "multiple_h1"
-
-    def test_homogeneous_h2_triggers(self) -> None:
-        headers = [
-            Header(2, "Alpha", 1),
-            Header(2, "Beta", 2),
-            Header(2, "Gamma", 3),
-            Header(2, "Delta", 4),
-        ]
-        split, reason, _ = _evaluate_split(headers, None)
-        assert split
-        assert reason == "homogeneous_h2_list"
-
-    def test_nonsplit_type_excluded(self) -> None:
-        headers = [Header(1, "A", 1), Header(1, "B", 2)]
-        split, _, _ = _evaluate_split(headers, {"type": "Procedure"})
-        assert not split
-
-    def test_session_journal_excluded(self) -> None:
-        headers = [
-            Header(1, "2026-05-01 Session", 1),
-            Header(1, "2026-05-02 Session", 2),
-        ]
-        split, _, _ = _evaluate_split(headers, None)
-        assert not split
-
-    def test_duplicate_h1_excluded(self) -> None:
-        headers = [Header(1, "Same", 1), Header(1, "Same", 2)]
-        split, _, _ = _evaluate_split(headers, None)
-        assert not split
-
-    def test_too_few_h2_no_split(self) -> None:
-        headers = [Header(2, "A", 1), Header(2, "B", 2)]
-        split, _, _ = _evaluate_split(headers, None)
-        assert not split
 
 
 # ---------------------------------------------------------------------------
@@ -207,17 +70,6 @@ class TestAnalyzeFile:
         report = analyze_file(f, bundle, {})
         assert report.okf_status == "non_conformant"
 
-    def test_split_candidate_detected(
-        self, tmp_path: Path, make_md: Callable[[Path, str], Path]
-    ) -> None:
-        bundle = tmp_path / "bundle"
-        bundle.mkdir()
-        content = "# Alpha\n\n# Beta\n"
-        f = make_md(bundle / "multi.md", content)
-        report = analyze_file(f, bundle, {})
-        assert report.split_candidate
-        assert report.split_reason == "multiple_h1"
-
     def test_subdirectory_depth(
         self, tmp_path: Path, make_md: Callable[[Path, str], Path]
     ) -> None:
@@ -253,9 +105,6 @@ def _make_report(
         wikilinks=wikilinks or [],
         markdown_links=markdown_links or [],
         split_candidate=split_candidate,
-        split_reason=None,
-        split_entity_count=None,
-        headers=[],
     )
 
 
@@ -523,3 +372,52 @@ class TestRunAuditWithManifest:
         assert sum(summary["by_severity"].values()) == len(all_diags)
         assert sum(summary["by_tier"].values()) == len(all_diags)
         assert sum(summary["by_code"].values()) == len(all_diags)
+
+    def test_split_candidate_derived_from_s202_diagnostic(
+        self,
+        hygiene_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        manifest_path, root = hygiene_manifest
+        manifest = load_manifest(manifest_path)
+        make_md(
+            root / "multi.md",
+            "---\ntype: JournalEntry\ncreated: 2026-01-01\n---\n"
+            "# Alpha\n\n"
+            "This paragraph discusses cooking pasta with tomato sauce and basil "
+            "leaves. The chef prepares pasta by boiling water, adding salt, and "
+            "cooking the noodles until perfectly tender for dinner tonight.\n\n"
+            "# Beta\n\n"
+            "This paragraph discusses telescopes observing distant galaxies and "
+            "stars. Astronomers use powerful telescopes to measure light from "
+            "ancient galaxies across the vast universe every single night.\n",
+        )
+        report = run_audit(root, root, manifest=manifest)
+        files = report["files"]
+        assert len(files) == 1
+        assert files[0]["split_candidate"]
+        assert any(d["code"] == "S202" for d in files[0]["diagnostics"])
+        assert report["stats"]["split_candidates"] == 1
+
+    def test_manifest_less_audit_reports_no_split_candidates(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(
+            bundle / "multi.md",
+            "# Alpha\n\n"
+            "This paragraph discusses cooking pasta with tomato sauce and basil "
+            "leaves. The chef prepares pasta by boiling water, adding salt, and "
+            "cooking the noodles until perfectly tender for dinner tonight.\n\n"
+            "# Beta\n\n"
+            "This paragraph discusses telescopes observing distant galaxies and "
+            "stars. Astronomers use powerful telescopes to measure light from "
+            "ancient galaxies across the vast universe every single night.\n",
+        )
+        report = run_audit(bundle, bundle)
+        assert report["stats"]["split_candidates"] == 0

@@ -5,12 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from okflint.scanner import (
-    Header,
     MarkdownLink,
     WikiLink,
     blank_code_spans,
     build_file_index,
-    evaluate_split,
     extract_headers,
     extract_markdown_links,
     extract_wikilinks,
@@ -312,47 +310,3 @@ class TestExtractHeaders:
         headers = extract_headers(blanked)
         assert len(headers) == 1
         assert headers[0].text == "RealHeader"
-
-
-# ---------------------------------------------------------------------------
-# evaluate_split
-# ---------------------------------------------------------------------------
-
-
-class TestEvaluateSplit:
-    def test_multiple_h1_triggers_split(self) -> None:
-        headers = [Header(1, "Alpha", 1), Header(1, "Beta", 2)]
-        split, reason, count = evaluate_split(headers, None)
-        assert split
-        assert reason == "multiple_h1"
-        assert count == 2
-
-    def test_duplicate_h1_no_split(self) -> None:
-        headers = [Header(1, "Same", 1), Header(1, "Same", 2)]
-        split, _, _ = evaluate_split(headers, None)
-        assert not split
-
-    def test_homogeneous_h2_triggers_split(self) -> None:
-        headers = [
-            Header(2, "Alpha", 1),
-            Header(2, "Beta", 2),
-            Header(2, "Gamma", 3),
-            Header(2, "Delta", 4),
-        ]
-        split, reason, _ = evaluate_split(headers, None)
-        assert split
-        assert reason == "homogeneous_h2_list"
-
-    def test_procedure_type_excluded(self) -> None:
-        headers = [Header(1, "A", 1), Header(1, "B", 2)]
-        fm = {"type": "Procedure"}
-        split, _, _ = evaluate_split(headers, fm)
-        assert not split
-
-    def test_dated_h1_excluded_as_journal(self) -> None:
-        headers = [
-            Header(1, "2026-05-01 Session", 1),
-            Header(1, "2026-05-02 Session", 2),
-        ]
-        split, _, _ = evaluate_split(headers, None)
-        assert not split

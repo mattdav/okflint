@@ -257,13 +257,14 @@ in different directories).
 
 **Fix**: specify the path, or disambiguate file names.
 
-### `S201` — Split candidate
+### `S202` — Split candidate (semantic cohesion)
 
 **Severity**: warning (configurable) · **Out-of-spec**
 
-A file containing multiple distinct concepts (multiple `# H1`, or a homogeneous
-list of `## H2` describing separable entities). A signal, never an obligation:
-splitting remains an editorial choice.
+A file whose body decomposes into more than one semantic cluster, detected via
+TF-IDF cosine similarity between paragraphs (connected components at a
+calibrated similarity threshold). A signal, never an obligation: splitting
+remains an editorial choice.
 
 **Fix**: consider splitting the file into multiple concepts, or ignore if the
 cohesion justifies keeping it together.
@@ -315,7 +316,7 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 | `L001` | Hygiene | warning | broken wikilink |
 | `L002` | Hygiene | warning | broken markdown link |
 | `L003` | Hygiene | warning | ambiguous wikilink |
-| `S201` | Hygiene | warning | split candidate |
+| `S202` | Hygiene | warning | split candidate (semantic cohesion) |
 | `R201` | Hygiene | warning | recommended reserved file missing |
 | `F201` | Hygiene | warning | field outside declared schema |
 

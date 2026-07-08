@@ -1,5 +1,5 @@
 """OKF validation tests — 15 rules (F001, F002, R001, R002,
-F101, F102, F105, F106, S102, L001-L003, S201, R201, F201)."""
+F101, F102, F105, F106, S102, L001-L003, S202, R201, F201)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from okflint.manifest import load_manifest
-from okflint.scanner import Header, MarkdownLink, WikiLink, build_file_index
+from okflint.manifest import SplitConfig, load_manifest
+from okflint.scanner import MarkdownLink, WikiLink, build_file_index
 from okflint.validate import (
     Diagnostic,
     check_core_concept,
@@ -425,25 +425,185 @@ class TestL003:
 
 
 # ---------------------------------------------------------------------------
-# S201 — split candidate
+# S202 — split candidate (semantic cohesion)
 # ---------------------------------------------------------------------------
 
 
-class TestS201:
-    def test_triggers_on_multiple_h1(self) -> None:
-        headers = [Header(1, "A", 1), Header(1, "B", 2)]
-        diags = check_hygiene_structure("doc.md", headers, None, "warn")
-        assert "S201" in _codes(diags)
+_MULTI_CLUSTER_CONTENT = (
+    "# Alpha\n\n"
+    "This paragraph discusses cooking pasta with tomato sauce and basil "
+    "leaves. The chef prepares pasta by boiling water, adding salt, and "
+    "cooking the noodles until perfectly tender for dinner tonight.\n\n"
+    "# Beta\n\n"
+    "This paragraph discusses telescopes observing distant galaxies and "
+    "stars. Astronomers use powerful telescopes to measure light from "
+    "ancient galaxies across the vast universe every single night.\n"
+)
 
-    def test_passes_on_single_h1(self) -> None:
-        headers = [Header(1, "A", 1)]
-        diags = check_hygiene_structure("doc.md", headers, None, "warn")
-        assert "S201" not in _codes(diags)
+_SINGLE_CLUSTER_CONTENT = (
+    "# Alpha\n\n"
+    "This paragraph discusses cooking pasta with tomato sauce and basil "
+    "leaves in a warm kitchen every evening with friends and family "
+    "gathered around the table for a long dinner.\n"
+)
 
-    def test_off_level_returns_empty(self) -> None:
-        headers = [Header(1, "A", 1), Header(1, "B", 2)]
-        diags = check_hygiene_structure("doc.md", headers, None, "off")
+_DEFAULT_SPLIT_CONFIG = SplitConfig(min_lines=0, exempt_types=frozenset(), exempt_paths=[])
+
+# Alpha-Gamma and Beta-Gamma share just enough vocabulary to form a
+# transitive chain: at a low tau all three merge into one component, at the
+# 0.15 default only Beta+Gamma merge, leaving Alpha separate (2 components).
+_CHAINED_CONTENT = (
+    "# Alpha\n\n"
+    "The project team reviewed the quarterly budget process and updated "
+    "the financial spreadsheet with new revenue numbers for the annual "
+    "report.\n\n"
+    "# Beta\n\n"
+    "The finance team reviewed the quarterly budget process and updated "
+    "the accounting timeline with new hiring plans for the coming year.\n\n"
+    "# Gamma\n\n"
+    "The hiring team reviewed the quarterly timeline process and updated "
+    "the accounting plans with new budget numbers for the coming year.\n"
+)
+
+
+class TestS202:
+    def test_triggers_on_multiple_cohesion_clusters(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            None,
+            _DEFAULT_SPLIT_CONFIG,
+            "warn",
+        )
+        assert "S202" in _codes(diags)
+
+    def test_passes_on_single_cluster(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _SINGLE_CLUSTER_CONTENT,
+            None,
+            _DEFAULT_SPLIT_CONFIG,
+            "warn",
+        )
+        assert "S202" not in _codes(diags)
+
+    def test_off_level_returns_empty(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            None,
+            _DEFAULT_SPLIT_CONFIG,
+            "off",
+        )
         assert not diags
+
+    def test_min_lines_gate_suppresses_short_files(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        split_config = SplitConfig(min_lines=100, exempt_types=frozenset(), exempt_paths=[])
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            None,
+            split_config,
+            "warn",
+        )
+        assert not diags
+
+    def test_exempt_type_suppresses_check(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        split_config = SplitConfig(
+            min_lines=0, exempt_types=frozenset({"Procedure"}), exempt_paths=[]
+        )
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            {"type": "Procedure"},
+            split_config,
+            "warn",
+        )
+        assert not diags
+
+    def test_exempt_path_suppresses_check(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        split_config = SplitConfig(
+            min_lines=0, exempt_types=frozenset(), exempt_paths=["archive/**"]
+        )
+        diags = check_hygiene_structure(
+            "archive/doc.md",
+            root / "archive" / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            None,
+            split_config,
+            "warn",
+        )
+        assert not diags
+
+    def test_error_level_sets_severity(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _MULTI_CLUSTER_CONTENT,
+            None,
+            _DEFAULT_SPLIT_CONFIG,
+            "error",
+        )
+        assert diags[0].severity == "error"
+
+    def test_manifest_tau_is_honoured_not_hardcoded(self, tmp_path: Path) -> None:
+        """A custom low split_config.tau must suppress a clustering that
+        fires at the 0.15 default, proving check_hygiene_structure passes
+        split_config.tau through to analyze_cohesion rather than a
+        module-level constant."""
+        root = tmp_path / "root"
+        root.mkdir()
+
+        default_diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _CHAINED_CONTENT,
+            None,
+            _DEFAULT_SPLIT_CONFIG,
+            "warn",
+        )
+        assert "S202" in _codes(default_diags)
+
+        low_tau_config = SplitConfig(
+            min_lines=0, exempt_types=frozenset(), exempt_paths=[], tau=0.05
+        )
+        low_tau_diags = check_hygiene_structure(
+            "doc.md",
+            root / "doc.md",
+            root,
+            _CHAINED_CONTENT,
+            None,
+            low_tau_config,
+            "warn",
+        )
+        assert "S202" not in _codes(low_tau_diags)
 
 
 # ---------------------------------------------------------------------------
@@ -574,6 +734,51 @@ class TestValidateFile:
         f = make_md(root / "bare.md", "# No frontmatter\n")
         diags = validate_file(f, m, base_index)
         assert "F001" in _codes(diags)
+
+    def test_s202_fires_end_to_end_via_manifest_split_block(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        """Regression guard for the analyze_cohesion wiring: exercises
+        load_manifest -> validate_file -> check_hygiene_structure ->
+        analyze_cohesion end-to-end, driven by a manifest that declares
+        the hygiene.split block, not cohesion.py in isolation."""
+        root = tmp_path / "root"
+        root.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.1'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n"
+            "profile:\n"
+            "  date_fields: [created]\n"
+            "  types:\n"
+            "    JournalEntry:\n"
+            "      required: [type, created]\n"
+            "      optional: []\n"
+            "hygiene:\n"
+            "  split_candidates: warn\n"
+            "  split:\n"
+            "    min_lines: 0\n"
+            "    exempt_types: []\n"
+            "    exempt_paths: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = make_md(
+            root / "doc.md",
+            "---\ntype: JournalEntry\ncreated: 2026-01-01\n---\n"
+            + _MULTI_CLUSTER_CONTENT,
+        )
+        diags = validate_file(f, m, base_index)
+        assert "S202" in _codes(diags)
 
 
 # ---------------------------------------------------------------------------

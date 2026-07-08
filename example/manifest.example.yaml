@@ -78,6 +78,17 @@ profile:
 # ---------------------------------------------------------------------------
 hygiene:
   broken_links: warn       # L001, L002, L003 — broken / ambiguous links
-  split_candidates: warn   # S201 — multi-concept files
+  split_candidates: warn   # S202 — semantic-cohesion split candidates
+
+  # Optional sub-block tuning the S202 gate. Omit entirely to keep every
+  # default below.
+  # split:
+  #   min_lines: 0           # skip files shorter than this many lines
+  #   exempt_types: []       # profile type names (e.g. [Reference]) never checked
+  #   exempt_paths: []       # glob patterns (fnmatch) never checked
+  #   tau: 0.15              # cosine similarity threshold for cohesion clustering.
+  #                          # Advanced — leave the default unless you understand
+  #                          # the cosine clustering; higher = more fragmentation.
+
   reserved_files: off      # R201 — presence of index.md / log.md
   unknown_fields: off      # F201 — fields outside the declared schema
