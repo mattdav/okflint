@@ -332,3 +332,124 @@ class TestLoadManifestExcludePatterns:
         f = self._write(tmp_path, "exclude_patterns:\n        - 42\n")
         with pytest.raises(ManifestError, match="exclude_patterns must be a list"):
             load_manifest(f)
+
+
+# ---------------------------------------------------------------------------
+# load_manifest — hygiene.split (S202 SplitConfig)
+# ---------------------------------------------------------------------------
+
+
+class TestLoadManifestSplitConfig:
+    def _write(self, tmp_path: Path, split_yaml: str) -> Path:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "hygiene:\n"
+            f"{split_yaml}",
+            encoding="utf-8",
+        )
+        return f
+
+    def test_absent_split_block_defaults(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  broken_links: warn\n")
+        m = load_manifest(f)
+        assert m.hygiene is not None
+        assert m.hygiene.split.min_lines == 0
+        assert m.hygiene.split.exempt_types == frozenset()
+        assert m.hygiene.split.exempt_paths == []
+        assert m.hygiene.split.tau == 0.15
+
+    def test_full_split_block_loads(self, tmp_path: Path) -> None:
+        f = self._write(
+            tmp_path,
+            "  split:\n"
+            "    min_lines: 30\n"
+            "    exempt_types: [JournalEntry, Meeting]\n"
+            "    exempt_paths: ['archive/**']\n"
+            "    tau: 0.2\n",
+        )
+        m = load_manifest(f)
+        assert m.hygiene is not None
+        assert m.hygiene.split.min_lines == 30
+        assert m.hygiene.split.exempt_types == frozenset({"JournalEntry", "Meeting"})
+        assert m.hygiene.split.exempt_paths == ["archive/**"]
+        assert m.hygiene.split.tau == 0.2
+
+    def test_split_block_without_tau_defaults_to_015(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    min_lines: 30\n")
+        m = load_manifest(f)
+        assert m.hygiene is not None
+        assert m.hygiene.split.tau == 0.15
+
+    def test_tau_zero_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: 0\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_tau_one_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: 1\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_tau_negative_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: -0.1\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_tau_above_one_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: 1.5\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_tau_non_numeric_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: 'high'\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_tau_bool_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    tau: true\n")
+        with pytest.raises(ManifestError, match="tau must be a number in the open"):
+            load_manifest(f)
+
+    def test_split_not_a_mapping_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split: not-a-mapping\n")
+        with pytest.raises(ManifestError, match="hygiene.split must be a mapping"):
+            load_manifest(f)
+
+    def test_min_lines_negative_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    min_lines: -1\n")
+        with pytest.raises(ManifestError, match="min_lines must be a non-negative"):
+            load_manifest(f)
+
+    def test_min_lines_non_int_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    min_lines: 'thirty'\n")
+        with pytest.raises(ManifestError, match="min_lines must be a non-negative"):
+            load_manifest(f)
+
+    def test_min_lines_bool_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    min_lines: true\n")
+        with pytest.raises(ManifestError, match="min_lines must be a non-negative"):
+            load_manifest(f)
+
+    def test_exempt_types_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    exempt_types: not-a-list\n")
+        with pytest.raises(ManifestError, match="exempt_types must be a list"):
+            load_manifest(f)
+
+    def test_exempt_types_non_string_element_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    exempt_types:\n      - 42\n")
+        with pytest.raises(ManifestError, match="exempt_types must be a list"):
+            load_manifest(f)
+
+    def test_exempt_paths_not_a_list_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    exempt_paths: not-a-list\n")
+        with pytest.raises(ManifestError, match="exempt_paths must be a list"):
+            load_manifest(f)
+
+    def test_exempt_paths_non_string_element_raises(self, tmp_path: Path) -> None:
+        f = self._write(tmp_path, "  split:\n    exempt_paths:\n      - 42\n")
+        with pytest.raises(ManifestError, match="exempt_paths must be a list"):
+            load_manifest(f)

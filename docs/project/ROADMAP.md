@@ -2,7 +2,7 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-07-04
+updated: 2026-07-08
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -20,7 +20,7 @@ linter.
 
 ---
 
-## v0.2 — Current state
+## v0.3 — Current state
 
 - 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
 - 15 catalogued rules (see [`config/RULES.md`](../../config/RULES.md))
@@ -28,38 +28,9 @@ linter.
 - Unified CLI `okflint audit | validate | index`
 - `audit` aligned with `validate`: same checks, descriptive, always exit 0 (shipped 0.2.0)
 - `okflint index` — deterministic OKF §6 `index.md` generation, dry-run by default (shipped 0.2.0)
+- `S202` — deterministic semantic-cohesion split candidate (TF-IDF section clustering), replacing the coarse structural `S201` (shipped 0.3.0)
 - Generic engine driven by a YAML manifest
 - Manifest self-validation (`manifest.py`)
-
----
-
-## Track A — Semantic cohesion for finer deterministic splitting
-
-**Problem.** The current `S201` rule (split candidate) relies on coarse structural
-signals: presence of multiple `# H1` headings, or a homogeneous list of `## H2`
-headings. It misses files that look structurally coherent but mix **thematically
-distant topics** — the kind of file that causes agents to react poorly (wrong skills
-activated, superfluous context loaded).
-
-**Direction.** Add semantic cohesion rules **measured deterministically**,
-without an LLM, for example:
-
-- **Inter-section lexical cohesion**: TF-IDF vectorisation per section, inter-section
-  similarity measure. Low cohesion (sections with disjoint vocabularies) flags a
-  heterogeneous file → split candidate. Reproducible, auditable.
-- **Incoming link family divergence**: if different sections of a file are cited by
-  disjoint concept families (section A pointed to by `Decision` nodes, section B by
-  `Procedure` nodes), it is probably two concepts.
-- **Intra-file tag divergence**: if a file carries (or its sections carry)
-  thematically distant tags.
-
-These signals would yield one or more additional hygiene rules
-(e.g. `S202` — high thematic heterogeneity). The **final judgment** (should we
-split, how to name the pieces) remains outside okflint: it belongs to the human or
-to an agent that consumes the diagnostic.
-
-**Boundary.** okflint *signals* a split candidate with metrics; it does not
-*decide* or *execute* the split.
 
 ---
 
@@ -189,12 +160,10 @@ with the human or the consuming agent. No LLM in the engine, ever.
 
 Small, bounded chores — not exploratory tracks, but tracked so they are not lost.
 
-- **`inv release --dry-run` is not a real dry-run.** `tasks.py` prints
-  `[dry-run] …` and then reports the *current* version instead of invoking
-  `cz bump --dry-run`; the safety net relied on throughout the 0.2.0 release was
-  in fact inert (the real check was done by calling `cz` directly). Fix: make it
-  actually run `cz bump --dry-run` and surface its output (target version +
-  changelog preview), or remove it rather than keep a lying dry-run.
-- **CI `setup-uv` version drift.** `docs.yml` still pins
-  `astral-sh/setup-uv@v5` while `release.yml` uses `@v6`. Align `docs.yml` to
-  `@v6` in a dedicated `chore(ci)`.
+- **`inv release` forces `part=patch` by default.** `tasks.py` always passes
+  `--increment {part}` to `cz bump`, so commitizen never infers the bump level
+  from the commit history: a `feat!` / `BREAKING CHANGE` released without an
+  explicit `--part=minor` would ship as a patch, silently under-versioning a
+  breaking change. Fix: let `cz bump` infer the increment from commits by
+  default (drop the forced `--increment`), keeping `--part` as an optional
+  override — the version then follows the commits, not a flag one can forget.

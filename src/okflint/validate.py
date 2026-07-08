@@ -9,22 +9,22 @@ from typing import Any, Literal
 
 from beartype import beartype
 
+from okflint.cohesion import analyze_cohesion
 from okflint.manifest import (
     HygieneConfig,
     Manifest,
     ManifestError,
     ProfileConfig,
+    SplitConfig,
     TypeConfig,
     load_manifest,
 )
 from okflint.scanner import (
-    Header,
     MarkdownLink,
     WikiLink,
     _is_excluded,
     blank_code_spans,
     build_file_index,
-    evaluate_split,
     extract_headers,
     extract_markdown_links,
     extract_wikilinks,
@@ -421,42 +421,78 @@ def check_hygiene_links(
     return diags
 
 
+def _net_content_lines(content: str) -> int:
+    """Count non-blank body lines after stripping the frontmatter block.
+
+    Args:
+        content: Full raw file content, frontmatter included.
+
+    Returns:
+        Number of body lines that are not blank/whitespace-only.
+    """
+    _, body = parse_frontmatter(content)
+    return sum(1 for line in body.split("\n") if line.strip())
+
+
 @beartype
 def check_hygiene_structure(
     path: str,
-    headers: list[Header],
+    file_path: Path,
+    applicable_root: Path,
+    content: str,
     frontmatter: dict[str, Any] | None,
+    split_config: SplitConfig,
     level: Literal["off", "warn", "error"],
 ) -> list[Diagnostic]:
-    """Check whether the file is a split candidate (S201).
+    """Check whether the file is a semantic-cohesion split candidate (S202).
+
+    Gates (all must pass for the check to fire):
+    - length: net content lines > split_config.min_lines
+    - type: declared `type` not in split_config.exempt_types
+    - path: not matched by split_config.exempt_paths
+    - cohesion: more than one connected component at split_config.tau
 
     Args:
         path: Relative file path.
-        headers: List of extracted headers.
+        file_path: Absolute path of the file (for path-exemption matching).
+        applicable_root: Manifest root the file belongs to.
+        content: Full raw file content, frontmatter included.
         frontmatter: Parsed frontmatter or None.
+        split_config: S202 gate configuration (min_lines, exemptions, tau).
         level: Control level (off | warn | error).
 
     Returns:
-        List of Diagnostic (S201).
+        List of Diagnostic (S202).
     """
     if level == "off":
         return []
 
+    if frontmatter is not None:
+        file_type = str(frontmatter.get("type", ""))
+        if file_type in split_config.exempt_types:
+            return []
+
+    if _is_excluded(file_path, applicable_root, split_config.exempt_paths):
+        return []
+
+    if _net_content_lines(content) <= split_config.min_lines:
+        return []
+
+    result = analyze_cohesion(content, tau=split_config.tau)
+    if len(result.components) <= 1:
+        return []
+
     severity = "warning" if level == "warn" else "error"
-    split, reason, count = evaluate_split(headers, frontmatter)
-
-    if split:
-        return [
-            Diagnostic(
-                code="S201",
-                tier="hygiene",
-                severity=severity,
-                file=path,
-                message=f"split candidate ({reason}, {count} sections)",
-            )
-        ]
-
-    return []
+    n_clusters = len(result.components)
+    return [
+        Diagnostic(
+            code="S202",
+            tier="hygiene",
+            severity=severity,
+            file=path,
+            message=f"S202 — split candidate ({n_clusters} cohesion clusters)",
+        )
+    ]
 
 
 @beartype
@@ -561,7 +597,6 @@ def validate_file(
     safe_body = blank_code_spans(body)
     wikilinks = extract_wikilinks(safe_body, base_index)
     md_links = extract_markdown_links(safe_body, file_path, applicable_root)
-    headers = extract_headers(safe_body)
 
     # Profile
     resolved_type_cfg: TypeConfig | None = None
@@ -590,7 +625,15 @@ def validate_file(
 
         # Structure
         diagnostics.extend(
-            check_hygiene_structure(rel, headers, fm, hygiene.split_candidates)
+            check_hygiene_structure(
+                rel,
+                file_path,
+                applicable_root,
+                content,
+                fm,
+                hygiene.split,
+                hygiene.split_candidates,
+            )
         )
 
         # Unknown fields (only if profile AND resolved type)

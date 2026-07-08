@@ -1,7 +1,7 @@
 ---
 type: ProjectDescription
 project: okflint
-updated: 2026-07-03
+updated: 2026-07-08
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -334,6 +334,7 @@ src/okflint/
 ├── scanner.py    ← shared primitives (scan, frontmatter, links)
 ├── audit.py      ← audit command (descriptive)
 ├── validate.py   ← validate command (normative gate)
+├── cohesion.py   ← S202 semantic-cohesion scorer (TF-IDF, cosine, clustering)
 ├── index.py      ← index command (OKF §6 index.md generation)
 ├── vault.py      ← okf-vault.json loading (VaultConfig, load_vault)
 ├── manifest.py   ← manifest loading + validation (Manifest, load_manifest)
@@ -344,8 +345,9 @@ src/okflint/
 
 ## Roadmap
 
-Envisioned evolutions beyond v0.1 (semantic cohesion for finer splitting,
-verifiable reading-grid expectations) are described in [ROADMAP.md](docs/project/ROADMAP.md).
+Envisioned evolutions beyond v0.1 (verifiable reading-grid expectations,
+broader invocation surfaces, a generic `fix` command) are described in
+[ROADMAP.md](docs/project/ROADMAP.md).
 
 ---
 

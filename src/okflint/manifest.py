@@ -34,6 +34,19 @@ class ProfileConfig:
 
 
 @dataclass
+class SplitConfig:
+    """Gate configuration for the S202 semantic cohesion check."""
+
+    min_lines: int
+    exempt_types: frozenset[str]
+    exempt_paths: list[str]
+    # Cosine similarity threshold for cohesion clustering. 0.15 default locked
+    # via the STEP 1 tau-sweep calibration (0.13-0.22 range on representative
+    # memos); manifest-overridable per base.
+    tau: float = 0.15
+
+
+@dataclass
 class HygieneConfig:
     """Configuration of hygiene checks (opt-in)."""
 
@@ -41,6 +54,7 @@ class HygieneConfig:
     split_candidates: Literal["off", "warn", "error"]
     reserved_files: Literal["off", "warn", "error"]
     unknown_fields: Literal["off", "warn", "error"]
+    split: SplitConfig
 
 
 @dataclass
@@ -77,12 +91,20 @@ _HYGIENE_VALUES: frozenset[str] = frozenset({"off", "warn", "error"})
 # Known OKF version
 _KNOWN_OKF_VERSION = "0.1"
 
+# Default SplitConfig: no length gate, no exemptions
+_DEFAULT_SPLIT_CONFIG = SplitConfig(
+    min_lines=0,
+    exempt_types=frozenset(),
+    exempt_paths=[],
+)
+
 # Default HygieneConfig values when the key is absent
 _DEFAULT_HYGIENE = HygieneConfig(
     broken_links="warn",
     split_candidates="off",
     reserved_files="off",
     unknown_fields="off",
+    split=_DEFAULT_SPLIT_CONFIG,
 )
 
 
@@ -216,6 +238,59 @@ def _parse_profile(raw: Any) -> ProfileConfig:
     )
 
 
+def _parse_split_config(raw: Any) -> SplitConfig:
+    """Parse the hygiene.split sub-block (S202 gate configuration) from raw YAML.
+
+    Args:
+        raw: Raw value of the hygiene.split block, or None if absent.
+
+    Returns:
+        Validated SplitConfig (defaults to no length gate, no exemptions,
+        tau=0.15).
+
+    Raises:
+        ManifestError: If the block or one of its fields is malformed, or if
+            tau lies outside the open interval (0, 1).
+    """
+    if raw is None:
+        return SplitConfig(min_lines=0, exempt_types=frozenset(), exempt_paths=[])
+    if not isinstance(raw, dict):
+        raise ManifestError("hygiene.split must be a mapping.")
+
+    min_lines = raw.get("min_lines", 0)
+    if not isinstance(min_lines, int) or isinstance(min_lines, bool) or min_lines < 0:
+        raise ManifestError("hygiene.split.min_lines must be a non-negative integer.")
+
+    exempt_types_raw = raw.get("exempt_types", [])
+    if not isinstance(exempt_types_raw, list) or not all(
+        isinstance(s, str) for s in exempt_types_raw
+    ):
+        raise ManifestError("hygiene.split.exempt_types must be a list of strings.")
+
+    exempt_paths_raw = raw.get("exempt_paths", [])
+    if not isinstance(exempt_paths_raw, list) or not all(
+        isinstance(s, str) for s in exempt_paths_raw
+    ):
+        raise ManifestError("hygiene.split.exempt_paths must be a list of strings.")
+
+    tau_raw = raw.get("tau", 0.15)
+    if (
+        not isinstance(tau_raw, (int, float))
+        or isinstance(tau_raw, bool)
+        or not (0 < tau_raw < 1)
+    ):
+        raise ManifestError(
+            "hygiene.split.tau must be a number in the open interval (0, 1)."
+        )
+
+    return SplitConfig(
+        min_lines=min_lines,
+        exempt_types=frozenset(exempt_types_raw),
+        exempt_paths=list(exempt_paths_raw),
+        tau=float(tau_raw),
+    )
+
+
 def _parse_hygiene(raw: Any) -> HygieneConfig:
     """Parse the hygiene configuration from raw YAML.
 
@@ -239,6 +314,7 @@ def _parse_hygiene(raw: Any) -> HygieneConfig:
         split_candidates=_get_level("split_candidates", "off"),
         reserved_files=_get_level("reserved_files", "off"),
         unknown_fields=_get_level("unknown_fields", "off"),
+        split=_parse_split_config(raw.get("split")),
     )
 
 

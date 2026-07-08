@@ -250,14 +250,24 @@ def release(
     bump_cmd = f"uv run cz bump --increment {part.upper()}"
     if dry_run:
         bump_cmd += " --dry-run"
-    _run(bump_cmd)
+        # cz bump --dry-run is itself non-destructive, so run it directly
+        # instead of letting _run swallow it — this is what actually surfaces
+        # the target version + changelog preview.
+        preview = subprocess.run(bump_cmd, shell=True)
+        if preview.returncode != 0:
+            print(f"\n❌ Failed: {bump_cmd}")
+            raise SystemExit(preview.returncode)
+    else:
+        _run(bump_cmd)
     print("✅ Version bumped + CHANGELOG.md updated")
 
-    # Get the new version after the bump
+    # Get the new version after the bump. In dry-run nothing was actually
+    # bumped, so this is still the current version — don't mislabel it as new.
     new_version = subprocess.run(
         "uv run cz version --project", shell=True, capture_output=True, text=True
     ).stdout.strip()
-    print(f"   New version: {new_version}")
+    if not dry_run:
+        print(f"   New version: {new_version}")
 
     # ── Step 3: push commit + tag ─────────────────────────────────────────────
     print("\n📦 Step 4/5: push commit + tag...")

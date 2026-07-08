@@ -10,7 +10,7 @@ Stages
   minimal conformance to OKF standard §9.
 - **Profile** (``F101``, ``F102``, ``F105``, ``F106``, ``S102``) — active when a
   ``profile`` block is declared in the manifest.
-- **Hygiene** (``F201``, ``L001``–``L003``, ``S201``, ``R201``) — opt-in via the
+- **Hygiene** (``F201``, ``L001``–``L003``, ``S202``, ``R201``) — opt-in via the
   ``hygiene`` key in the manifest, level ``warn`` or ``error``.
 
 Severities
