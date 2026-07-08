@@ -1,0 +1,6 @@
+- [.ai-context/](.ai-context/index.md)
+- [config/](config/index.md)
+- [docs/](docs/index.md)
+- [CHANGELOG](CHANGELOG.md)
+- [CONTRIBUTING](CONTRIBUTING.md)
+- [README](README.md)
