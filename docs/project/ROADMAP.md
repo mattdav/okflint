@@ -160,12 +160,10 @@ with the human or the consuming agent. No LLM in the engine, ever.
 
 Small, bounded chores — not exploratory tracks, but tracked so they are not lost.
 
-- **`inv release --dry-run` is not a real dry-run.** `tasks.py` prints
-  `[dry-run] …` and then reports the *current* version instead of invoking
-  `cz bump --dry-run`; the safety net relied on throughout the 0.2.0 release was
-  in fact inert (the real check was done by calling `cz` directly). Fix: make it
-  actually run `cz bump --dry-run` and surface its output (target version +
-  changelog preview), or remove it rather than keep a lying dry-run.
-- **CI `setup-uv` version drift.** `docs.yml` still pins
-  `astral-sh/setup-uv@v5` while `release.yml` uses `@v6`. Align `docs.yml` to
-  `@v6` in a dedicated `chore(ci)`.
+- **`inv release` forces `part=patch` by default.** `tasks.py` always passes
+  `--increment {part}` to `cz bump`, so commitizen never infers the bump level
+  from the commit history: a `feat!` / `BREAKING CHANGE` released without an
+  explicit `--part=minor` would ship as a patch, silently under-versioning a
+  breaking change. Fix: let `cz bump` infer the increment from commits by
+  default (drop the forced `--increment`), keeping `--part` as an optional
+  override — the version then follows the commits, not a flag one can forget.
