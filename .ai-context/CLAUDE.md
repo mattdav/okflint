@@ -55,7 +55,7 @@ linter. See `docs/project/ROADMAP.md` for the okflint / harness boundary.
 
 ## Notable dependencies
 
-- **Runtime**: `pyyaml` (sole production dependency).
+- **Runtime**: `pyyaml` and `beartype`.
 - **Dev**: `ruff`, `mypy` (lint), `pytest` + `pytest-cov` (tests), `invoke` (tasks).
 - **Build**: `hatchling` (>= 1.26 for SPDX licence syntax).
 

@@ -49,6 +49,27 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=85
 
+  wheel-smoke:
+    name: Installed Wheel Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Build wheel
+        run: uv build --wheel
+      - name: Install and run wheel without development dependencies
+        run: |
+          uv venv .wheel-venv
+          uv pip install --python .wheel-venv/bin/python dist/*.whl
+          uv pip check --python .wheel-venv/bin/python
+          .wheel-venv/bin/okflint --help
+
   commitizen:
     name: Commitizen (format des commits)
     runs-on: ubuntu-latest

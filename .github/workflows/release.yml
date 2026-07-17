@@ -66,6 +66,13 @@ jobs:
       - name: Build sdist + wheel
         run: uv build
 
+      - name: Verify the installed wheel without development dependencies
+        run: |
+          uv venv .wheel-venv
+          uv pip install --python .wheel-venv/bin/python dist/*.whl
+          uv pip check --python .wheel-venv/bin/python
+          .wheel-venv/bin/okflint --help
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
