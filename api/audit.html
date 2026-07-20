@@ -173,7 +173,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.analyze_file">
-<span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.analyze_file" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.analyze_file" title="Link to this definition"></a></dt>
 <dd><p>Full analysis of a .md file in the bundle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -181,6 +181,11 @@
 <li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the file.</p></li>
 <li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root.</p></li>
 <li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Vault index for wikilink resolution.</p></li>
+<li><p><strong>reserved_files</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – Mapping with “index”/”log” keys to their configured
+filename — <code class="docutils literal notranslate"><span class="pre">manifest.base.reserved_files</span></code> when a manifest is
+loaded, <code class="docutils literal notranslate"><span class="pre">DEFAULT_RESERVED_FILES</span></code> otherwise. Same authority as
+used by diagnostics computation in <code class="docutils literal notranslate"><span class="pre">run_audit</span></code>, so labelling
+and diagnostics never disagree on what counts as reserved.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -252,7 +257,9 @@ Used when –bundle is combined with –manifest as a sub-filter.</p></li>
 When provided, vault indexing is skipped entirely.</p></li>
 <li><p><strong>manifest</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="manifest.html#okflint.manifest.Manifest" title="okflint.manifest.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – When provided, each file is validated through the same
 engine as <code class="docutils literal notranslate"><span class="pre">validate</span></code> (core + profile + hygiene diagnostics).
-When None, diagnostics are core-only (F001/F002).</p></li>
+When None, diagnostics are core-only (F001/F002), with reserved
+files (index.md/log.md) still routed to R001/R002 instead of
+F001/F002 via <code class="docutils literal notranslate"><span class="pre">dispatch_reserved_file</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

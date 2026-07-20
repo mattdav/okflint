@@ -63,6 +63,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.validate.ManifestError"><code class="docutils literal notranslate"><span class="pre">ManifestError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#okflint.validate.dispatch_reserved_file"><code class="docutils literal notranslate"><span class="pre">dispatch_reserved_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#okflint.validate.run_validate"><code class="docutils literal notranslate"><span class="pre">run_validate()</span></code></a></li>
 </ul>
 </li>
@@ -141,6 +142,41 @@
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="okflint.validate.dispatch_reserved_file">
+<span class="sig-prename descclassname"><span class="pre">okflint.validate.</span></span><span class="sig-name descname"><span class="pre">dispatch_reserved_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/validate.html#dispatch_reserved_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.validate.dispatch_reserved_file" title="Link to this definition"></a></dt>
+<dd><p>Route a file to its reserved-file check, or signal it is a concept file.</p>
+<p>Single source of truth for “is this file reserved, and if so which rule
+applies”: both the manifest-driven path (<code class="docutils literal notranslate"><span class="pre">validate_file</span></code>) and the
+manifest-less path (<code class="docutils literal notranslate"><span class="pre">run_audit</span></code>) must go through this instead of each
+deciding independently which names are reserved — that duplication is
+what let F001 fire on reserved files in the manifest-less audit path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Relative file path (for diagnostic messages).</p></li>
+<li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the file; its basename is matched
+against <code class="docutils literal notranslate"><span class="pre">reserved_files</span></code>.</p></li>
+<li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Raw file content.</p></li>
+<li><p><strong>reserved_files</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – Mapping with “index”/”log” keys to their configured
+filename. Pass <code class="docutils literal notranslate"><span class="pre">manifest.base.reserved_files</span></code> when a manifest
+is loaded, <code class="docutils literal notranslate"><span class="pre">DEFAULT_RESERVED_FILES</span></code> otherwise.</p></li>
+<li><p><strong>is_root</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – True if the file sits directly under the applicable root
+(manifest root, or bundle root when there is no manifest). Only
+affects R001’s root exemption for <cite>okf_version</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.validate.Diagnostic" title="okflint.validate.Diagnostic"><code class="xref py py-class docutils literal notranslate"><span class="pre">Diagnostic</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Diagnostics from R001/R002 if the file is reserved (possibly empty
+if conformant), or None if the file is not reserved and the caller
+should fall through to the normal concept-file check.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="okflint.validate.run_validate">
 <span class="sig-prename descclassname"><span class="pre">okflint.validate.</span></span><span class="sig-name descname"><span class="pre">run_validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifest_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/validate.html#run_validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.validate.run_validate" title="Link to this definition"></a></dt>
 <dd><p>Orchestrate OKF validation over a list of targets.</p>
@@ -151,7 +187,9 @@ caller to pass a vault-wide union index built once for all bundles.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>manifest_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Path to the OKF YAML manifest.</p></li>
-<li><p><strong>targets</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</span>) – Files or directories to validate.</p></li>
+<li><p><strong>targets</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]</span>) – Files or directories to validate. May be relative (e.g. to
+the process CWD); resolved to absolute internally to match the
+manifest’s own resolved roots.</p></li>
 <li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Pre-built file index (stem → list of relative paths).
 When provided, the per-manifest index build is skipped.</p></li>
 </ul>

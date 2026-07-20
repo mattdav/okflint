@@ -119,8 +119,20 @@
 <span class="c1"># ISO date pattern YYYY-MM-DD</span>
 <span class="n">_ISO_DATE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">)</span>
 
-<span class="c1"># Re-export for importers (cli.py)</span>
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Diagnostic&quot;</span><span class="p">,</span> <span class="s2">&quot;ManifestError&quot;</span><span class="p">,</span> <span class="s2">&quot;run_validate&quot;</span><span class="p">]</span>
+<span class="c1"># OKF v0.1 default reserved file names, used whenever no manifest overrides</span>
+<span class="c1"># them via base.reserved_files. Single source of truth: callers with or</span>
+<span class="c1"># without a loaded manifest must use this instead of re-declaring their own</span>
+<span class="c1"># reserved-name set.</span>
+<span class="n">DEFAULT_RESERVED_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;index.md&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span> <span class="s2">&quot;log.md&quot;</span><span class="p">}</span>
+
+<span class="c1"># Re-export for importers (cli.py, audit.py)</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;DEFAULT_RESERVED_FILES&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Diagnostic&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ManifestError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dispatch_reserved_file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;run_validate&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="Diagnostic">
@@ -261,6 +273,55 @@
             <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">diags</span>
+
+
+<div class="viewcode-block" id="dispatch_reserved_file">
+<a class="viewcode-back" href="../../api/validate.html#okflint.validate.dispatch_reserved_file">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dispatch_reserved_file</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">reserved_files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">is_root</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Route a file to its reserved-file check, or signal it is a concept file.</span>
+
+<span class="sd">    Single source of truth for &quot;is this file reserved, and if so which rule</span>
+<span class="sd">    applies&quot;: both the manifest-driven path (``validate_file``) and the</span>
+<span class="sd">    manifest-less path (``run_audit``) must go through this instead of each</span>
+<span class="sd">    deciding independently which names are reserved — that duplication is</span>
+<span class="sd">    what let F001 fire on reserved files in the manifest-less audit path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path (for diagnostic messages).</span>
+<span class="sd">        file_path: Absolute path of the file; its basename is matched</span>
+<span class="sd">            against ``reserved_files``.</span>
+<span class="sd">        content: Raw file content.</span>
+<span class="sd">        reserved_files: Mapping with &quot;index&quot;/&quot;log&quot; keys to their configured</span>
+<span class="sd">            filename. Pass ``manifest.base.reserved_files`` when a manifest</span>
+<span class="sd">            is loaded, ``DEFAULT_RESERVED_FILES`` otherwise.</span>
+<span class="sd">        is_root: True if the file sits directly under the applicable root</span>
+<span class="sd">            (manifest root, or bundle root when there is no manifest). Only</span>
+<span class="sd">            affects R001&#39;s root exemption for `okf_version`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Diagnostics from R001/R002 if the file is reserved (possibly empty</span>
+<span class="sd">        if conformant), or None if the file is not reserved and the caller</span>
+<span class="sd">        should fall through to the normal concept-file check.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reserved_idx</span> <span class="o">=</span> <span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;index.md&quot;</span><span class="p">)</span>
+    <span class="n">reserved_log</span> <span class="o">=</span> <span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;log.md&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_idx</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">check_core_reserved_index</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">is_root</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_log</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">check_core_reserved_log</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -656,16 +717,17 @@
 
     <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">applicable_root</span><span class="p">))</span>
 
-    <span class="n">reserved_idx</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;index.md&quot;</span><span class="p">)</span>
-    <span class="n">reserved_log</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;log.md&quot;</span><span class="p">)</span>
-
     <span class="c1"># Reserved files: specific handling, no concept check</span>
-    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_idx</span><span class="p">:</span>
-        <span class="n">is_root</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">check_core_reserved_index</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">is_root</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">reserved_log</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">check_core_reserved_log</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+    <span class="n">is_root</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">==</span> <span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">)</span>
+    <span class="n">reserved_diags</span> <span class="o">=</span> <span class="n">dispatch_reserved_file</span><span class="p">(</span>
+        <span class="n">rel</span><span class="p">,</span>
+        <span class="n">file_path</span><span class="p">,</span>
+        <span class="n">content</span><span class="p">,</span>
+        <span class="n">reserved_files</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="p">,</span>
+        <span class="n">is_root</span><span class="o">=</span><span class="n">is_root</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">reserved_diags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reserved_diags</span>
 
     <span class="c1"># Concept file</span>
     <span class="n">fm</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
@@ -752,7 +814,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        manifest_path: Path to the OKF YAML manifest.</span>
-<span class="sd">        targets: Files or directories to validate.</span>
+<span class="sd">        targets: Files or directories to validate. May be relative (e.g. to</span>
+<span class="sd">            the process CWD); resolved to absolute internally to match the</span>
+<span class="sd">            manifest&#39;s own resolved roots.</span>
 <span class="sd">        vault_index: Pre-built file index (stem → list of relative paths).</span>
 <span class="sd">            When provided, the per-manifest index build is skipped.</span>
 
@@ -763,6 +827,10 @@
 <span class="sd">        ManifestError: If the manifest is invalid or unreadable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
+    <span class="c1"># Resolve here, once, so every downstream comparison (root matching,</span>
+    <span class="c1"># relative_to in validate_file) is absolute-to-absolute, matching how</span>
+    <span class="c1"># manifest.base.roots are already resolved.</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">]</span>
     <span class="n">_root_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
     <span class="n">_excl_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">r</span><span class="o">.</span><span class="n">path</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">exclude_patterns</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">exclude_patterns</span>
