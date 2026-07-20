@@ -835,3 +835,88 @@ class TestRunValidate:
         diags, code = run_validate(manifest_path, [root])
         assert code == 0
         assert any(d.code == "L001" for d in diags)
+
+    def test_relative_dir_target_does_not_raise(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Regression guard: a CLI-style relative target (e.g. `okflint
+        validate --manifest m.yaml docs/` run from the repo root) must not
+        raise ValueError when compared against the manifest's resolved
+        (absolute) roots."""
+        manifest_path, root = profile_manifest
+        make_md(
+            root / "concept.md",
+            "---\ntype: Decision\nstatut: Accepté\ncreated: 2026-01-01\n---\n",
+        )
+        monkeypatch.chdir(root.parent)
+        diags, code = run_validate(manifest_path, [Path("root")])
+        assert code == 0
+        assert not [d for d in diags if d.severity == "error"]
+
+    def test_relative_single_file_target_does_not_raise(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        manifest_path, root = profile_manifest
+        make_md(
+            root / "concept.md",
+            "---\ntype: Decision\nstatut: Accepté\ncreated: 2026-01-01\n---\n",
+        )
+        monkeypatch.chdir(root)
+        diags, code = run_validate(manifest_path, [Path("concept.md")])
+        assert code == 0
+        assert not [d for d in diags if d.severity == "error"]
+
+    def test_absolute_single_file_target_unchanged(
+        self,
+        profile_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        manifest_path, root = profile_manifest
+        f = make_md(
+            root / "concept.md",
+            "---\ntype: Decision\nstatut: Accepté\ncreated: 2026-01-01\n---\n",
+        )
+        diags, code = run_validate(manifest_path, [f])
+        assert code == 0
+        assert not [d for d in diags if d.severity == "error"]
+
+    def test_multiroot_relative_target_matches_correct_root(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A relative target under the second declared root must resolve to
+        that root (and its exclude_patterns), not silently fall back to the
+        first root."""
+        root_a = tmp_path / "root_a"
+        root_b = tmp_path / "root_b"
+        root_a.mkdir()
+        root_b.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.1'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root_a.as_posix()}'\n"
+            f"    - path: '{root_b.as_posix()}'\n"
+            "      exclude_patterns: ['skip/**']\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n",
+            encoding="utf-8",
+        )
+        make_md(root_b / "concept.md", "---\ntype: Reference\n---\n# OK\n")
+        make_md(root_b / "skip" / "ignored.md", "# No frontmatter\n")
+
+        monkeypatch.chdir(tmp_path)
+        diags, code = run_validate(manifest_path, [Path("root_b")])
+        assert code == 0
+        assert not any("ignored.md" in d.file for d in diags)

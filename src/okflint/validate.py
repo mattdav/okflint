@@ -662,7 +662,9 @@ def run_validate(
 
     Args:
         manifest_path: Path to the OKF YAML manifest.
-        targets: Files or directories to validate.
+        targets: Files or directories to validate. May be relative (e.g. to
+            the process CWD); resolved to absolute internally to match the
+            manifest's own resolved roots.
         vault_index: Pre-built file index (stem → list of relative paths).
             When provided, the per-manifest index build is skipped.
 
@@ -673,6 +675,10 @@ def run_validate(
         ManifestError: If the manifest is invalid or unreadable.
     """
     manifest = load_manifest(manifest_path)
+    # Resolve here, once, so every downstream comparison (root matching,
+    # relative_to in validate_file) is absolute-to-absolute, matching how
+    # manifest.base.roots are already resolved.
+    targets = [t.resolve() for t in targets]
     _root_paths = [r.path for r in manifest.base.roots]
     _excl_map: dict[Path, list[str]] = {
         r.path: r.exclude_patterns for r in manifest.base.roots if r.exclude_patterns
