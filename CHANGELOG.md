@@ -18,6 +18,14 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.3.1 (2026-07-20)
+
+### Fix
+
+- **audit**: exempter les fichiers réservés de F001 en mode sans manifeste
+- **validate**: normaliser les targets CLI en chemins absolus
+- déclarer beartype en dépendance runtime
+
 ## v0.3.0 (2026-07-08)
 
 ### BREAKING CHANGE
