@@ -15,7 +15,7 @@ from okflint.audit import (
     run_audit,
 )
 from okflint.manifest import RootConfig, load_manifest
-from okflint.validate import run_validate
+from okflint.validate import DEFAULT_RESERVED_FILES, run_validate
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ class TestAnalyzeFile:
         bundle = tmp_path / "bundle"
         bundle.mkdir()
         f = make_md(bundle / "doc.md", "---\ntype: Reference\n---\n# Title\n")
-        report = analyze_file(f, bundle, {})
+        report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
         assert report.path == "doc.md"
         assert report.okf_status == "conformant"
         assert not report.is_reserved
@@ -58,7 +58,7 @@ class TestAnalyzeFile:
         bundle = tmp_path / "bundle"
         bundle.mkdir()
         f = make_md(bundle / "index.md", "# Index\n")
-        report = analyze_file(f, bundle, {})
+        report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
         assert report.is_reserved
 
     def test_non_conformant_without_frontmatter(
@@ -67,7 +67,7 @@ class TestAnalyzeFile:
         bundle = tmp_path / "bundle"
         bundle.mkdir()
         f = make_md(bundle / "bare.md", "# Bare content\n")
-        report = analyze_file(f, bundle, {})
+        report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
         assert report.okf_status == "non_conformant"
 
     def test_subdirectory_depth(
@@ -76,7 +76,7 @@ class TestAnalyzeFile:
         bundle = tmp_path / "bundle"
         bundle.mkdir()
         f = make_md(bundle / "sub" / "doc.md", "---\ntype: Reference\n---\n")
-        report = analyze_file(f, bundle, {})
+        report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
         assert report.depth == 1
         assert report.path == "sub/doc.md"
 
@@ -174,6 +174,92 @@ class TestRunAudit:
         assert "files" in report
         assert report["stats"]["total_files"] == 2
         assert report["stats"]["total_concept_files"] == 1
+        # Regression guard: index.md has no frontmatter, which used to
+        # trigger a spurious F001 in the manifest-less audit path because
+        # diagnostics were computed via check_core_concept() without ever
+        # consulting is_reserved.
+        assert "F001" not in report["diagnostics_summary"]["by_code"]
+
+    def test_manifest_less_reserved_files_at_multiple_depths_no_f001(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "index.md", "# Root index\n")
+        make_md(bundle / "log.md", "# Log\n\n## 2026-01-01\n\nEntry.\n")
+        make_md(bundle / "sub" / "index.md", "# Sub index\n")
+        report = run_audit(bundle, bundle)
+        assert report["stats"]["total_reserved_files"] == 3
+        assert "F001" not in report["diagnostics_summary"]["by_code"]
+
+    def test_manifest_driven_reserved_files_parity_with_manifest_less(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        """The manifest-driven and manifest-less audit paths must agree on
+        reserved files: neither should ever emit F001 for them."""
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "index.md", "# Root index\n")
+        make_md(bundle / "log.md", "# Log\n\n## 2026-01-01\n\nEntry.\n")
+        make_md(bundle / "sub" / "index.md", "# Sub index\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.1'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{bundle.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n",
+            encoding="utf-8",
+        )
+        manifest = load_manifest(manifest_path)
+        report = run_audit(bundle, bundle, manifest=manifest)
+        assert "F001" not in report["diagnostics_summary"]["by_code"]
+
+    def test_manifest_less_non_reserved_file_still_triggers_f001(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        """The fix must not silence F001 for genuine concept files."""
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "bare.md", "# No frontmatter\n")
+        report = run_audit(bundle, bundle)
+        assert report["diagnostics_summary"]["by_code"].get("F001") == 1
+
+    def test_manifest_less_non_root_index_with_frontmatter_triggers_r001(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "sub" / "index.md", "---\ntype: Reference\n---\n# Sub index\n")
+        report = run_audit(bundle, bundle)
+        assert report["diagnostics_summary"]["by_code"].get("R001") == 1
+
+    def test_manifest_less_root_index_with_only_okf_version_passes(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(bundle / "index.md", "---\nokf_version: '0.1'\n---\n# Root index\n")
+        report = run_audit(bundle, bundle)
+        assert report["diagnostics_summary"]["by_code"] == {}
 
 
 # ---------------------------------------------------------------------------

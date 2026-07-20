@@ -34,8 +34,20 @@ from okflint.scanner import (
 # ISO date pattern YYYY-MM-DD
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
-# Re-export for importers (cli.py)
-__all__ = ["Diagnostic", "ManifestError", "run_validate"]
+# OKF v0.1 default reserved file names, used whenever no manifest overrides
+# them via base.reserved_files. Single source of truth: callers with or
+# without a loaded manifest must use this instead of re-declaring their own
+# reserved-name set.
+DEFAULT_RESERVED_FILES: dict[str, str] = {"index": "index.md", "log": "log.md"}
+
+# Re-export for importers (cli.py, audit.py)
+__all__ = [
+    "DEFAULT_RESERVED_FILES",
+    "Diagnostic",
+    "ManifestError",
+    "dispatch_reserved_file",
+    "run_validate",
+]
 
 
 @dataclass
@@ -173,6 +185,52 @@ def check_core_reserved_log(
             )
 
     return diags
+
+
+@beartype
+def dispatch_reserved_file(
+    path: str,
+    file_path: Path,
+    content: str,
+    *,
+    reserved_files: dict[str, str],
+    is_root: bool,
+) -> list[Diagnostic] | None:
+    """Route a file to its reserved-file check, or signal it is a concept file.
+
+    Single source of truth for "is this file reserved, and if so which rule
+    applies": both the manifest-driven path (``validate_file``) and the
+    manifest-less path (``run_audit``) must go through this instead of each
+    deciding independently which names are reserved — that duplication is
+    what let F001 fire on reserved files in the manifest-less audit path.
+
+    Args:
+        path: Relative file path (for diagnostic messages).
+        file_path: Absolute path of the file; its basename is matched
+            against ``reserved_files``.
+        content: Raw file content.
+        reserved_files: Mapping with "index"/"log" keys to their configured
+            filename. Pass ``manifest.base.reserved_files`` when a manifest
+            is loaded, ``DEFAULT_RESERVED_FILES`` otherwise.
+        is_root: True if the file sits directly under the applicable root
+            (manifest root, or bundle root when there is no manifest). Only
+            affects R001's root exemption for `okf_version`.
+
+    Returns:
+        Diagnostics from R001/R002 if the file is reserved (possibly empty
+        if conformant), or None if the file is not reserved and the caller
+        should fall through to the normal concept-file check.
+    """
+    reserved_idx = reserved_files.get("index", "index.md")
+    reserved_log = reserved_files.get("log", "log.md")
+
+    if file_path.name == reserved_idx:
+        return check_core_reserved_index(path, content, is_root)
+
+    if file_path.name == reserved_log:
+        return check_core_reserved_log(path, content)
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -568,16 +626,17 @@ def validate_file(
 
     rel = str(file_path.relative_to(applicable_root))
 
-    reserved_idx = manifest.base.reserved_files.get("index", "index.md")
-    reserved_log = manifest.base.reserved_files.get("log", "log.md")
-
     # Reserved files: specific handling, no concept check
-    if file_path.name == reserved_idx:
-        is_root = any(file_path.parent == r.path for r in manifest.base.roots)
-        return check_core_reserved_index(rel, content, is_root)
-
-    if file_path.name == reserved_log:
-        return check_core_reserved_log(rel, content)
+    is_root = any(file_path.parent == r.path for r in manifest.base.roots)
+    reserved_diags = dispatch_reserved_file(
+        rel,
+        file_path,
+        content,
+        reserved_files=manifest.base.reserved_files,
+        is_root=is_root,
+    )
+    if reserved_diags is not None:
+        return reserved_diags
 
     # Concept file
     fm, body = parse_frontmatter(content)

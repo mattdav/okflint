@@ -144,7 +144,9 @@ profile, and hygiene — according to the manifest's declared severities. The JS
 report then includes `diagnostics` per file and a top-level `diagnostics_summary`
 (counts by severity, tier, and code). The difference with `validate` is the exit
 code, not the checks: `audit` never fails, it only reports. Without a manifest
-(`--bundle`/`--vault` folder mode), diagnostics stay core-only (F001/F002).
+(`--bundle`/`--vault` folder mode), diagnostics stay core-only (F001/F002),
+with reserved files (`index.md`, `log.md`) still routed to R001/R002 instead
+of F001/F002, exactly as with a manifest.
 
 ```bash
 # Audit every bundle in a vault manifest (recommended)

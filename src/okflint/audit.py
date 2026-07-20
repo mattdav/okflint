@@ -22,12 +22,15 @@ from okflint.scanner import (
     extract_wikilinks,
     parse_frontmatter,
 )
-from okflint.validate import Diagnostic, check_core_concept, validate_file
+from okflint.validate import (
+    DEFAULT_RESERVED_FILES,
+    Diagnostic,
+    check_core_concept,
+    dispatch_reserved_file,
+    validate_file,
+)
 
 OkfStatus = Literal["conformant", "partial", "non_conformant"]
-
-# OKF v0.1 reserved names (not concepts)
-RESERVED_NAMES: set[str] = {"index.md", "log.md"}
 
 
 @dataclass
@@ -69,6 +72,7 @@ def analyze_file(
     file_path: Path,
     bundle_path: Path,
     vault_index: dict[str, list[str]],
+    reserved_files: dict[str, str],
 ) -> FileReport:
     """Full analysis of a .md file in the bundle.
 
@@ -76,13 +80,19 @@ def analyze_file(
         file_path: Absolute path of the file.
         bundle_path: Bundle root.
         vault_index: Vault index for wikilink resolution.
+        reserved_files: Mapping with "index"/"log" keys to their configured
+            filename — ``manifest.base.reserved_files`` when a manifest is
+            loaded, ``DEFAULT_RESERVED_FILES`` otherwise. Same authority as
+            used by diagnostics computation in ``run_audit``, so labelling
+            and diagnostics never disagree on what counts as reserved.
 
     Returns:
         FileReport with all fields populated.
     """
     rel_path = file_path.relative_to(bundle_path).as_posix()
     depth = len(file_path.relative_to(bundle_path).parts) - 1
-    is_reserved = file_path.name.lower() in RESERVED_NAMES
+    reserved_names = {name.lower() for name in reserved_files.values()}
+    is_reserved = file_path.name.lower() in reserved_names
 
     content = file_path.read_text(encoding="utf-8")
     lines = len(content.splitlines())
@@ -199,7 +209,9 @@ def run_audit(
             When provided, vault indexing is skipped entirely.
         manifest: When provided, each file is validated through the same
             engine as ``validate`` (core + profile + hygiene diagnostics).
-            When None, diagnostics are core-only (F001/F002).
+            When None, diagnostics are core-only (F001/F002), with reserved
+            files (index.md/log.md) still routed to R001/R002 instead of
+            F001/F002 via ``dispatch_reserved_file``.
 
     Returns:
         Full audit report serialisable as JSON.
@@ -248,13 +260,30 @@ def run_audit(
 
     print(f"   {len(all_md_files)} files found")
 
+    reserved_files = (
+        manifest.base.reserved_files if manifest is not None else DEFAULT_RESERVED_FILES
+    )
+
     files: list[FileReport] = []
     for md_file, bundle_root in all_md_files:
-        report = analyze_file(md_file, bundle_root, _vault_index)
+        report = analyze_file(md_file, bundle_root, _vault_index, reserved_files)
         if manifest is not None:
             report.diagnostics = validate_file(md_file, manifest, _vault_index)
         else:
-            report.diagnostics = check_core_concept(report.path, report.frontmatter)
+            is_root = md_file.parent == bundle_root
+            content = md_file.read_text(encoding="utf-8")
+            reserved_diags = dispatch_reserved_file(
+                report.path,
+                md_file,
+                content,
+                reserved_files=reserved_files,
+                is_root=is_root,
+            )
+            report.diagnostics = (
+                reserved_diags
+                if reserved_diags is not None
+                else check_core_concept(report.path, report.frontmatter)
+            )
         report.split_candidate = any(d.code == "S202" for d in report.diagnostics)
         files.append(report)
 
