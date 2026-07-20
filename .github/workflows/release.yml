@@ -35,10 +35,47 @@ jobs:
       - name: Tests
         run: uv run python -m pytest --cov=src/okflint --cov-fail-under=85
 
+  smoke-install:
+    name: Smoke install (clean venv, wheel only)
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Build wheel
+        run: uv build --wheel
+
+      - name: Install wheel in a clean venv (no dev deps, no extras)
+        run: |
+          python -m venv smoke-venv
+          smoke-venv/bin/pip install dist/*.whl
+
+      - name: CLI smoke checks
+        run: |
+          smoke-venv/bin/okflint --help
+          smoke-venv/bin/okflint validate --help
+          smoke-venv/bin/okflint audit --help
+
+      - name: Real validation on a mini-bundle fixture
+        run: |
+          smoke-venv/bin/okflint validate --manifest tests/fixtures/base/manifest.yaml
+          smoke-venv/bin/okflint audit --manifest tests/fixtures/base/manifest.yaml
+
   publish:
     name: Build + Publish PyPI
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, smoke-install]
 
     environment:
       name: pypi

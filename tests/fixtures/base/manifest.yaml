@@ -1,0 +1,8 @@
+okf_version: "0.1"
+base:
+  name: smoke-test-base
+  roots:
+    - path: .
+  reserved_files:
+    index: index.md
+    log: log.md
