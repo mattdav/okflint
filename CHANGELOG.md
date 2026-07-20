@@ -22,9 +22,9 @@ Do not manually edit the generated sections.
 
 ### Fix
 
-- **audit**: exempter les fichiers réservés de F001 en mode sans manifeste
-- **validate**: normaliser les targets CLI en chemins absolus
-- déclarer beartype en dépendance runtime
+- **audit**: Exclude reserved files from F001 in manifest-less mode
+- **validate**: Standardize CLI targets to absolute paths
+- Declare beartype as a runtime dependency
 
 ## v0.3.0 (2026-07-08)
 
