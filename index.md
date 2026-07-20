@@ -1,4 +1,4 @@
-- [.ai-context/](.ai-context/index.md)
+- [.claude/](.claude/index.md)
 - [config/](config/index.md)
 - [docs/](docs/index.md)
 - [CHANGELOG](CHANGELOG.md)
