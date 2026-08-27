@@ -86,7 +86,8 @@ must be documented there with its code, stage, and severity.
 inv lint        # must pass with zero issues
 ```
 
-Runs in sequence: `ruff check --fix`, `ruff format`, `mypy`.
+Delegates to `pre-commit run --all-files` (single source of truth: ruff,
+mypy, markdownlint, prettier, commitizen).
 **Must pass with zero issues before any commit.**
 
 ### Strict rules

@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import webbrowser
 from pathlib import Path
 
 from invoke.context import Context
@@ -10,34 +11,36 @@ RELEASE_BRANCH = "main"  # reference branch for releases
 CLEAN_DIRS: list[str] = [
     "build",  # Build artefacts
     "dist",  # Packaged distributions
+    "htmlcov",  # HTML coverage report (pytest-cov)
+    "docs/code/sphinx/_build",  # Sphinx build output
     ".pytest_cache",  # pytest cache
     ".ruff_cache",  # Ruff cache
     ".mypy_cache",  # mypy cache
     ".okflint",  # JSON audit reports (regeneratable)
-    "htmlcov",  # HTML coverage report
     "__pycache__",  # Python cache (root)
 ]
-
+# Fichiers supprimés séparément : rmtree échoue sur un fichier, et
+# ignore_errors=True masquerait l'échec sans rien nettoyer.
 CLEAN_FILES: list[str] = [
     ".coverage",  # pytest-cov coverage data
+    "coverage.xml",  # XML coverage report
 ]
 
 
-# ================ Helper Functions ================= #
 @task
 def clean(c: Context) -> None:
-    """Remove build artifacts and caches."""
+    """Remove build artifacts, generated docs and caches."""
     for directory in CLEAN_DIRS:
         path: Path = Path(directory)
-        if path.exists():
-            print(f"  - Removing {directory}")
+        if path.is_dir():
+            print(f"  - Removing {directory}/")
             shutil.rmtree(path, ignore_errors=True)
 
     for filename in CLEAN_FILES:
-        path = Path(filename)
-        if path.exists():
+        file_path = Path(filename)
+        if file_path.is_file():
             print(f"  - Removing {filename}")
-            path.unlink(missing_ok=True)
+            file_path.unlink(missing_ok=True)
 
     # Recursively clean __pycache__
     for path in Path(".").rglob("__pycache__"):
@@ -57,7 +60,6 @@ def clean(c: Context) -> None:
     print("🗑 Clean task Done!")
 
 
-# ================ Quality test ================= #
 @task
 def index(c: Context) -> None:
     """Index the codebase in codebase-memory-mcp to improve Claude Code context.
@@ -97,26 +99,31 @@ def index(c: Context) -> None:
 
 @task
 def lint(c: Context) -> None:
-    """Run linting checks."""
-    result = 0
-    print("Running Ruff check...")
-    check_command = subprocess.run("uv run ruff check --fix src/.", shell=True)
-    if check_command.returncode != 0:
-        result += check_command.returncode
-    print("\nRunning Ruff format check...")
-    format_command = subprocess.run("uv run ruff format src/.", shell=True)
-    if format_command.returncode != 0:
-        result += format_command.returncode
-    print("\nRunning mypy...")
-    # uv run mypy fails on Windows with compiled mypy (Failed to canonicalize
-    # script path) — using python -m mypy as a workaround
-    mypy_command = subprocess.run("uv run python -m mypy src/.", shell=True)
-    if mypy_command.returncode != 0:
-        result += mypy_command.returncode
-    if result != 0:
+    """Run all quality checks via pre-commit (single source of truth)."""
+    print("🔎 Running pre-commit on all files...")
+    result = subprocess.run("uv run pre-commit run --all-files", shell=True)
+    if result.returncode != 0:
         print("❌ Linting issues found!")
-    else:
-        print("🔎 Linting Task Done!")
+        raise SystemExit(result.returncode)
+    print("✅ Linting Task Done!")
+
+
+@task
+def precommit_install(c: Context) -> None:
+    """Install the pre-commit hooks (pre-commit and commit-msg stages).
+
+    Both stages are required: the commitizen hook only fires on commit-msg,
+    which pre-commit does not install by default.
+    """
+    print("🔧 Installing pre-commit hooks...")
+    result = subprocess.run(
+        "uv run pre-commit install --install-hooks -t pre-commit -t commit-msg",
+        shell=True,
+    )
+    if result.returncode != 0:
+        print("❌ pre-commit install failed!")
+        raise SystemExit(result.returncode)
+    print("✅ pre-commit hooks installed!")
 
 
 @task
@@ -134,40 +141,53 @@ def test(c: Context, verbose: bool = False, coverage: bool = True) -> None:
 
     # Execute
     result = subprocess.run(cmd, shell=True)
-
     if result.returncode != 0:
         print("❌ Tests failed!")
-    else:
-        print("✅ All tests passed!")
-        html_report = Path("htmlcov") / "index.html"
-        if html_report.exists():
-            print(f"📊 HTML report: {html_report.resolve()}")
+        raise SystemExit(result.returncode)
+
+    print("✅ All tests passed!")
+    html_report = Path("htmlcov") / "index.html"
+    if html_report.exists():
+        print(f"📊 HTML report: {html_report.resolve()}")
 
 
 @task
 def docs(c: Context, open_browser: bool = False) -> None:
-    """Build the Sphinx documentation as HTML."""
-    src = Path("docs/sphinx")
+    """Build the Sphinx documentation as HTML.
+
+    `-W --keep-going` reproduces CI's behavior: any warning becomes an
+    error, but the build runs to completion so all of them get reported.
+    """
+    src = Path("docs/code/sphinx")
     out = src / "_build" / "html"
     out.mkdir(parents=True, exist_ok=True)
 
     print("📖 Building Sphinx documentation...")
     result = subprocess.run(
-        f'uv run sphinx-build -b html "{src}" "{out}"',
+        f'uv run sphinx-build -W --keep-going -b html "{src}" "{out}"',
         shell=True,
     )
     if result.returncode != 0:
         print("❌ Sphinx build failed!")
-        return
+        raise SystemExit(result.returncode)
 
     index_html = out / "index.html"
     print(f"✅ Documentation built: {index_html.resolve()}")
 
     # Optionally open in browser
     if open_browser:
-        import webbrowser
-
         webbrowser.open(index_html.as_uri())
+
+
+@task
+def build(c: Context) -> None:
+    """Build the package (wheel + sdist) via uv."""
+    print("📦 Building package...")
+    result = subprocess.run("uv build", shell=True)
+    if result.returncode != 0:
+        print("❌ Build failed!")
+        raise SystemExit(result.returncode)
+    print("✅ Build Done! Artifacts in dist/")
 
 
 @task
@@ -221,7 +241,7 @@ def release(
     ).stdout.strip()
     if not dry_run and current_branch != RELEASE_BRANCH:
         print(f"❌ You are on '{current_branch}', not on '{RELEASE_BRANCH}'.")
-        print("   Run 'git checkout main' before releasing.")
+        print(f"   Run 'git checkout {RELEASE_BRANCH}' before releasing.")
         raise SystemExit(1)
 
     # Clean working tree
@@ -238,10 +258,8 @@ def release(
     # ── Step 1: lint + tests ──────────────────────────────────────────────────
     if not skip_tests:
         print("\n📦 Step 2/5: lint + tests...")
-        _run("uv run ruff check src/")
-        _run("uv run ruff format --check src/")
-        _run("uv run python -m mypy src/")
-        _run("uv run python -m pytest --cov=src/okflint --cov-fail-under=85 -q")
+        _run("uv run pre-commit run --all-files")
+        _run("uv run python -m pytest --cov-fail-under=85 -q")
         print("✅ Lint and tests OK")
     else:
         print("\n⚠️  Step 2/5: lint + tests skipped (--skip-tests)")

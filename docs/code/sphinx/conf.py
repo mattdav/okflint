@@ -33,7 +33,6 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build"]
