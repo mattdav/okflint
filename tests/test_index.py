@@ -232,9 +232,7 @@ class TestCmdIndex:
         make_md(root / "a.md", "---\ntype: Reference\ntitle: A\n---\n")
         parser = build_parser()
 
-        args = parser.parse_args(
-            ["index", "--manifest", str(manifest_path), "--apply"]
-        )
+        args = parser.parse_args(["index", "--manifest", str(manifest_path), "--apply"])
         assert _cmd_index(args) == 0
         assert (root / "index.md").exists()
         written_first = (root / "index.md").read_text(encoding="utf-8")
@@ -298,9 +296,7 @@ class TestCmdIndex:
             encoding="utf-8",
         )
         parser = build_parser()
-        args = parser.parse_args(
-            ["index", "--vault", str(vault_path), "--apply"]
-        )
+        args = parser.parse_args(["index", "--vault", str(vault_path), "--apply"])
 
         assert _cmd_index(args) == 0
         assert (bundle / "index.md").exists()
@@ -314,9 +310,7 @@ class TestCmdIndex:
 
         bundle = tmp_path / "bundle"
         bundle.mkdir()
-        (bundle / "okf-base.yaml").write_text(
-            "okf_version: '0.1'\n", encoding="utf-8"
-        )
+        (bundle / "okf-base.yaml").write_text("okf_version: '0.1'\n", encoding="utf-8")
         vault_path = tmp_path / "okf-vault.json"
         vault_path.write_text(
             json.dumps(

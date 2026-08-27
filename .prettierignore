@@ -1,0 +1,14 @@
+uv.lock
+docs/code/**/_build/
+
+# Fixtures pédagogiques figées : leur formatage exact (alignement des
+# commentaires, espacement) fait partie du contenu montré à l'utilisateur,
+# ne pas les laisser dériver au gré des reformatages automatiques.
+example/manifest.example.yaml
+example/ok-vault.example.json
+
+# Markdown : formatage exclusivement géré par markdownlint-cli2 (voir
+# .pre-commit-config.yaml). L'extension VS Code de prettier formate aussi
+# les .md à la sauvegarde, hors pre-commit : cette exclusion évite qu'elle
+# réintroduise le conflit entre les deux outils sur ce type de fichier.
+*.md

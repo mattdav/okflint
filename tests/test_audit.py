@@ -7,16 +7,14 @@ from pathlib import Path
 
 from okflint.audit import (
     FileReport,
-    MarkdownLink,
-    WikiLink,
     analyze_file,
     compute_stats,
     get_okf_status,
     run_audit,
 )
 from okflint.manifest import RootConfig, load_manifest
+from okflint.scanner import MarkdownLink, WikiLink
 from okflint.validate import DEFAULT_RESERVED_FILES, run_validate
-
 
 # ---------------------------------------------------------------------------
 # get_okf_status
@@ -90,8 +88,8 @@ def _make_report(
     path: str = "doc.md",
     is_reserved: bool = False,
     okf_status: str = "conformant",
-    wikilinks: list | None = None,
-    markdown_links: list | None = None,
+    wikilinks: list[WikiLink] | None = None,
+    markdown_links: list[MarkdownLink] | None = None,
     split_candidate: bool = False,
 ) -> FileReport:
     return FileReport(

@@ -75,9 +75,7 @@ class TestF002:
 class TestR001:
     def test_triggers_on_non_root_index_with_frontmatter(self) -> None:
         content = "---\ntype: Reference\n---\n# Index\n"
-        diags = check_core_reserved_index(
-            "sub/index.md", content, is_root_index=False
-        )
+        diags = check_core_reserved_index("sub/index.md", content, is_root_index=False)
         assert "R001" in _codes(diags)
 
     def test_triggers_on_root_index_with_extra_keys(self) -> None:
@@ -87,9 +85,7 @@ class TestR001:
 
     def test_passes_on_index_without_frontmatter(self) -> None:
         content = "# Index\nNo frontmatter here\n"
-        diags = check_core_reserved_index(
-            "index.md", content, is_root_index=False
-        )
+        diags = check_core_reserved_index("index.md", content, is_root_index=False)
         assert not diags
 
     def test_passes_on_root_index_with_only_okf_version(self) -> None:
@@ -135,9 +131,7 @@ class TestF101:
         diags = check_profile("doc.md", {"type": "Unknown"}, m.profile)
         assert "F101" in _codes(diags)
 
-    def test_passes_on_known_type(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_passes_on_known_type(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -206,9 +200,7 @@ class TestF105:
         )
         assert "F105" in _codes(diags)
 
-    def test_passes_on_valid_value(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_passes_on_valid_value(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -293,9 +285,7 @@ class TestF105:
 
 
 class TestF106:
-    def test_triggers_on_alias_type(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_triggers_on_alias_type(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -344,9 +334,7 @@ class TestS102:
         )
         assert "S102" in _codes(diags)
 
-    def test_passes_on_iso_date(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_passes_on_iso_date(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -447,7 +435,9 @@ _SINGLE_CLUSTER_CONTENT = (
     "gathered around the table for a long dinner.\n"
 )
 
-_DEFAULT_SPLIT_CONFIG = SplitConfig(min_lines=0, exempt_types=frozenset(), exempt_paths=[])
+_DEFAULT_SPLIT_CONFIG = SplitConfig(
+    min_lines=0, exempt_types=frozenset(), exempt_paths=[]
+)
 
 # Alpha-Gamma and Beta-Gamma share just enough vocabulary to form a
 # transitive chain: at a low tau all three merge into one component, at the
@@ -512,7 +502,9 @@ class TestS202:
     def test_min_lines_gate_suppresses_short_files(self, tmp_path: Path) -> None:
         root = tmp_path / "root"
         root.mkdir()
-        split_config = SplitConfig(min_lines=100, exempt_types=frozenset(), exempt_paths=[])
+        split_config = SplitConfig(
+            min_lines=100, exempt_types=frozenset(), exempt_paths=[]
+        )
         diags = check_hygiene_structure(
             "doc.md",
             root / "doc.md",
@@ -681,9 +673,7 @@ class TestF201:
         )
         assert not diags
 
-    def test_off_level_returns_empty(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_off_level_returns_empty(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -811,9 +801,7 @@ class TestRunValidate:
         _, code = run_validate(manifest_path, [root])
         assert code == 1
 
-    def test_invalid_manifest_raises_manifest_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_invalid_manifest_raises_manifest_error(self, tmp_path: Path) -> None:
         from okflint.manifest import ManifestError
 
         bad_manifest = tmp_path / "bad.yaml"

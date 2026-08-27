@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from okflint.scanner import (
-    MarkdownLink,
-    WikiLink,
     blank_code_spans,
     build_file_index,
     extract_headers,
@@ -14,7 +12,6 @@ from okflint.scanner import (
     extract_wikilinks,
     parse_frontmatter,
 )
-
 
 # ---------------------------------------------------------------------------
 # parse_frontmatter
@@ -130,9 +127,7 @@ class TestExtractMarkdownLinks:
     def test_external_link_not_broken(self, tmp_path: Path) -> None:
         file = tmp_path / "doc.md"
         file.touch()
-        links = extract_markdown_links(
-            "[Google](https://google.com)", file, tmp_path
-        )
+        links = extract_markdown_links("[Google](https://google.com)", file, tmp_path)
         assert len(links) == 1
         assert links[0].is_external
         assert not links[0].broken

@@ -13,7 +13,6 @@ from okflint.audit import run_audit
 from okflint.cli import _cmd_audit, _cmd_validate, build_parser
 from okflint.vault import BundleEntry, VaultConfig, VaultError, load_vault
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
@@ -154,10 +153,10 @@ class TestLoadVaultErrors:
             load_vault(vault_file)
 
     def test_bundle_missing_path_key(self, tmp_path: Path) -> None:
-        vault_file = _write_vault(
-            tmp_path, {"bundles": [{"manifest": "x.yaml"}]}
-        )
-        with pytest.raises(VaultError, match="must be a mapping with at least a 'path' key"):
+        vault_file = _write_vault(tmp_path, {"bundles": [{"manifest": "x.yaml"}]})
+        with pytest.raises(
+            VaultError, match="must be a mapping with at least a 'path' key"
+        ):
             load_vault(vault_file)
 
     def test_bundle_not_a_mapping(self, tmp_path: Path) -> None:
@@ -469,8 +468,10 @@ class TestCmdValidateVault:
         args = parser.parse_args(
             [
                 "validate",
-                "--vault", str(vault_file),
-                "--manifest", str(manifest),
+                "--vault",
+                str(vault_file),
+                "--manifest",
+                str(manifest),
                 str(bundle / "index.md"),
             ]
         )

@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+*.png     binary
+*.jpg     binary
+*.parquet binary
+*.pdf     binary
+
+uv.lock linguist-generated=true -diff
+docs/code/**/_build/** linguist-documentation
+
+.claude/progress.log merge=union

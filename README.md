@@ -63,9 +63,9 @@ uv pip install -e .
 cp example/manifest.example.yaml /path/to/my-base/okf-base.yaml
 ```
 
-2. Adapt it to your taxonomy (types, required fields, status vocabulary).
+1. Adapt it to your taxonomy (types, required fields, status vocabulary).
 
-3. Validate:
+2. Validate:
 
 ```bash
 okflint validate --manifest /path/to/my-base/okf-base.yaml /path/to/my-base
@@ -121,7 +121,7 @@ types:
 ## Key concepts
 
 | Term | Definition |
-|---|---|
+| --- | --- |
 | **bundle** | A root folder of the documentary base to audit or validate. All `.md` files it contains (recursively) are analysed. Multiple bundles can be declared via `base.roots` in the manifest. |
 | **vault** | The root folder(s) of all your Markdown (may be larger than the bundle). Used only to resolve `[[...]]` wikilinks. When using `--manifest`, all roots serve as the vault automatically. |
 | **vault manifest** | An `okf-vault.json` file listing multiple bundles in a workspace. Passing it to `--vault` enables audit/validate across all bundles at once, with a shared union wikilink-resolution index. |
@@ -166,7 +166,7 @@ Either `--vault` pointing to an `okf-vault.json` file, or both `--bundle` and `-
 **Options:**
 
 | Option | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `--manifest <path>` | conditional | OKF manifest; `base.roots` defines the bundle and vault roots |
 | `--bundle <path>` | conditional | Root folder to audit; acts as a sub-filter when `--manifest` is also set |
 | `--vault <path>` | conditional | Vault folder for wikilink resolution, **or** an `okf-vault.json` file for multi-bundle mode |
@@ -177,6 +177,7 @@ In vault JSON mode, each bundle is printed under its own `=== name ===` header,
 followed by a `=== Total vault ===` aggregate.
 
 **Concrete example — Obsidian vault:**
+
 ```bash
 okflint audit \
   --bundle ~/Obsidian/My-project/docs \
@@ -186,6 +187,7 @@ okflint audit \
 ```
 
 **Concrete example — multi-bundle workspace:**
+
 ```bash
 # okf-vault.json lists several bundles, each with its own okf-base.yaml
 okflint audit --vault ./okf-vault.json --apply
@@ -193,6 +195,7 @@ okflint audit --vault ./okf-vault.json --apply
 ```
 
 **`okf-vault.json` format:**
+
 ```json
 {
   "okf_vault_version": "0.1",
@@ -242,7 +245,7 @@ okflint validate --vault /path/to/okf-vault.json --manifest /path/to/okf-base.ya
 **Options:**
 
 | Option | Required | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `--manifest <path>` | no | `okf-base.yaml` | Path to the OKF manifest |
 | `--vault <path>` | no | — | `okf-vault.json` file: without `--manifest` validates each bundle with its own manifest; with `--manifest` uses the vault union index |
 | `--json` | no | — | JSON output instead of human-readable text |
@@ -251,7 +254,7 @@ okflint validate --vault /path/to/okf-vault.json --manifest /path/to/okf-base.ya
 **Exit codes:**
 
 | Code | Meaning |
-|---|---|
+| --- | --- |
 | `0` | No errors (warnings may still be present) |
 | `1` | At least one conformance error |
 | `2` | Invalid or unreadable manifest / vault config error |
@@ -260,6 +263,7 @@ In vault JSON mode without `--manifest`, errors are prefixed with `[bundle_name]
 and the exit code is the maximum across all bundles.
 
 **Concrete example — CI GitHub Actions integration:**
+
 ```yaml
 - name: Validate docs
   run: |
@@ -268,6 +272,7 @@ and the exit code is the maximum across all bundles.
 ```
 
 **Concrete example — git pre-commit hook:**
+
 ```bash
 # .git/hooks/pre-commit
 okflint validate --manifest okf-base.yaml docs/ || exit 1
@@ -302,7 +307,7 @@ okflint index --vault ./okf-vault.json --apply
 **Options:**
 
 | Option | Required | Description |
-|---|---|---|
+| --- | --- | --- |
 | `--manifest <path>` | conditional | OKF manifest; required unless `--vault` resolves to an `okf-vault.json` |
 | `--vault <path>` | conditional | `okf-vault.json` file for multi-bundle mode (each bundle uses its own manifest) |
 | `--apply` | no | Write the `index.md` files whose content differs from the expected one |
@@ -330,7 +335,7 @@ The **full API documentation** (generated from docstrings) is available at
 
 ## Architecture
 
-```
+```text
 src/okflint/
 ├── cli.py        ← dispatcher: okflint audit | validate | index
 ├── scanner.py    ← shared primitives (scan, frontmatter, links)

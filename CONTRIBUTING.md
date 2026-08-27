@@ -41,7 +41,7 @@ uv run okflint --help
 
 ## Project architecture
 
-```
+```text
 src/okflint/
 ├── cli.py        ← CLI dispatcher: okflint audit | validate
 ├── scanner.py    ← shared primitives (scan, frontmatter, code-fence, links)
@@ -76,7 +76,7 @@ must be documented there with its code, stage, and severity.
 ### Tools
 
 | Tool | Role |
-|---|---|
+| --- | --- |
 | [ruff](https://docs.astral.sh/ruff/) | Linting and formatting |
 | [mypy](https://mypy.readthedocs.io/) | Static type checking (strict mode) |
 
@@ -132,7 +132,7 @@ conforming case. Tests must never be deleted to make CI pass.
 ### Branches
 
 | Branch | Usage |
-|---|---|
+| --- | --- |
 | `main` | Stable code, ready for release |
 | `feat/<name>` | New feature |
 | `fix/<name>` | Bug fix |
@@ -140,7 +140,7 @@ conforming case. Tests must never be deleted to make CI pass.
 
 ### Commit format
 
-```
+```text
 feat: add S202 semantic cohesion rule
 fix: correct exclude_patterns matching on nested roots
 chore: update dependencies
@@ -173,14 +173,16 @@ okflint uses [commitizen](https://commitizen-tools.github.io/commitizen/) to
 validate messages and automatically generate the CHANGELOG.
 
 **Required format**:
-```
+
+```text
 <type>(<optional scope>): <description>
 ```
 
 Accepted types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`, `ci`, `build`, `style`.
 
 Valid examples:
-```
+
+```text
 feat: add S202 semantic cohesion rule
 fix(manifest): correct exclude_patterns matching on nested roots
 docs: update README
@@ -199,6 +201,7 @@ inv release --dry-run     # simulation without modifying anything
 ```
 
 **What `inv release` does:**
+
 1. Verifies you are on `main` with a clean tree
 2. Runs lint + tests (safety before publishing)
 3. Bumps the version via commitizen + updates `CHANGELOG.md`
@@ -212,7 +215,8 @@ inv release --dry-run     # simulation without modifying anything
 ### Trusted Publisher PyPI (one-time setup)
 
 To allow `release.yml` to publish without a token:
-1. Go to https://pypi.org/manage/account/publishing/
+
+1. Go to <https://pypi.org/manage/account/publishing/>
 2. Add a Trusted Publisher:
    - Owner: `mattdav`
    - Repository: `okflint`

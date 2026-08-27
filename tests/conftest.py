@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
 
 
-def _base_manifest_dict(root: Path) -> dict:
+def _base_manifest_dict(root: Path) -> dict[str, Any]:
     return {
         "okf_version": "0.1",
         "base": {

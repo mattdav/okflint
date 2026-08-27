@@ -8,7 +8,6 @@ import pytest
 
 from okflint.manifest import ManifestError, RootConfig, _coerce_level, load_manifest
 
-
 # ---------------------------------------------------------------------------
 # _coerce_level
 # ---------------------------------------------------------------------------
@@ -60,7 +59,8 @@ class TestLoadManifestErrors:
     def test_empty_roots_raises(self, tmp_path: Path) -> None:
         f = tmp_path / "m.yaml"
         f.write_text(
-            "base:\n  roots: []\n  reserved_files:\n    index: index.md\n    log: log.md\n",
+            "base:\n  roots: []\n  reserved_files:\n"
+            "    index: index.md\n    log: log.md\n",
             encoding="utf-8",
         )
         with pytest.raises(ManifestError, match="roots must be a non-empty list"):
@@ -96,9 +96,7 @@ class TestLoadManifestErrors:
         with pytest.raises(ManifestError, match="required and optional"):
             load_manifest(f)
 
-    def test_values_suffix_for_undeclared_property_raises(
-        self, tmp_path: Path
-    ) -> None:
+    def test_values_suffix_for_undeclared_property_raises(self, tmp_path: Path) -> None:
         root = tmp_path / "root"
         root.mkdir()
         f = tmp_path / "m.yaml"
@@ -217,9 +215,7 @@ class TestLoadManifestSuccess:
         assert m.profile is None
         assert m.hygiene is None
 
-    def test_profile_manifest_loads(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_profile_manifest_loads(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
@@ -246,17 +242,13 @@ class TestLoadManifestSuccess:
             "statut": ["Accepté", "Proposé", "Déprécié"]
         }
 
-    def test_decision_aliases_loaded(
-        self, profile_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_decision_aliases_loaded(self, profile_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = profile_manifest
         m = load_manifest(manifest_path)
         assert m.profile is not None
         assert "adr" in m.profile.types["Decision"].aliases
 
-    def test_hygiene_manifest_loads(
-        self, hygiene_manifest: tuple[Path, Path]
-    ) -> None:
+    def test_hygiene_manifest_loads(self, hygiene_manifest: tuple[Path, Path]) -> None:
         manifest_path, _ = hygiene_manifest
         m = load_manifest(manifest_path)
         assert m.hygiene is not None
@@ -313,7 +305,8 @@ class TestLoadManifestExcludePatterns:
 
     def test_exclude_patterns_loaded(self, tmp_path: Path) -> None:
         f = self._write(
-            tmp_path, "exclude_patterns:\n        - .venv/**\n        - src/**/data/**\n"
+            tmp_path,
+            "exclude_patterns:\n        - .venv/**\n        - src/**/data/**\n",
         )
         m = load_manifest(f)
         assert m.base.roots[0].exclude_patterns == [".venv/**", "src/**/data/**"]

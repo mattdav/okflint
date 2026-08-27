@@ -22,7 +22,7 @@ beyond that (« anything beyond that is left to the producer »). `okflint`
 materialises this invitation as three stages of distinct authority:
 
 | Stage | Authority | Output prefix | Severity | Exit code effect |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **OKF core** | OKF v0.1 spec §9 (universal, non-negotiable) | `OKF non-conformant` | error | `exit 1` |
 | **Profile** | the manifest *you* declared | `Profile not respected` | error | `exit 1` |
 | **Hygiene** | stricter than OKF (opt-in) | `hygiene (out-of-spec)` | warning | `exit 0` |
@@ -303,7 +303,7 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 ## Quick reference
 
 | Code | Stage | Severity | Summary |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `F001` | OKF core | error | frontmatter absent/unparsable |
 | `F002` | OKF core | error | `type` absent or empty |
 | `R001` | OKF core | error | frontmatter forbidden in `index.md` |

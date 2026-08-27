@@ -1,0 +1,5 @@
+# Fichier volontairement vide, mais conservé : sa seule présence ancre la
+# recherche de configuration de prettier à la racine du projet. Sans lui,
+# prettier remonte l'arborescence et peut récupérer une configuration
+# extérieure au projet.
+{}

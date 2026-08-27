@@ -1,0 +1,35 @@
+{
+  // Base : ensemble de règles recommandées par markdownlint.
+  "default": true,
+
+  // Désactivée : MD013 n'a pas de correctif automatique et plus aucun
+  // outil ne reformate le Markdown pour la respecter (prettier ne touche
+  // plus ce type de fichier, voir .prettierignore).
+  "MD013": false,
+
+  // Désactivée : le HTML inline est nécessaire pour les badges et les
+  // callouts (ex. <details>, <img> alignées) dans les README.
+  "MD033": false,
+
+  // Le standard documentaire (docs-standard.md) porte délibérément à la
+  // fois un `title:` YAML en frontmatter et un H1 Markdown. Par défaut,
+  // MD025 compte le titre du frontmatter comme un second titre de premier
+  // niveau et signale donc à tort « plusieurs H1 ». Ce n'est pas un défaut
+  // des templates SPEC/FIX/PLAN : c'est une désactivation du comptage du
+  // frontmatter par MD025, nécessaire pour que tout document documentaire
+  // futur passe le lint.
+  "MD025": { "front_matter_title": "" },
+
+  // CHANGELOG.md (généré par commitizen) et CONTRIBUTING.md contiennent
+  // légitimement plusieurs sections avec des sous-titres identiques (ex.
+  // "Fix"/"Feat" répétés par version, "Prerequisites" répété par étape) :
+  // ce ne sont pas des doublons. MD024 ne doit comparer que les titres
+  // frères au sein d'une même section, pas tout le document.
+  "MD024": { "siblings_only": true },
+
+  // Les fichiers index.md sont des fichiers réservés OKF : une simple
+  // liste de liens de navigation, sans H1, par convention du format
+  // (convention auto-référentielle : okflint applique cette même règle à
+  // sa propre documentation). MD041 ne s'applique donc pas ici.
+  "MD041": false,
+}

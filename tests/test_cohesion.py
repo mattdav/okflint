@@ -79,8 +79,12 @@ class TestSplitIntoSections:
 class TestMergeMicroSections:
     def test_no_merge_when_all_above_floor(self) -> None:
         sections = [
-            Section(title=None, level=None, line=1, body="alpha beta gamma", token_count=10),
-            Section(title="B", level=1, line=2, body="delta epsilon zeta", token_count=10),
+            Section(
+                title=None, level=None, line=1, body="alpha beta gamma", token_count=10
+            ),
+            Section(
+                title="B", level=1, line=2, body="delta epsilon zeta", token_count=10
+            ),
         ]
         merged = merge_micro_sections(sections, min_tokens=5)
         assert [s.body for s in merged] == ["alpha beta gamma", "delta epsilon zeta"]
@@ -88,7 +92,13 @@ class TestMergeMicroSections:
     def test_first_section_absorbed_into_next(self) -> None:
         sections = [
             Section(title=None, level=None, line=1, body="tiny", token_count=1),
-            Section(title="B", level=1, line=2, body="second section body text", token_count=10),
+            Section(
+                title="B",
+                level=1,
+                line=2,
+                body="second section body text",
+                token_count=10,
+            ),
         ]
         merged = merge_micro_sections(sections, min_tokens=5)
         assert len(merged) == 1
@@ -98,9 +108,21 @@ class TestMergeMicroSections:
 
     def test_middle_section_absorbed_into_previous(self) -> None:
         sections = [
-            Section(title="A", level=1, line=1, body="first section body words", token_count=10),
+            Section(
+                title="A",
+                level=1,
+                line=1,
+                body="first section body words",
+                token_count=10,
+            ),
             Section(title="B", level=2, line=2, body="micro filler", token_count=1),
-            Section(title="C", level=1, line=3, body="third section body words", token_count=10),
+            Section(
+                title="C",
+                level=1,
+                line=3,
+                body="third section body words",
+                token_count=10,
+            ),
         ]
         merged = merge_micro_sections(sections, min_tokens=5)
         assert [s.title for s in merged] == ["A", "C"]

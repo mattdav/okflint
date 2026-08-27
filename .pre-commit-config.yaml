@@ -1,0 +1,72 @@
+# Configuration pre-commit — source unique de vérité pour le lint du projet.
+# `inv lint` délègue entièrement à `pre-commit run --all-files` (voir tasks.py) :
+# une seule config à maintenir, pas de dérive entre deux définitions du lint.
+repos:
+  # ────────────────────────────── Python : ruff ──────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: ^(src/.*|tests/.*|tasks\.py)$
+      - id: ruff-format
+        files: ^(src/.*|tests/.*|tasks\.py)$
+
+  # ────────────────────────────── Python : mypy ──────────────────────────────
+  # Hook local (pas mirrors-mypy) : mypy a besoin des dépendances du projet
+  # pour typer correctement, il tourne donc dans le venv via `uv run` plutôt
+  # que dans l'environnement isolé du miroir.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run python -m mypy src/. tests/. tasks.py
+        language: system
+        types: [python]
+        files: ^(src/.*|tests/.*|tasks\.py)$
+        pass_filenames: false
+
+  # ───────────────────────────── Markdown : format ───────────────────────────
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.2
+    hooks:
+      - id: markdownlint-cli2
+        args: [--fix]
+        files: \.md$
+
+  # ───────────────────────── Formatage : YAML, JSON ───────────────────────────
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.6
+    hooks:
+      - id: prettier
+        files: \.(json|jsonc|ya?ml)$
+
+  # ──────────────────────────── Hooks génériques ─────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: fix-byte-order-marker
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  # ───────────────────────── Message de commit ───────────────────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.16.5
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # ──────────────────────────── OKF : okflint ────────────────────────────────
+  # Dogfooding : pointe sur l'install éditable locale (uv run), jamais uvx —
+  # okflint est le linter que ce hook exécute sur son propre repo.
+  - repo: local
+    hooks:
+      - id: okflint
+        name: okflint
+        entry: uv run okflint validate --manifest manifest_okflint.yaml .
+        language: system
+        pass_filenames: false

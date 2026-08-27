@@ -2,7 +2,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from invoke import Context, task
+from invoke.context import Context
+from invoke.tasks import task
 
 # ================ Config ================= #
 RELEASE_BRANCH = "main"  # reference branch for releases
@@ -107,8 +108,8 @@ def lint(c: Context) -> None:
     if format_command.returncode != 0:
         result += format_command.returncode
     print("\nRunning mypy...")
-    # uv run mypy fails on Windows with compiled mypy (Failed to canonicalize script path)
-    # Using python -m mypy as a workaround
+    # uv run mypy fails on Windows with compiled mypy (Failed to canonicalize
+    # script path) — using python -m mypy as a workaround
     mypy_command = subprocess.run("uv run python -m mypy src/.", shell=True)
     if mypy_command.returncode != 0:
         result += mypy_command.returncode
