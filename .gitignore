@@ -134,8 +134,10 @@ cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
-# Utility files
-.claude/
+# Claude Code — local scope only
+.claude/settings.local.json
+# Exception: progress.log must be tracked (overrides the *.log rule above)
+!.claude/progress.log
 
 # Outputs okflint (rapports d'audit JSON — toujours régénérables)
 .okflint/

@@ -1,0 +1,274 @@
+
+## Session du 2026-06-22 19:22 — okf_converter
+
+**Fichiers modifiés :**
+  - src/okf_converter/bin/audit.py
+  - tasks.py
+
+---
+
+## Session du 2026-06-22 20:04 — okf_converter
+
+**Fichiers modifiés :**
+  - src/okf_converter/bin/audit.py
+  - tasks.py
+
+---
+
+## Session du 2026-06-22 20:09 — okf_converter
+
+**Fichiers modifiés :**
+  - src/okf_converter/bin/audit.py
+
+---
+
+## Session du 2026-06-22 23:25 — okf_converter
+
+**Fichiers modifiés :**
+  - src/okf_converter/bin/audit.py
+
+---
+
+## Session du 2026-06-24 21:32 — okf_converter
+
+**Fichiers modifiés :**
+  - src/okf_converter/bin/audit.py
+  - src/okf_converter/bin/scanner.py
+  - src/okf_converter/bin/validate.py
+  - tasks.py
+
+---
+
+## Session du 2026-06-25 20:59 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - tasks.py
+
+---
+
+## Session du 2026-06-25 21:12 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+
+---
+
+## Session du 2026-06-25 21:36 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+
+---
+
+## Session du 2026-06-27 09:02 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - tasks.py
+  - tests/conftest.py
+  - tests/test_audit.py
+  - tests/test_cli.py
+  - tests/test_manifest.py
+  - tests/test_scanner.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-06-27 09:18 — okflint
+
+**Fichiers modifiés :**
+  - docs/sphinx/conf.py
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - src/okflint/manifest.py
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - tasks.py
+
+---
+
+## Session du 2026-06-27 09:24 — okflint
+
+**Fichiers modifiés :**
+  - tests/test_cli.py
+
+---
+
+## Session du 2026-06-28 07:56 — okflint
+
+- Implémentation Track D de okflint : scan multi-root piloté par manifeste
+- `run_audit` dans `audit.py` : signature étendue à `list[Path] | Path` avec `target_filter`, normalisation interne en liste, rapport enrichi avec `bundle_paths`, `vault_paths`, `roots[]`
+- `cli.py` : `--bundle`/`--vault` rendus optionnels, `--manifest` ajouté au sous-commande `audit`, logique de résolution (manifest seul / bundle+vault / les deux / aucun), `targets` passé à `nargs='*'` dans `validate` avec fallback sur `manifest.base.roots`
+- Tests partiellement rédigés (interrompus à la demande de l'utilisateur)
+
+**En suspens :** - Tests à ajouter dans `test_cli.py` (TestCmdAuditManifest, TestCmdValidateManifest) et `test_audit.py` (TestRunAuditMultiRoot)
+- `inv lint` et `inv test` à passer (≥93% couverture)
+- README à mettre à jour si comportement externe a changé (CLI a changé)
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+
+---
+
+## Session du 2026-06-28 08:11 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - tasks.py
+  - tests/test_audit.py
+  - tests/test_cli.py
+
+---
+
+## Session du 2026-06-28 09:50 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - src/okflint/validate.py
+  - src/okflint/vault.py
+  - tests/test_cli.py
+  - tests/test_vault.py
+
+---
+
+## Session du 2026-06-28 10:04 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+
+---
+
+## Session du 2026-06-28 13:28 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - src/okflint/manifest.py
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - tests/test_audit.py
+  - tests/test_manifest.py
+  - tests/test_scanner.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-03 22:34 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+  - tests/conftest.py
+  - tests/test_cli.py
+  - tests/test_manifest.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-04 10:22 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/scanner.py
+  - tests/test_scanner.py
+
+---
+
+## Session du 2026-07-04 10:49 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - tests/test_audit.py
+
+---
+
+## Session du 2026-07-04 13:28 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - src/okflint/index.py
+  - tests/test_index.py
+
+---
+
+## Session du 2026-07-07 19:19 — okflint
+
+**Fichiers modifiés :**
+  - scripts/calibrate_cohesion.py
+  - src/okflint/cohesion.py
+
+---
+
+## Session du 2026-07-07 19:52 — okflint
+
+**Fichiers modifiés :**
+  - scripts/calibrate_cohesion.py
+
+---
+
+## Session du 2026-07-08 12:30 — okflint
+
+**Fichiers modifiés :**
+  - scripts/calibrate_cohesion.py
+  - src/okflint/audit.py
+  - src/okflint/cohesion.py
+  - src/okflint/manifest.py
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - tests/test_audit.py
+  - tests/test_cohesion.py
+  - tests/test_manifest.py
+  - tests/test_scanner.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-08 21:01 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/validate.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-08 21:47 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+  - tests/test_manifest.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-08 22:01 — okflint
+
+**Fichiers modifiés :**
+  - tasks.py
+
+---
+
+## Session du 2026-07-20 19:41 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - src/okflint/validate.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-07-20 19:54 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/validate.py
+  - tests/test_audit.py
+
+---

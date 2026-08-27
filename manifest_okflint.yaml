@@ -10,6 +10,7 @@ base:
         - "worktrees/**"
         - .pytest_cache/**
         - tests/**
+        - "docs/_templates/**"
   reserved_files:
     index: "index.md"
     log: "log.md"
@@ -20,7 +21,6 @@ base:
 profile:
   date_fields: [created, updated]
   types:
-
     ProjectDescription:
       # README.md — descriptive project documentation, human/consumer-facing.
       # Answers "what is it, how to use it".
@@ -47,6 +47,26 @@ profile:
       required: [project]
       optional: [updated, tags]
 
+    Command:
+      # .claude/commands/*.md — Claude Code slash-command definitions.
+      required: [description]
+      optional: [argument-hint]
+
+    Spec:
+      # docs/specs/*.md — business need documented before implementation.
+      required: [id, title, description, status]
+      optional: [superseded-by, work-item, tags, timestamp, perimeter, audience]
+
+    Fix:
+      # docs/fixes/*.md — malfunction, root cause, resolution.
+      required: [id, title, description, status, severity]
+      optional: [work-item, tags, timestamp, perimeter, audience]
+
+    Plan:
+      # docs/plans/*.md — implementation procedure for a Spec or a Fix.
+      required: [id, title, description, status, implements]
+      optional: [tags, timestamp, perimeter, audience]
+
 hygiene:
   broken_links: warn
   split_candidates: off
@@ -54,8 +74,8 @@ hygiene:
   # Optional sub-block tuning the S202 gate. Omit entirely to keep every
   # default below.
   split:
-    min_lines: 300           # skip files shorter than this many lines
-    exempt_types: [README.md]       # profile type names (e.g. [Reference]) never checked
+    min_lines: 300 # skip files shorter than this many lines
+    exempt_types: [README.md] # profile type names (e.g. [Reference]) never checked
   #   exempt_paths: []       # glob patterns (fnmatch) never checked
   #   tau: 0.15              # cosine similarity threshold for cohesion clustering.
   #                          # Advanced — leave the default unless you understand
