@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from okflint.manifest import SplitConfig, load_manifest
+from okflint.manifest import SplitConfig, TypeConfig, load_manifest
 from okflint.scanner import MarkdownLink, WikiLink, build_file_index
 from okflint.validate import (
     Diagnostic,
@@ -16,6 +16,7 @@ from okflint.validate import (
     check_core_reserved_index,
     check_core_reserved_log,
     check_hygiene_links,
+    check_hygiene_okf_v02_shapes,
     check_hygiene_reserved,
     check_hygiene_structure,
     check_hygiene_unknown_fields,
@@ -797,6 +798,312 @@ class TestF201:
             },
             type_cfg,
             "off",
+        )
+        assert not diags
+
+
+# ---------------------------------------------------------------------------
+# S203 — status outside draft|stable|deprecated
+# ---------------------------------------------------------------------------
+
+
+class TestS203:
+    def test_triggers_on_unknown_status(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "status": "wip"}, "", "warn"
+        )
+        assert "S203" in _codes(diags)
+
+    def test_passes_on_known_status(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "status": "stable"}, "", "warn"
+        )
+        assert "S203" not in _codes(diags)
+
+    def test_neutralised_by_profile_status_values(self) -> None:
+        type_cfg = TypeConfig(
+            required=[],
+            optional=["status"],
+            controlled_values={"status": ["open", "closed"]},
+            aliases=[],
+        )
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "status": "wip"},
+            "",
+            "warn",
+            type_cfg=type_cfg,
+        )
+        assert "S203" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S204 — stale_after not YYYY-MM-DD
+# ---------------------------------------------------------------------------
+
+
+class TestS204:
+    def test_triggers_on_malformed_stale_after(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "stale_after": "01/01/2026"}, "", "warn"
+        )
+        assert "S204" in _codes(diags)
+
+    def test_passes_on_wellformed_stale_after(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "stale_after": "2026-01-01"}, "", "warn"
+        )
+        assert "S204" not in _codes(diags)
+
+    def test_skipped_when_already_covered_by_s102(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "stale_after": "01/01/2026"},
+            "",
+            "warn",
+            date_fields=["stale_after"],
+        )
+        assert "S204" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S205 — generated.at / verified[].at not ISO 8601 datetime
+# ---------------------------------------------------------------------------
+
+
+class TestS205:
+    def test_triggers_on_generated_at_date_only(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "generated": {"by": "human:mat", "at": "2026-01-01"},
+            },
+            "",
+            "warn",
+        )
+        assert "S205" in _codes(diags)
+
+    def test_passes_on_generated_at_iso_datetime(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "generated": {"by": "human:mat", "at": "2026-01-01T00:00:00Z"},
+            },
+            "",
+            "warn",
+        )
+        assert "S205" not in _codes(diags)
+
+    def test_triggers_on_verified_at_date_only(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "verified": [{"by": "human:mat", "at": "2026-01-01"}],
+            },
+            "",
+            "warn",
+        )
+        assert "S205" in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S206 — generated.by / verified[].by outside the actor convention
+# ---------------------------------------------------------------------------
+
+
+class TestS206:
+    def test_triggers_on_malformed_generated_by(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "generated": {"by": "someone"}}, "", "warn"
+        )
+        assert "S206" in _codes(diags)
+
+    def test_passes_on_producer_version_form(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "generated": {"by": "reference_agent/gemini-2.5-pro"},
+            },
+            "",
+            "warn",
+        )
+        assert "S206" not in _codes(diags)
+
+    def test_passes_on_human_form(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "generated": {"by": "human:mat"}},
+            "",
+            "warn",
+        )
+        assert "S206" not in _codes(diags)
+
+    def test_triggers_on_malformed_verified_by(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "verified": [{"by": "someone"}]},
+            "",
+            "warn",
+        )
+        assert "S206" in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# `verified` shorthand (bare mapping) — never flagged for its own shape
+# ---------------------------------------------------------------------------
+
+
+class TestVerifiedShorthand:
+    def test_bare_mapping_not_flagged_for_its_shape(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "verified": {"by": "human:mat", "at": "2026-01-01T00:00:00Z"},
+            },
+            "",
+            "warn",
+        )
+        assert not diags
+
+    def test_bare_mapping_contents_still_checked(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "verified": {"by": "someone"}},
+            "",
+            "warn",
+        )
+        assert "S206" in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S207 — Attested Computation contract shape
+# ---------------------------------------------------------------------------
+
+
+class TestS207:
+    def test_triggers_on_malformed_parameters(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "runtime": "python3.12",
+                "parameters": [{"name": "x"}],
+                "computation": "/computation.md",
+            },
+            "",
+            "warn",
+        )
+        assert "S207" in _codes(diags)
+
+    def test_passes_on_wellformed_parameters(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "runtime": "python3.12",
+                "parameters": [{"name": "x", "type": "int", "required": True}],
+                "computation": "/computation.md",
+            },
+            "",
+            "warn",
+        )
+        assert "S207" not in _codes(diags)
+
+    def test_triggers_on_executor_missing_receipt(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "runtime": "python3.12",
+                "executor": {"resource": "/exec.md"},
+                "computation": "/computation.md",
+            },
+            "",
+            "warn",
+        )
+        assert "S207" in _codes(diags)
+
+    def test_triggers_on_attester_missing_resource(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "runtime": "python3.12",
+                "attester": {},
+                "computation": "/computation.md",
+            },
+            "",
+            "warn",
+        )
+        assert "S207" in _codes(diags)
+
+    def test_triggers_on_computation_field_and_block_both_present(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "runtime": "python3.12",
+                "computation": "/computation.md",
+            },
+            "# Computation\n",
+            "warn",
+        )
+        assert "S207" in _codes(diags)
+
+    def test_triggers_on_computation_field_and_block_both_absent(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Attested Computation", "runtime": "python3.12"},
+            "",
+            "warn",
+        )
+        assert "S207" in _codes(diags)
+
+    def test_passes_on_computation_block_only(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Attested Computation", "runtime": "python3.12"},
+            "# Computation\n",
+            "warn",
+        )
+        assert "S207" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S203-S207 family — level gating and okf_version non-regression
+# ---------------------------------------------------------------------------
+
+
+class TestOkfV02ShapesFamily:
+    def test_off_level_returns_empty(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "status": "wip"}, "", "off"
+        )
+        assert not diags
+
+    def test_clean_concept_produces_nothing(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Reference", "status": "stable"}, "", "warn"
+        )
+        assert not diags
+
+    def test_no_regression_on_okf_v01(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Attested Computation",
+                "status": "wip",
+                "stale_after": "01/01/2026",
+                "generated": {"by": "someone", "at": "2026-01-01"},
+            },
+            "",
+            "warn",
+            okf_version="0.1",
         )
         assert not diags
 

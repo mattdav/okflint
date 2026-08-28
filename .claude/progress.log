@@ -548,3 +548,89 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - config/RULES.md
 
 ---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 4
+
+- Traité l'étape 4 de PLAN-002 : « Règles de forme d'hygiène — S203 à S207 ».
+  Étape 3 marquée complète dans ce log → étape 4 par défaut.
+- Périmètre confirmé avec l'utilisateur avant écriture de code (règle 1).
+- Nouvelle clé manifeste `hygiene.okf_v02_shapes` (off | warn | error,
+  défaut `warn`) ajoutée à `HygieneConfig`/`_DEFAULT_HYGIENE`/
+  `_parse_hygiene` dans `manifest.py`, pilotant les cinq règles ensemble
+  (pas de granularité par règle — conforme au plan).
+- Nouvelle fonction `check_hygiene_okf_v02_shapes` (`validate.py`),
+  gated à la fois sur `level != "off"` et sur `okf_version == "0.2"`
+  résolu (même précédent qu'à l'étape 3 : une base `"0.1"` ne voit rien de
+  nouveau). Câblée dans `validate_file`, inconditionnellement dans le bloc
+  hygiène (indépendante de la présence d'un profil, contrairement à
+  `F201`) :
+  - `S203` : `status` hors `draft|stable|deprecated` (vocabulaire par
+    défaut du spec, §5.4). Neutralisée si le type résolu du concept
+    déclare un `status_values` au profil — le profil du producteur
+    l'emporte. Ne se déclenche jamais si `status` est absent.
+  - `S204` : `stale_after` non `YYYY-MM-DD`. Ne double pas `S102` : sautée
+    si `stale_after` figure dans `profile.date_fields`.
+  - `S205` : `generated.at` et chaque `verified[].at` doivent être un
+    datetime ISO 8601 complet (une date seule ne suffit pas, contrairement
+    à `S102`).
+  - `S206` : `generated.by` et chaque `verified[].by` doivent suivre l'une
+    des trois formes de la convention d'acteur (`<producteur>/<version>`,
+    `human:<id>`, `process:<id>`) — jamais de vérification que l'identité
+    désignée existe réellement.
+  - `S207` : forme du contrat `Attested Computation` (au-delà de
+    `runtime`, qui est `F005`/core) : `parameters` doit être une liste de
+    `{name, type, required}` ; `executor` doit porter `resource` et
+    `receipt` ; `attester` doit porter `resource` ; le contenu du calcul
+    doit être fourni par exactement l'un de `computation` (champ) ou
+    `# Computation` (bloc du corps) — les deux présents ou aucun des deux
+    déclenchent la règle.
+  - `verified` accepte la forme abrégée (mapping nu, un seul vérificateur) :
+    traitée comme une liste à un élément, jamais flaggée pour sa forme —
+    seul son contenu (`by`/`at`) est vérifié comme s'il s'agissait d'un
+    élément de liste.
+- Tests ajoutés dans `test_validate.py` : un déclenchant + un non
+  déclenchant par règle (`TestS203`-`TestS207`), un test dédié pour la
+  neutralisation de `S203` par `status_values`, un test dédié pour la
+  forme abrégée de `verified` (aucun diagnostic pour la forme elle-même,
+  mais son contenu reste vérifié), et une famille `TestOkfV02ShapesFamily`
+  couvrant `level="off"` → rien, un concept propre → rien, et la
+  non-régression explicite sur `okf_version="0.1"`.
+- Doc : `config/RULES.md` complété avec les cinq nouvelles entrées Stage 3
+  (code, sévérité, source spec, exemple non conforme/conforme, fix) et la
+  table de référence rapide.
+- Non-régression vérifiée explicitement (pas supposée) via une fixture ad
+  hoc (hors dépôt, réutilisée depuis l'étape 3) : un concept portant les
+  cinq formes malformées (`status` hors vocabulaire, `stale_after` mal
+  formaté, `generated.at`/`verified.at` sans heure, `generated.by`/
+  `verified.by` hors convention d'acteur) avec `hygiene.okf_v02_shapes:
+  warn` déclaré → en `okf_version: "0.2"`, les cinq codes se déclenchent
+  bien ; en `okf_version: "0.1"`, sortie vide, identique au comportement
+  pré-étape-4.
+- Vérifié : `inv lint` (0 issue), `inv test` (338 passed, 95% ≥ 93%),
+  `okflint validate --manifest manifest_okflint.yaml .` (exit 0, sortie
+  inchangée).
+- Hors périmètre, signalé et non traité :
+  - Les deux entrées de log vide/incomplète héritées des sessions
+    précédentes (« Session du 2026-08-28 15:43 » et « Session du
+    2026-08-28 17:29 — okflint », cette dernière listant `validate.py`/
+    `test_validate.py` sans corps — vraisemblablement un artefact du hook
+    on-stop qui double mon entrée détaillée de l'étape 3) restent non
+    commitées dans l'arbre de travail, non touchées, pour décision de
+    l'utilisateur.
+  - Une modification non commitée trouvée dans
+    `docs/plans/PLAN-002_okf-v0.2.md` au début de cette session (précision
+    de la doctrine F201/v0.2 dans la section « famille absente »),
+    produite par une session antérieure et jamais commitée — non touchée,
+    exclue de ce commit.
+- Prochaine session : PLAN-002 étape 5 (`S208`/`S209` — formes héritées /
+  contenu périmé, nouvelles clés manifeste `legacy_forms`/`stale_content` ;
+  `S209` nécessite une date d'évaluation injectée, jamais `date.today()`
+  en dur dans les tests).
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+  - tests/test_validate.py
+  - config/RULES.md
+
+---

@@ -383,6 +383,145 @@ drift. Only fires if a profile declares the relevant type.
 **Fix**: fix the field name, add it to `optional` in the manifest if legitimate,
 or leave `unknown_fields: off` if the base intentionally allows free fields.
 
+### `S203` — `status` outside `draft | stable | deprecated`
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+OKF v0.2's default `status` vocabulary is a SHOULD-level recommendation
+([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §5.4, not among §11's three
+MUSTs), not a structural requirement. It only fires when `status` is present.
+**Never fires** if the manifest declares a `status_values` controlled
+vocabulary for the concept's type (`F105`, Stage 2): the producer's profile
+overrides the spec's default. Only fires on a base whose resolved
+`okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S203
+---
+type: Reference
+status: wip
+---
+
+# ✅ fixed
+---
+type: Reference
+status: draft
+---
+```
+
+**Fix**: use `draft`, `stable`, or `deprecated`, or declare a
+`status_values` vocabulary in the manifest if the base uses its own.
+
+### `S204` — `stale_after` incorrectly formatted
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+`stale_after`, when present, must be `YYYY-MM-DD`. Does not double-report if
+`stale_after` is already listed in `profile.date_fields` (already covered by
+`S102`). Only fires on a base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S204
+---
+type: Reference
+stale_after: 01/06/2026
+---
+```
+
+**Fix**: reformat as `YYYY-MM-DD`.
+
+### `S205` — `generated.at` / `verified[].at` not ISO 8601 datetime
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+Unlike `S102`'s date-only fields, `generated.at` and each `verified[].at`
+must carry a full ISO 8601 datetime (a date alone does not qualify). `verified`
+may be a bare mapping (see below) — its single entry is checked the same way.
+Only fires on a base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S205
+---
+type: Reference
+generated:
+  by: "human:mdaviaud"
+  at: "2026-01-01"
+---
+
+# ✅ fixed
+---
+type: Reference
+generated:
+  by: "human:mdaviaud"
+  at: "2026-01-01T00:00:00Z"
+---
+```
+
+**Fix**: use a full ISO 8601 datetime, not a bare date.
+
+### `S206` — `generated.by` / `verified[].by` outside the actor convention
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+`generated.by` and each `verified[].by` must follow one of the three actor
+forms ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §4):
+`<producer>/<version>`, `human:<id>`, `process:<id>`. `okflint` never verifies
+that the designated identity actually exists — only the shape. Only fires on
+a base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S206
+---
+type: Reference
+generated:
+  by: matthieu
+  at: "2026-01-01T00:00:00Z"
+---
+
+# ✅ fixed
+---
+type: Reference
+generated:
+  by: "human:matthieu"
+  at: "2026-01-01T00:00:00Z"
+---
+```
+
+**Fix**: prefix with `human:` or `process:`, or use `<producer>/<version>`.
+
+### `S207` — `Attested Computation` contract shape
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+On an `Attested Computation` concept ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md)
+§7 — beyond `runtime`, which is `F005`, core): `parameters`, if present,
+should be a list of `{name, type, required}` entries; `executor`, if present,
+should carry `resource` and `receipt`; `attester`, if present, should carry
+`resource`; and the computation itself must be provided by **exactly one** of
+a `computation` field or a `# Computation` body block — both present or
+neither is flagged. `okflint` never requires the paths referenced (`computation`,
+`executor.resource`, `attester.resource`) to resolve to an existing file. Only
+fires on a base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S207: both a field and a body block
+---
+type: Attested Computation
+runtime: dbt/1.8
+computation: /computations/refresh.md
+---
+# Computation
+...
+```
+
+**Fix**: pick one of `computation` or a `# Computation` block, complete
+`executor`/`attester`/`parameters` per the contract shape above.
+
 ---
 
 ## Quick reference
@@ -407,6 +546,11 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 | `S202` | Hygiene | warning | split candidate (semantic cohesion) |
 | `R201` | Hygiene | warning | recommended reserved file missing |
 | `F201` | Hygiene | warning | field outside declared schema |
+| `S203` | Hygiene | warning | `status` outside draft\|stable\|deprecated (v0.2) |
+| `S204` | Hygiene | warning | `stale_after` incorrectly formatted (v0.2) |
+| `S205` | Hygiene | warning | `generated.at`/`verified[].at` not ISO datetime (v0.2) |
+| `S206` | Hygiene | warning | `generated.by`/`verified[].by` outside actor convention (v0.2) |
+| `S207` | Hygiene | warning | `Attested Computation` contract shape (v0.2) |
 
 ---
 

@@ -54,6 +54,7 @@ class HygieneConfig:
     split_candidates: Literal["off", "warn", "error"]
     reserved_files: Literal["off", "warn", "error"]
     unknown_fields: Literal["off", "warn", "error"]
+    okf_v02_shapes: Literal["off", "warn", "error"]
     split: SplitConfig
 
 
@@ -109,6 +110,7 @@ _DEFAULT_HYGIENE = HygieneConfig(
     split_candidates="off",
     reserved_files="off",
     unknown_fields="off",
+    okf_v02_shapes="warn",
     split=_DEFAULT_SPLIT_CONFIG,
 )
 
@@ -319,6 +321,7 @@ def _parse_hygiene(raw: Any) -> HygieneConfig:
         split_candidates=_get_level("split_candidates", "off"),
         reserved_files=_get_level("reserved_files", "off"),
         unknown_fields=_get_level("unknown_fields", "off"),
+        okf_v02_shapes=_get_level("okf_v02_shapes", "warn"),
         split=_parse_split_config(raw.get("split")),
     )
 

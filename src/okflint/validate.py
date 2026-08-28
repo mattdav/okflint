@@ -34,6 +34,20 @@ from okflint.scanner import (
 # ISO date pattern YYYY-MM-DD
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
+# ISO 8601 datetime (date-only strings do not match — SPEC-002 §5 requires a
+# time component for `generated.at` / `verified[].at`).
+_ISO_DATETIME_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$"
+)
+
+# Actor convention (SPEC-002 §4): `<producer>/<version>`, `human:<id>`, or
+# `process:<id>`. Existence of the designated identity is never verified.
+_ACTOR_RE = re.compile(r"^(?:human:\S+|process:\S+|[^\s/:]+/[^\s/:]+)$")
+
+# SPEC-002 §5.4's default `status` vocabulary (a SHOULD, not among §11's three
+# MUSTs) — overridden by a profile's `status_values` for the concept's type.
+_DEFAULT_STATUS_VALUES = frozenset({"draft", "stable", "deprecated"})
+
 # OKF v0.1 default reserved file names, used whenever no manifest overrides
 # them via base.reserved_files. Single source of truth: callers with or
 # without a loaded manifest must use this instead of re-declaring their own
@@ -492,6 +506,268 @@ def check_hygiene_unknown_fields(
     ]
 
 
+def _verified_entries(raw: Any) -> list[dict[str, Any]]:
+    """Normalise `verified` for iteration, without flagging its own shape.
+
+    SPEC-002 §5: `verified` is either a list of `{by, at}` events, or a bare
+    mapping (single verifier, no list dash) that MUST be treated as a
+    one-element list and MUST NOT be flagged for taking that shorthand form.
+
+    Args:
+        raw: Raw value of the `verified` field, or None if absent.
+
+    Returns:
+        List of verifier mappings to inspect (empty if absent or malformed).
+    """
+    if isinstance(raw, dict):
+        return [raw]
+    if isinstance(raw, list):
+        return [entry for entry in raw if isinstance(entry, dict)]
+    return []
+
+
+def _check_s207_attested_computation(
+    path: str,
+    frontmatter: dict[str, Any],
+    safe_body: str,
+    severity: Literal["warning", "error"],
+) -> list[Diagnostic]:
+    """Check the `Attested Computation` contract shape (S207).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter of an `Attested Computation` concept.
+        safe_body: Markdown body with code spans/fences blanked.
+        severity: Severity to attach to each diagnostic (warning | error).
+
+    Returns:
+        List of Diagnostic (S207).
+    """
+    diags: list[Diagnostic] = []
+
+    parameters = frontmatter.get("parameters")
+    if parameters is not None:
+        valid = isinstance(parameters, list) and all(
+            isinstance(p, dict) and {"name", "type", "required"} <= set(p.keys())
+            for p in parameters
+        )
+        if not valid:
+            diags.append(
+                Diagnostic(
+                    code="S207",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=(
+                        "`parameters` should be a list of "
+                        "`{name, type, required}` entries"
+                    ),
+                )
+            )
+
+    executor = frontmatter.get("executor")
+    if isinstance(executor, dict):
+        missing = []
+        if not executor.get("resource"):
+            missing.append("resource")
+        receipt = executor.get("receipt")
+        if not isinstance(receipt, list) or not receipt:
+            missing.append("receipt")
+        if missing:
+            diags.append(
+                Diagnostic(
+                    code="S207",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=f"`executor` should carry {' and '.join(missing)}",
+                )
+            )
+
+    attester = frontmatter.get("attester")
+    if isinstance(attester, dict) and not attester.get("resource"):
+        diags.append(
+            Diagnostic(
+                code="S207",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message="`attester` should carry `resource`",
+            )
+        )
+
+    has_field = bool(frontmatter.get("computation"))
+    has_block = any(
+        h.level == 1 and h.text.strip() == "Computation"
+        for h in extract_headers(safe_body)
+    )
+    if has_field and has_block:
+        diags.append(
+            Diagnostic(
+                code="S207",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message=(
+                    "both a `computation` field and a `# Computation` block are present"
+                ),
+            )
+        )
+    elif not has_field and not has_block:
+        diags.append(
+            Diagnostic(
+                code="S207",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message=(
+                    "neither a `computation` field nor a `# Computation` "
+                    "block is present"
+                ),
+            )
+        )
+
+    return diags
+
+
+@beartype
+def check_hygiene_okf_v02_shapes(
+    path: str,
+    frontmatter: dict[str, Any],
+    safe_body: str,
+    level: Literal["off", "warn", "error"],
+    *,
+    type_cfg: TypeConfig | None = None,
+    date_fields: list[str] | None = None,
+    okf_version: str = "0.2",
+) -> list[Diagnostic]:
+    """Check OKF v0.2 shape hygiene rules (S203-S207).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        safe_body: Markdown body with code spans/fences blanked.
+        level: Control level (off | warn | error), from
+            `hygiene.okf_v02_shapes`.
+        type_cfg: Resolved profile type configuration, if any. Used to
+            neutralise S203 when the type declares a `status_values`
+            controlled vocabulary (the producer's profile overrides the
+            spec's default `status` vocabulary).
+        date_fields: `profile.date_fields`, if a profile is declared. Used
+            to avoid double-reporting `stale_after` when it is already
+            covered by S102.
+        okf_version: Resolved OKF version driving the base. Defaults to
+            `"0.2"`. S203-S207 only fire when this is `"0.2"`: a base
+            declaring `"0.1"` must be validated exactly as before v0.2
+            support was added.
+
+    Returns:
+        List of Diagnostic (S203, S204, S205, S206, S207).
+    """
+    if level == "off" or okf_version != "0.2":
+        return []
+
+    severity: Literal["warning", "error"] = "warning" if level == "warn" else "error"
+    date_fields = date_fields or []
+    diags: list[Diagnostic] = []
+
+    # S203 — status outside draft|stable|deprecated
+    status = frontmatter.get("status")
+    status_overridden = type_cfg is not None and "status" in type_cfg.controlled_values
+    if status is not None and not status_overridden:
+        if str(status) not in _DEFAULT_STATUS_VALUES:
+            diags.append(
+                Diagnostic(
+                    code="S203",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=f"`status` outside draft|stable|deprecated: `{status}`",
+                )
+            )
+
+    # S204 — stale_after not YYYY-MM-DD (S102 already covers it if declared
+    # in profile.date_fields — do not double-report)
+    if "stale_after" in frontmatter and "stale_after" not in date_fields:
+        val = frontmatter["stale_after"]
+        if val and not _ISO_DATE_RE.match(str(val)):
+            diags.append(
+                Diagnostic(
+                    code="S204",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=(
+                        f"`stale_after` incorrectly formatted: `{val}` "
+                        f"(expected YYYY-MM-DD)"
+                    ),
+                )
+            )
+
+    # S205 — generated.at / verified[].at not ISO 8601 datetime
+    generated = frontmatter.get("generated")
+    if isinstance(generated, dict) and generated.get("at"):
+        val = str(generated["at"])
+        if not _ISO_DATETIME_RE.match(val):
+            diags.append(
+                Diagnostic(
+                    code="S205",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=f"`generated.at` not ISO 8601 datetime: `{val}`",
+                )
+            )
+    for entry in _verified_entries(frontmatter.get("verified")):
+        if entry.get("at"):
+            val = str(entry["at"])
+            if not _ISO_DATETIME_RE.match(val):
+                diags.append(
+                    Diagnostic(
+                        code="S205",
+                        tier="hygiene",
+                        severity=severity,
+                        file=path,
+                        message=f"`verified[].at` not ISO 8601 datetime: `{val}`",
+                    )
+                )
+
+    # S206 — generated.by / verified[].by outside the actor convention
+    if isinstance(generated, dict) and generated.get("by"):
+        val = str(generated["by"])
+        if not _ACTOR_RE.match(val):
+            diags.append(
+                Diagnostic(
+                    code="S206",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=f"`generated.by` outside actor convention: `{val}`",
+                )
+            )
+    for entry in _verified_entries(frontmatter.get("verified")):
+        if entry.get("by"):
+            val = str(entry["by"])
+            if not _ACTOR_RE.match(val):
+                diags.append(
+                    Diagnostic(
+                        code="S206",
+                        tier="hygiene",
+                        severity=severity,
+                        file=path,
+                        message=f"`verified[].by` outside actor convention: `{val}`",
+                    )
+                )
+
+    # S207 — Attested Computation contract shape
+    if str(frontmatter.get("type", "")).strip() == _ATTESTED_COMPUTATION_TYPE:
+        diags.extend(
+            _check_s207_attested_computation(path, frontmatter, safe_body, severity)
+        )
+
+    return diags
+
+
 @beartype
 def check_hygiene_links(
     path: str,
@@ -741,7 +1017,8 @@ def validate_file(
     if manifest.profile is not None:
         profile_diags = check_profile(rel, fm, manifest.profile)
         diagnostics.extend(profile_diags)
-        # Resolve type_cfg for F201 (hygiene unknown fields)
+        # Resolve type_cfg for F201 (hygiene unknown fields) and S203
+        # (status_values override)
         type_key, _ = _resolve_type(str(fm.get("type", "")), manifest.profile)
         if type_key is not None:
             resolved_type_cfg = manifest.profile.types[type_key]
@@ -781,6 +1058,21 @@ def validate_file(
                     rel, fm, resolved_type_cfg, hygiene.unknown_fields
                 )
             )
+
+        # OKF v0.2 shapes (S203-S207)
+        diagnostics.extend(
+            check_hygiene_okf_v02_shapes(
+                rel,
+                fm,
+                safe_body,
+                hygiene.okf_v02_shapes,
+                type_cfg=resolved_type_cfg,
+                date_fields=(
+                    manifest.profile.date_fields if manifest.profile is not None else []
+                ),
+                okf_version=manifest.resolved_okf_version,
+            )
+        )
 
     return diagnostics
 
