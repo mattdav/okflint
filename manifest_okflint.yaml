@@ -8,7 +8,10 @@ base:
         - ".venv/**"
         - ".git/**"
         - "worktrees/**"
+        - ".claude/worktrees/**"
         - .pytest_cache/**
+        - ".mypy_cache/**"
+        - ".ruff_cache/**"
         - tests/**
         - "docs/_templates/**"
   reserved_files:
@@ -54,18 +57,23 @@ profile:
 
     Spec:
       # docs/specs/*.md — business need documented before implementation.
-      required: [id, title, description, status]
-      optional: [superseded-by, work-item, tags, timestamp, perimeter, audience]
+      required: [id, title, description, status, timestamp, perimeter]
+      optional: [superseded-by, work-item, tags, audience]
+      status_values: [draft, accepted, implemented, superseded]
 
     Fix:
       # docs/fixes/*.md — malfunction, root cause, resolution.
-      required: [id, title, description, status, severity]
-      optional: [work-item, tags, timestamp, perimeter, audience]
+      required: [id, title, description, status, severity, timestamp, perimeter]
+      optional: [work-item, tags, audience]
+      status_values: [draft, confirmed, fixed, wontfix]
+      severity_values: [blocker, major, minor]
 
     Plan:
       # docs/plans/*.md — implementation procedure for a Spec or a Fix.
-      required: [id, title, description, status, implements]
-      optional: [tags, timestamp, perimeter, audience]
+      required:
+        [id, title, description, status, implements, timestamp, perimeter]
+      optional: [tags, audience]
+      status_values: [draft, active, done, deprecated]
 
 hygiene:
   broken_links: warn
