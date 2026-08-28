@@ -115,6 +115,14 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
 
 - Fichiers cibles : moteur de règles + `src/okflint/manifest.py` (nouvelle clé
   `hygiene.okf_v02_shapes`)
+- **Gating.** Comme `F003`–`F005`, ces cinq règles sont gatées sur la version
+  résolue : silencieuses sous `"0.1"`, actives sous `"0.2"` (donc actives sans
+  manifeste). Sous un manifeste v0.1, ce sont les règles de profil (`F102`,
+  `F105`, `S102`) qui tiennent l'utilisateur à ses engagements, plus le message
+  INFO. Conséquence à documenter dans `RULES.md` : sous un manifeste v0.1, une
+  famille v0.2 employée sans être déclarée n'est contrôlée par rien, `F201`
+  étant `off` par défaut. C'est voulu, et c'est ce que le message INFO invite à
+  corriger.
 - Action :
   - `S203` : `status` hors de `draft | stable | deprecated`. **Ne se déclenche
     pas** si le manifeste déclare un `status_values` pour le type du concept —
@@ -123,11 +131,21 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
     MUST de §11).
   - `S204` : `stale_after` non conforme à `YYYY-MM-DD`. Ne pas doubler `S102`
     si `stale_after` figure dans `profile.date_fields`.
-  - `S205` : `generated.at` et `verified[].at` non conformes à ISO 8601
-    (datetime, pas date seule).
+  - `S205` : `generated.at` et `verified[].at` non parsables en ISO 8601. **Les
+    deux formes sont acceptées** — date seule (`2026-08-28`) comme datetime
+    complet. `stale_after` reste strictement date-only, contrôlé par `S204` :
+    ce n'est pas une incohérence, c'est ce que pose la spec.
   - `S206` : `generated.by` et `verified[].by` hors des trois formes de la
-    convention d'acteur (`<producteur>/<version>`, `human:<id>`, `process:<id>`).
-    Ne jamais vérifier que l'identité désignée existe.
+    convention d'acteur. Formes acceptées :
+    - `human:<id>` et `process:<id>` — préfixe **sensible à la casse**,
+      identifiant non vide ;
+    - `<producteur>/<version>` — deux segments non vides, sans espace, aucune
+      validation du format de version.
+    Tout le reste déclenche. Délibérément permissif sur la troisième forme : le
+    but est d'attraper `by: Matthieu` ou `by: gpt-4`, pas de valider un
+    identifiant. La sensibilité à la casse est la raison d'être de la règle : un
+    `Human:matthieu` fait silencieusement sortir le concept du palier de
+    confiance le plus élevé. Ne jamais vérifier que l'identité désignée existe.
   - `S207` : forme de contrat `Attested Computation` — `parameters` non liste de
     `{name, type, required}` ; `executor` sans `resource` ou sans `receipt` ;
     `attester` sans `resource` ; champ `computation` **et** bloc `# Computation`
@@ -137,7 +155,12 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
   diagnostic — c'est le seul MUST que §11 adresse directement aux consommateurs.
 - Vérification : couverture déclenchante/non déclenchante par règle ; test
   explicite sur `verified` en mapping nu ; test explicite sur `S203` neutralisé
-  par un `status_values` de profil.
+  par un `status_values` de profil ; test explicite confirmant le silence total
+  des cinq règles sous un manifeste `okf_version: "0.1"`.
+- **Granularité** : les cinq règles partagent la clé `hygiene.okf_v02_shapes`.
+  Promouvoir `S207` en `error` promeut aussi `S203`. Compromis assumé — codes
+  séparés pour la lisibilité du catalogue, clé unique pour la configuration — à
+  écrire dans `RULES.md` pour que personne ne cherche une clé par règle.
 - Commit `feat:`
 
 ### 5. Formes héritées et fraîcheur — `S208`, `S209`
