@@ -2,7 +2,7 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-07-08
+updated: 2026-08-03
 tags: [python, cli, linter, okf, open-source]
 ---
 
@@ -34,91 +34,6 @@ linter.
 
 ---
 
-## Track B — Reading-grid expectations verifiable by the manifest
-
-**Context.** An agent exploiting a base needs a *reading grid*:
-from the frontmatter (types, tags), know which concepts to consult for a given
-intent, in what order, retrieving as little superfluous context as possible. This
-grid is a methodological concern specific to each organisation — it is not
-okflint's responsibility.
-
-**What okflint CAN do.** Just as it does not decide which types exist (the manifest
-declares them) but verifies the base respects them, okflint can verify that the base
-contains **everything needed for a reading grid to work**, provided the manifest
-declares the grid's expectations. Examples of declarable, verifiable expectations:
-
-- "Every concept of type `Procedure` must carry a `domain` tag to be routable"
-  → conditional required field rule.
-- "Values of the `domain` field belong to a closed vocabulary" → controlled
-  vocabulary rule on an arbitrary field.
-- "Every routable concept declares an `intent`" → presence rule.
-
-This requires extending the manifest with a section describing these expectations
-(a `routing` or `grid` block, to be designed), and adding the corresponding
-validation rules to the catalogue.
-
-**Boundary — essential.** okflint verifies that the base is **structured to be
-routable** (the necessary fields, tags, and vocabularies are present and consistent).
-It does **not traverse** the grid: the directed walk "for intent A, read X then Y"
-is runtime orchestration logic, executed by the agent in its harness. okflint is
-static; it validates a base at rest. The grid makes the base *routable*; the harness
-*routes*.
-
-**Update (0.2.0).** The « controlled vocabulary on an arbitrary field » example
-above is now shipped: the generic `<prop>_values` model constrains any declared
-property. What remains of Track B is the routing/grid layer proper — conditional
-required fields, presence rules, and the `routing`/`grid` manifest block still to be
-designed.
-
-## Track C — Reaching agents beyond the Python toolchain (MCP server, bundles, standalone binary)
-
-**Problem**. Today okflint is a Python CLI on PyPI. That already serves users who
-have a Python toolchain and an agentic harness with a real filesystem and
-lifecycle hooks (Claude Code, Gemini CLI, Cursor): they wire okflint validate
-into a PostToolUse-style hook and get a deterministic gate on every generated
-Markdown file, for free, with the existing CLI. But a large and growing population
-of agent users never touch Python — people working in chat-first apps like Claude
-Desktop. For them, "validate the Markdown my agent just produced" is out of reach:
-no pip install, often no local file at all, and no lifecycle-hook surface to
-attach a gate to.
-
-**Direction**. Broaden okflint's invocation surface without touching its engine.
-Several packaging layers, all sharing one thin adapter over the existing --json
-output:
-
-A thin MCP server (stdio) exposing validate and audit as model-callable
-tools. Lets an agent self-diagnose mid-task and self-correct, and is the common
-brick under everything below. One server can serve Claude Code, a Gemini CLI
-extension, and Claude Desktop alike.
-A standalone binary (PyInstaller / shiv / pex) bundling the engine and the
-MCP entrypoint into a single runtime-free executable. Removes the Python
-dependency entirely — drops into non-Python repos and feeds the bundle below.
-A Desktop Extension (.mcpb) wrapping that binary as a "binary MCP server",
-giving non-technical Claude Desktop users a one-click, no-JSON, no-Python install.
-A Python-based .mcpb would not do: Claude Desktop bundles Node.js, not Python,
-and the MCP Python SDK's compiled dependencies cannot be bundled portably — hence
-the binary.
-Optionally, a remote MCP connector (HTTPS) exposing validate(content, manifest) with the document passed in-band: zero install, zero Python.
-Trade-off: hosting cost and document content leaving the user's machine — often
-unacceptable on corporate endpoints, so this stays secondary to the local binary.
-
-A Skill (e.g. the OKF skill ecosystem) is the natural instruction layer that
-tells an agent to call the okflint tool after generating Markdown, and to fix what
-it reports. Coordinating with skill authors is the distribution flywheel.
-
-**Boundary** — essential. Every layer here is transport and packaging, never
-engine. The MCP server, the binary, the .mcpb, the remote connector — all are
-adapters over the same deterministic core, in the exact same family as the CLI. No
-LLM ever enters the engine; okflint stays static and reproducible. One honesty
-constraint also carries over: chat-first surfaces like Claude Desktop expose no
-lifecycle hooks, so the best they can offer is model-invoked validation (strong
-nudging via skill + tool), not a guaranteed gate. A hard, every-time gate still
-lives where the documents ultimately land — CI or a pre-commit on the repository or
-vault — not in the chat app. okflint provides the check; the harness or the
-pipeline decides whether it is advisory or blocking.
-
----
-
 ## Track D — `okflint validate-manifest`: expose manifest validation as a command
 
 **Context.** `manifest.py` already validates a manifest's structure and raises
@@ -138,21 +53,90 @@ deterministic, no engine change.
 
 ---
 
-## Track E — Generic `okflint fix`: deterministic rewrites
+## Track F — OKF v0.2: provenance, trust, lifecycle, attestation
 
-**Context.** Two catalogue rules are already marked auto-fixable (`F106` alias
-normalisation, `S102` date reformatting), and `okflint index` (0.2.0) is the first
-deterministic generator shipped. These deterministic rewrites currently have no
-shared home.
+**Context.** Google Cloud published OKF v0.2 on 2026-07-25, six weeks after v0.1.
+The change is **additive and backward-compatible**: `type` remains the only
+always-required field, every new field is optional, and a v0.1 bundle stays valid
+unchanged. What v0.2 adds is vocabulary, not rules.
 
-**Direction.** A generic `fix` command hosting the deterministic, judgment-free
-rewrites: normalise `type` aliases (F106), reformat date fields (S102), (re)generate
-`index.md` (§6). Dry-run + diff by default, write on `--apply` — the `audit`/`index`
-convention.
+The motivating problem is one okflint is well placed to serve. When a human writes
+a concept, accountability is implicit — someone put their name on it. When an agent
+generates ten thousand concepts overnight, that guarantee is gone, and whatever
+reads them next must judge each one on signals it can actually see. v0.2 makes five
+questions answerable from frontmatter:
 
-**Boundary — essential.** Deterministic rewrites only. Anything requiring judgment
-(what to split, how to rename, what a concept means) never enters `fix`; it stays
-with the human or the consuming agent. No LLM in the engine, ever.
+| Question | Family |
+| --- | --- |
+| What was this created from? | provenance |
+| How much should I trust it? | trust |
+| Is it still true? | freshness |
+| Is it the current version? | lifecycle |
+| Was this number produced the way we said it must be? | attestation |
+
+Two deliberate renames carry a migration cost for every existing bundle:
+
+| v0.1 | v0.2 |
+| --- | --- |
+| `timestamp` | `generated.at` |
+| body `# Citations` list | `sources` field |
+
+A v0.2 consumer is expected to fall back to the v0.1 forms, so nothing breaks.
+
+**Direction.** Make the target spec version an explicit input rather than an
+implicit assumption. The manifest already carries `okf_version`; the engine should
+validate against the version the base declares.
+
+- **Dual-form acceptance.** Recognise both `generated.at` and `timestamp`, both the
+  `sources` field and the body `# Citations` section. When a base declares
+  `okf_version: "0.2"` but still uses v0.1 forms, report it — a warning, not an
+  error, mirroring the spec's own fallback stance.
+- **Shape validation for the new field families.** `sources` records, `verified`,
+  `generated`, and lifecycle `status` all have declared structures. Validating their
+  *shape* is squarely in scope, in the same family as every existing frontmatter rule.
+- **Lifecycle vocabulary.** `status: deprecated` is a closed-vocabulary case the
+  generic `<prop>_values` model already covers — likely little more than a default
+  profile entry.
+- **`Attested Computation`.** v0.2 introduces this concept type, carrying both what a
+  value means and the sanctioned way to compute it. okflint can verify that such a
+  concept declares what the spec requires, and that its declared parameters are
+  well-formed.
+
+**Boundary — essential.** Two lines okflint must not cross, both of which follow
+directly from the guiding principle.
+
+First, **okflint validates that a trust signal is present and well-formed, never
+that it is true.** `verified` is the most load-bearing field in v0.2 precisely
+because it separates *having read* from *having confirmed*. A tool that implied it
+had checked the underlying claim would make the field worthless within a week. The
+linter reports the shape of the assertion; only a human or a consuming agent can
+make the assertion.
+
+Second, **attestation validation stops at the declaration.** Checking that an
+`Attested Computation` is structurally sound is static analysis. Executing the
+sanctioned computation, or verifying at runtime that it was the one that actually
+ran, is orchestration — it belongs to the consumer of the base, not to the linter.
+
+The v0.1 → v0.2 migration — renaming `timestamp` to `generated.at`, converting a
+body `# Citations` list into a `sources` field — is signaled by okflint but never
+rewritten by it: the linter does not rewrite.
+
+**Note on timing.** As of 2026-07-27, an ecosystem observer reported that nearly
+every tool on Google's community list still targeted v0.1. The window in which
+v0.2 support is a differentiator is narrow but real.
+
+---
+
+## Discarded directions
+
+- *Track B (reading-grid expectations)* — la partie utile (vocabulaire contrôlé
+  sur un champ arbitraire) est livrée en 0.2.0 ; le reste relève de la
+  méthodologie propre à chaque organisation, pas d'un standard outillé.
+- *Track C (MCP server, standalone binary, .mcpb)* — décision de positionnement,
+  pas de périmètre : okflint reste un CLI Python ; la surface MCP est couverte
+  par des bibliothèques complémentaires comme `okf-parser`.
+- *Track E (`okflint fix`)* — okflint signale, il ne réécrit pas. La réécriture
+  appartient à l'humain ou à l'agent consommateur.
 
 ---
 

@@ -336,3 +336,32 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - tests/test_manifest.py
 
 ---
+
+## Session du 2026-08-28 10:41 — okflint
+
+- Ajouté la commande `okflint validate-manifest <manifest>` : expose la validation
+  structurelle déjà faite par `manifest.py` (ManifestError) comme commande dédiée,
+  sortie lisible ou `--json`, exit 0/2 (jamais 1, aucun scan de base). Aucune
+  nouvelle logique de validation — extraction pure de l'existant (commit 14cfdfe).
+- Retiré les mentions obsolètes d'auto-fix (« coming soon ») des règles F106 et
+  S102 dans config/RULES.md, la commande `fix` ayant été abandonnée (commit c22e111).
+- Élagué docs/project/ROADMAP.md : suppression des tracks B (grille de lecture),
+  C (serveur MCP / binaire) et E (`okflint fix`), chacune remplacée par une raison
+  dans une nouvelle section « Discarded directions » ; le paragraphe de Track F
+  faisant référence à Track E est remplacé par une phrase actant qu'okflint
+  signale la migration v0.1→v0.2 sans jamais la réécrire (commit 8498c6f).
+- Vérifié la mission complète : inv lint (0 issue), inv test (286 passed, 94%),
+  okflint validate --manifest manifest_okflint.yaml . (exit 0).
+- Point signalé à l'utilisateur, non corrigé (hors périmètre) : README.md contient
+  encore, dans sa section Roadmap, une mention de la commande `fix` générique,
+  désormais incohérente avec le retrait de Track E.
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - tests/test_cli.py
+  - README.md
+  - docs/code/guides/quickstart.rst
+  - config/RULES.md
+  - docs/project/ROADMAP.md
+
+---
