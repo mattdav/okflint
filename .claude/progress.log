@@ -416,3 +416,70 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - tests/test_audit.py
 
 ---
+
+## Session du 2026-08-28 13:08 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - tests/test_audit.py
+  - tests/test_scanner.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 2
+
+- Traité l'étape 2 de PLAN-002 : « `okf_version` comme entrée du moteur ».
+  Étape 1 marquée complète dans ce log → étape 2 par défaut.
+- Vérification du code réel avant modification (règle 5) : `R001` ne
+  validait déjà que la présence de la clé `okf_version` dans l'index.md
+  racine, jamais sa valeur — donc `okf_version: "0.2"` y passait déjà sans
+  changement. Aucune modification nécessaire dans `validate.py` pour ce
+  point du plan.
+- `manifest.py` : `_KNOWN_OKF_VERSION` (une seule valeur, avertissement
+  stderr silencieux) remplacé par `_VALID_OKF_VERSIONS = {"0.1", "0.2"}` ;
+  toute valeur hors de cet ensemble lève désormais `ManifestError` (exit 2)
+  au lieu d'un simple warning. Quand la valeur est `"0.1"`, un message
+  d'information est émis une fois sur stderr (« manifest targets OKF 0.1;
+  0.2 is the current revision ») — ce n'est pas un diagnostic (pas de code,
+  pas d'entrée dans la liste des violations, aucun effet sur le code de
+  sortie). `Manifest` expose désormais une propriété `resolved_okf_version`
+  (valeur déclarée, ou `"0.2"` par défaut si la clé est absente).
+- Point de scope soumis à l'utilisateur avant modification : le spec exige
+  que ce message d'info aille « dans l'en-tête du rapport JSON, jamais dans
+  le tableau des diagnostics » pour `validate --json`. Or `validate --json`
+  sort aujourd'hui une liste JSON brute de diagnostics, sans objet ni
+  en-tête, verrouillée par un test existant (`test_json_output_contains_diagnostics`,
+  `isinstance(data, list)`). Décision utilisateur : ne pas changer le shape
+  JSON (diff minimal, zéro breaking change) — le message sort uniquement
+  sur stderr, dans les deux modes (texte et `--json`). Déviation assumée et
+  documentée par rapport à la lettre du spec pour ce cas précis.
+- Conséquence de cette décision : `cli.py` n'a nécessité aucune
+  modification — `ManifestError` se propage déjà partout vers exit 2 sans
+  changement de plomberie. Le plan citait `cli.py` comme fichier cible ;
+  périmètre réduit par rapport au plan, signalé ici.
+- Tests ajoutés dans `test_manifest.py` : `"0.1"` accepté + message stderr,
+  `"0.2"` accepté sans message, valeur inconnue (`"0.3"`) lève
+  `ManifestError`, clé absente → aucun message ni erreur, et
+  `resolved_okf_version` pour les trois cas (absent/0.1/0.2).
+- Non-régression : `manifest_okflint.yaml` déclare `okf_version: "0.1"` ;
+  `okflint validate --manifest manifest_okflint.yaml .` reste exit 0 avec
+  « ✅ All files are OKF-conformant. » inchangé, seule la ligne d'info
+  stderr s'ajoute. Vérifié manuellement en plus de la suite de tests
+  (298 tests, tous verts, aucune régression).
+- Vérifié : `inv lint` (0 issue), `inv test` (298 passed, 95% ≥ 93%),
+  `okflint validate --manifest manifest_okflint.yaml .` (exit 0), manifeste
+  `okf_version: "0.3"` de test → exit 2 avec message d'erreur explicite.
+- Hors périmètre, signalé et non traité : rien de nouveau constaté au-delà
+  du travail de l'étape.
+- Prochaine session : PLAN-002 étape 3 (règles F003/F004/F005, tier core,
+  conditionnelles à la présence de structures v0.2 — cible probable
+  `validate.py`, voir le plan pour le détail exact).
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - tests/test_manifest.py
+
+---

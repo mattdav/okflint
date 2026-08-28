@@ -446,3 +446,92 @@ class TestLoadManifestSplitConfig:
         f = self._write(tmp_path, "  split:\n    exempt_paths:\n      - 42\n")
         with pytest.raises(ManifestError, match="exempt_paths must be a list"):
             load_manifest(f)
+
+
+# ---------------------------------------------------------------------------
+# okf_version
+# ---------------------------------------------------------------------------
+
+
+def _write_versioned_manifest(tmp_path: Path, version: str) -> Path:
+    root = tmp_path / "root"
+    root.mkdir(exist_ok=True)
+    f = tmp_path / "m.yaml"
+    f.write_text(
+        f"okf_version: '{version}'\n"
+        "base:\n"
+        "  roots:\n"
+        f"    - path: '{root.as_posix()}'\n"
+        "  reserved_files:\n"
+        "    index: index.md\n"
+        "    log: log.md\n",
+        encoding="utf-8",
+    )
+    return f
+
+
+class TestOkfVersion:
+    def test_01_accepted_with_info_message(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        f = _write_versioned_manifest(tmp_path, "0.1")
+        manifest = load_manifest(f)
+        assert manifest.okf_version == "0.1"
+        assert "manifest targets OKF 0.1" in capsys.readouterr().err
+
+    def test_02_accepted_no_info_message(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        f = _write_versioned_manifest(tmp_path, "0.2")
+        manifest = load_manifest(f)
+        assert manifest.okf_version == "0.2"
+        assert capsys.readouterr().err == ""
+
+    def test_unknown_version_raises(self, tmp_path: Path) -> None:
+        f = _write_versioned_manifest(tmp_path, "0.3")
+        with pytest.raises(ManifestError, match="Unknown okf_version"):
+            load_manifest(f)
+
+    def test_absent_key_no_error_no_message(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            "base:\n"
+            "  roots:\n"
+            f"    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n",
+            encoding="utf-8",
+        )
+        manifest = load_manifest(f)
+        assert manifest.okf_version is None
+        assert capsys.readouterr().err == ""
+
+
+class TestResolvedOkfVersion:
+    def test_absent_resolves_to_02(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            "base:\n"
+            "  roots:\n"
+            f"    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n",
+            encoding="utf-8",
+        )
+        assert load_manifest(f).resolved_okf_version == "0.2"
+
+    def test_01_resolves_to_01(self, tmp_path: Path) -> None:
+        f = _write_versioned_manifest(tmp_path, "0.1")
+        assert load_manifest(f).resolved_okf_version == "0.1"
+
+    def test_02_resolves_to_02(self, tmp_path: Path) -> None:
+        f = _write_versioned_manifest(tmp_path, "0.2")
+        assert load_manifest(f).resolved_okf_version == "0.2"

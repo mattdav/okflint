@@ -84,12 +84,17 @@ class Manifest:
     profile: ProfileConfig | None
     hygiene: HygieneConfig | None
 
+    @property
+    def resolved_okf_version(self) -> str:
+        """Effective OKF version: declared value, or "0.2" if unset."""
+        return self.okf_version or "0.2"
+
 
 # Valid hygiene values
 _HYGIENE_VALUES: frozenset[str] = frozenset({"off", "warn", "error"})
 
-# Known OKF version
-_KNOWN_OKF_VERSION = "0.1"
+# Recognised OKF versions
+_VALID_OKF_VERSIONS: frozenset[str] = frozenset({"0.1", "0.2"})
 
 # Default SplitConfig: no length gate, no exemptions
 _DEFAULT_SPLIT_CONFIG = SplitConfig(
@@ -408,14 +413,18 @@ def load_manifest(path: Path) -> Manifest:
         external_refs=external_refs,
     )
 
-    # okf_version (optional, warning if unknown)
+    # okf_version (optional; must be a recognised value when present)
     okf_version: str | None = None
     if "okf_version" in data:
         okf_version = str(data["okf_version"])
-        if okf_version != _KNOWN_OKF_VERSION:
+        if okf_version not in _VALID_OKF_VERSIONS:
+            raise ManifestError(
+                f"Unknown okf_version={okf_version!r} "
+                f"(expected one of: {sorted(_VALID_OKF_VERSIONS)})."
+            )
+        if okf_version == "0.1":
             print(
-                f"Warning: unknown okf_version={okf_version!r} "
-                f"(expected: {_KNOWN_OKF_VERSION!r}).",
+                "manifest targets OKF 0.1; 0.2 is the current revision",
                 file=sys.stderr,
             )
 
