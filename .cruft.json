@@ -1,0 +1,21 @@
+{
+  "template": "https://github.com/mattdav/project_template",
+  "commit": "2a8016022c361503a5788726fcb3ea1cf5cf7175",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "okflint",
+      "author": "Matthieu Daviaud",
+      "email": "matthieu.daviaud@gmail.com",
+      "description": "Compliance linter for OKF (Open Knowledge Format) documentary bases — the Ruff of documentation.",
+      "version": "0.3.1",
+      "license": "MIT license",
+      "publish_pypi": "yes",
+      "use_wiki": "no",
+      "_python_version": "3.12",
+      "_template": "https://github.com/mattdav/project_template",
+      "_commit": "2a8016022c361503a5788726fcb3ea1cf5cf7175"
+    }
+  },
+  "directory": null
+}
