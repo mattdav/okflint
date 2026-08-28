@@ -41,12 +41,12 @@ jobs:
           # le build va jusqu'au bout pour tous les remonter d'un coup. Sans
           # cette option, une documentation vide ou amputée se publie sans que
           # rien n'échoue.
-          uv run sphinx-build -W --keep-going -b html docs/code/sphinx docs/code/sphinx/_build/html
+          uv run sphinx-build -W --keep-going -b html docs/code docs/build/html
           # Fichier requis pour que GitHub Pages serve les dossiers _static/, _sources/, etc.
-          touch docs/code/sphinx/_build/html/.nojekyll
+          touch docs/build/html/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: docs/code/sphinx/_build/html/
+          folder: docs/build/html/
