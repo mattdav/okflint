@@ -272,3 +272,48 @@
   - tests/test_audit.py
 
 ---
+
+## Session du 2026-08-28 09:31 — okflint
+
+Fin de la mission « aligner okflint sur project_template » : trois derniers
+sous-tâches réalisées, chacune commitée séparément.
+
+- `0425261` (docs) : alignement de `manifest_okflint.yaml` sur
+  `manifest_project_template.yaml` — exclude_patterns complétés
+  (`.claude/worktrees/**`, `.mypy_cache/**`, `.ruff_cache/**`), champs
+  requis resserrés pour Spec/Fix/Plan (`timestamp`, `perimeter`) + ajout
+  des `status_values`/`severity_values`. Le type `WikiPage` du template a
+  été exclu délibérément : okflint n'a aucune fonctionnalité wiki/ingestion
+  (vérifié par grep — seuls des wikilinks Obsidian existent dans le code).
+- `4952df6` (docs) : aplatissement de `docs/code/sphinx/` vers `docs/code/`
+  et passage à la génération automatique des pages API via un hook
+  `builder-inited` dans `docs/code/conf.py` (source unique, `inv docs`
+  n'appelle plus `sphinx-apidoc` lui-même). Suppression de l'orphelin mort
+  `docs/code/source/` (fossile `okf_converter`, non référencé). Mise à jour
+  de `.gitignore`, `.github/workflows/docs.yml` et `tasks.py` en
+  conséquence. `docs/make.bat` reste non versionné (règle `*.bat`
+  préexistante du `.gitignore`, volontairement respectée).
+- `d4d6381` (chore) : `cruft link` vers `project_template` (commit
+  `2a80160`), avec deux surcharges de contexte délibérées par rapport aux
+  défauts du template : `_python_version: "3.12"` (vs `"3.13"`, cohérent
+  avec `requires-python`/mypy du projet) et `use_wiki: "no"` (cohérent avec
+  l'exclusion de WikiPage ci-dessus). `cruft check` confirme un état propre.
+
+Les 7 sous-tâches de la mission sont maintenant complètes et vérifiées
+ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
+`inv docs` (`-W --keep-going`) ✅, `okflint validate` ✅, `cruft check` ✅.
+
+**Fichiers modifiés :**
+  - manifest_okflint.yaml
+  - docs/code/conf.py (déplacé depuis docs/code/sphinx/conf.py)
+  - docs/code/index.rst (déplacé)
+  - docs/code/guides/{quickstart,manifest,rules}.rst (déplacés)
+  - docs/Makefile (déplacé depuis docs/code/Makefile)
+  - docs/code/api/*.rst (supprimés, remplacés par génération auto)
+  - docs/code/source/ (supprimé, orphelin mort)
+  - .gitignore
+  - .github/workflows/docs.yml
+  - tasks.py
+  - .cruft.json (nouveau)
+
+---
