@@ -365,3 +365,54 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - docs/project/ROADMAP.md
 
 ---
+
+## Session du 2026-08-28 10:46 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/cli.py
+  - tests/test_cli.py
+
+---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 1
+
+- Traité l'étape 1 de PLAN-002 (support OKF v0.2) : « Liens absolus
+  bundle-relatifs ». Aucune entrée PLAN-002 n'existait dans ce log, donc
+  étape 1 par défaut.
+- Vérification du code réel avant modification (règle 5) : le cas mono-root,
+  y compris depuis un sous-répertoire, résolvait déjà correctement un lien
+  `[x](/chemin.md)` contre la racine du bundle — pas de bug là. Le vrai faux
+  positif reproduit est **multi-root** : un lien absolu porté par le fichier
+  du root A et dont la cible existe dans le root B était signalé `L002` à
+  tort, car `extract_markdown_links` ne testait que le root propriétaire du
+  fichier source.
+- Le plan ne citait que `src/okflint/scanner.py` comme fichier cible ; corriger
+  le vrai bug a nécessité de toucher aussi `validate.py` et `audit.py` (leurs
+  call sites doivent transmettre la liste des autres roots du manifeste/bundle)
+  — validé explicitement avec l'utilisateur avant modification.
+- `extract_markdown_links` accepte désormais un paramètre optionnel
+  `other_roots` (rétrocompatible, défaut `None`) : root propriétaire testé en
+  premier, puis les autres roots avant de conclure à `L002`, à l'image de la
+  résolution des wikilinks à l'échelle de la base.
+- Tests ajoutés : fallback multi-root résolu (scanner + validate_file +
+  run_audit), cible absente de tous les roots → `L002` maintenu.
+- Non-régression : le manifeste `manifest_okflint.yaml` est mono-root, donc
+  `other_roots` y est toujours vide — comportement inchangé pour cette base ;
+  confirmé par la suite de tests existante (291 tests, tous verts) qui ne
+  bouge pas.
+- Vérifié : `inv lint` (0 issue), `inv test` (291 passed, 95% ≥ 93%),
+  `okflint validate --manifest manifest_okflint.yaml .` (exit 0).
+- Hors périmètre, signalé et non traité : rien de nouveau constaté durant
+  cette étape au-delà du bug corrigé.
+- Prochaine session : PLAN-002 étape 2 (`okf_version` comme entrée du
+  moteur — `manifest.py`, `validate.py`, `audit.py`, `cli.py`).
+
+**Fichiers modifiés :**
+  - src/okflint/scanner.py
+  - src/okflint/validate.py
+  - src/okflint/audit.py
+  - tests/test_scanner.py
+  - tests/test_validate.py
+  - tests/test_audit.py
+
+---

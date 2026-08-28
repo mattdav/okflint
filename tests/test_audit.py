@@ -302,6 +302,27 @@ class TestRunAuditMultiRoot:
         assert len(report["bundle_paths"]) == 1
         assert report["stats"]["total_files"] == 1
 
+    def test_absolute_link_resolves_across_bundle_roots(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        """Regression guard: an absolute markdown link owned by root1 must
+        resolve against root2 too, not just its own root."""
+        root1 = tmp_path / "root1"
+        root1.mkdir()
+        root2 = tmp_path / "root2"
+        root2.mkdir()
+        make_md(root2 / "shared.md", "---\ntype: Reference\n---\n")
+        make_md(
+            root1 / "doc.md",
+            "---\ntype: Reference\n---\n[Shared](/shared.md)\n",
+        )
+        report = run_audit([root1, root2], [root1, root2])
+        doc_report = next(f for f in report["files"] if f["path"] == "doc.md")
+        assert doc_report["markdown_links"][0]["broken"] is False
+
 
 # ---------------------------------------------------------------------------
 # run_audit — exclude_patterns

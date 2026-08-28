@@ -655,7 +655,10 @@ def validate_file(
 
     safe_body = blank_code_spans(body)
     wikilinks = extract_wikilinks(safe_body, base_index)
-    md_links = extract_markdown_links(safe_body, file_path, applicable_root)
+    other_roots = [r.path for r in manifest.base.roots if r.path != applicable_root]
+    md_links = extract_markdown_links(
+        safe_body, file_path, applicable_root, other_roots
+    )
 
     # Profile
     resolved_type_cfg: TypeConfig | None = None

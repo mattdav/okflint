@@ -212,6 +212,7 @@ def extract_markdown_links(
     content: str,
     file_path: Path,
     bundle_path: Path,
+    other_roots: list[Path] | None = None,
 ) -> list[MarkdownLink]:
     """Extract [text](target) markdown links and verify internal links.
 
@@ -220,7 +221,11 @@ def extract_markdown_links(
     Args:
         content: Markdown file body.
         file_path: Absolute path of the current file.
-        bundle_path: Bundle root (for resolving absolute paths).
+        bundle_path: Root owning the current file (tried first for absolute
+            paths).
+        other_roots: Remaining roots of a multi-root base. An absolute path
+            not found under ``bundle_path`` is tried against each of these,
+            in order, before being reported broken.
 
     Returns:
         List of MarkdownLink.
@@ -238,9 +243,11 @@ def extract_markdown_links(
         if is_external:
             broken = False
         elif path_part.startswith("/"):
-            # Absolute path relative to the bundle
-            resolved = bundle_path / path_part.lstrip("/")
-            broken = not resolved.exists()
+            # Absolute path, bundle-relative: owning root first, then the
+            # base's other roots (mirrors wikilink resolution at base scale).
+            rel = path_part.lstrip("/")
+            candidate_roots = [bundle_path, *(other_roots or [])]
+            broken = not any((root / rel).exists() for root in candidate_roots)
         else:
             # Path relative to the current file
             resolved = file_path.parent / path_part

@@ -197,6 +197,27 @@ class TestExtractMarkdownLinks:
         assert not links[0].broken
         assert not links[1].broken
 
+    def test_absolute_link_found_in_other_root(self, tmp_path: Path) -> None:
+        root_a = tmp_path / "a"
+        root_b = tmp_path / "b"
+        root_a.mkdir()
+        root_b.mkdir()
+        src = root_a / "doc.md"
+        src.touch()
+        (root_b / "shared.md").touch()
+        links = extract_markdown_links("[Shared](/shared.md)", src, root_a, [root_b])
+        assert not links[0].broken
+
+    def test_absolute_link_missing_in_all_roots(self, tmp_path: Path) -> None:
+        root_a = tmp_path / "a"
+        root_b = tmp_path / "b"
+        root_a.mkdir()
+        root_b.mkdir()
+        src = root_a / "doc.md"
+        src.touch()
+        links = extract_markdown_links("[Missing](/absent.md)", src, root_a, [root_b])
+        assert links[0].broken
+
 
 # ---------------------------------------------------------------------------
 # build_file_index

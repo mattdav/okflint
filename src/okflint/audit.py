@@ -73,18 +73,22 @@ def analyze_file(
     bundle_path: Path,
     vault_index: dict[str, list[str]],
     reserved_files: dict[str, str],
+    other_roots: list[Path] | None = None,
 ) -> FileReport:
     """Full analysis of a .md file in the bundle.
 
     Args:
         file_path: Absolute path of the file.
-        bundle_path: Bundle root.
+        bundle_path: Bundle root owning the file.
         vault_index: Vault index for wikilink resolution.
         reserved_files: Mapping with "index"/"log" keys to their configured
             filename — ``manifest.base.reserved_files`` when a manifest is
             loaded, ``DEFAULT_RESERVED_FILES`` otherwise. Same authority as
             used by diagnostics computation in ``run_audit``, so labelling
             and diagnostics never disagree on what counts as reserved.
+        other_roots: Remaining roots of a multi-root bundle, tried as
+            fallback for absolute markdown links not found under
+            ``bundle_path``.
 
     Returns:
         FileReport with all fields populated.
@@ -103,7 +107,9 @@ def analyze_file(
 
     safe_body = blank_code_spans(body)
     wikilinks = extract_wikilinks(safe_body, vault_index)
-    markdown_links = extract_markdown_links(safe_body, file_path, bundle_path)
+    markdown_links = extract_markdown_links(
+        safe_body, file_path, bundle_path, other_roots
+    )
 
     return FileReport(
         path=rel_path,
@@ -264,9 +270,14 @@ def run_audit(
         manifest.base.reserved_files if manifest is not None else DEFAULT_RESERVED_FILES
     )
 
+    _all_bundle_root_paths = [r.path for r in _bundle_roots]
+
     files: list[FileReport] = []
     for md_file, bundle_root in all_md_files:
-        report = analyze_file(md_file, bundle_root, _vault_index, reserved_files)
+        other_roots = [p for p in _all_bundle_root_paths if p != bundle_root]
+        report = analyze_file(
+            md_file, bundle_root, _vault_index, reserved_files, other_roots
+        )
         if manifest is not None:
             report.diagnostics = validate_file(md_file, manifest, _vault_index)
         else:

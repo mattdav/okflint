@@ -770,6 +770,76 @@ class TestValidateFile:
         diags = validate_file(f, m, base_index)
         assert "S202" in _codes(diags)
 
+    def test_absolute_link_resolves_across_multi_root_base(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        """Regression guard for L002 on multi-root bases: an absolute link
+        owned by root A must resolve against root B too, mirroring how
+        wikilinks already resolve at base scale via base_index."""
+        root_a = tmp_path / "a"
+        root_b = tmp_path / "b"
+        root_a.mkdir()
+        root_b.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.1'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root_a.as_posix()}'\n"
+            f"    - path: '{root_b.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n"
+            "hygiene:\n"
+            "  broken_links: warn\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        make_md(root_b / "shared.md", "---\ntype: Reference\n---\n")
+        f = make_md(
+            root_a / "doc.md",
+            "---\ntype: Reference\n---\n[Shared](/shared.md)\n",
+        )
+        diags = validate_file(f, m, base_index)
+        assert "L002" not in _codes(diags)
+
+    def test_absolute_link_missing_from_all_roots_still_flagged(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root_a = tmp_path / "a"
+        root_b = tmp_path / "b"
+        root_a.mkdir()
+        root_b.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.1'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root_a.as_posix()}'\n"
+            f"    - path: '{root_b.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n"
+            "hygiene:\n"
+            "  broken_links: warn\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = make_md(
+            root_a / "doc.md",
+            "---\ntype: Reference\n---\n[Missing](/absent.md)\n",
+        )
+        diags = validate_file(f, m, base_index)
+        assert "L002" in _codes(diags)
+
 
 # ---------------------------------------------------------------------------
 # Integration: run_validate
