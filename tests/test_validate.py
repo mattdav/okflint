@@ -4,6 +4,7 @@ F101, F102, F105, F106, S102, L001-L003, S202, R201, F201)."""
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -15,9 +16,11 @@ from okflint.validate import (
     check_core_concept,
     check_core_reserved_index,
     check_core_reserved_log,
+    check_hygiene_legacy_forms,
     check_hygiene_links,
     check_hygiene_okf_v02_shapes,
     check_hygiene_reserved,
+    check_hygiene_stale_content,
     check_hygiene_structure,
     check_hygiene_unknown_fields,
     check_profile,
@@ -1104,6 +1107,184 @@ class TestOkfV02ShapesFamily:
             "",
             "warn",
             okf_version="0.1",
+        )
+        assert not diags
+
+
+# ---------------------------------------------------------------------------
+# S208 — legacy OKF v0.1 forms (timestamp, # Citations)
+# ---------------------------------------------------------------------------
+
+
+class TestS208:
+    def test_triggers_on_timestamp_not_declared_in_profile(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "timestamp": "2026-01-01"},
+            "",
+            "warn",
+            declared_okf_version="0.2",
+        )
+        assert "S208" in _codes(diags)
+
+    def test_neutralised_when_timestamp_declared_in_profile(self) -> None:
+        type_cfg = TypeConfig(
+            required=[],
+            optional=["timestamp"],
+            controlled_values={},
+            aliases=[],
+        )
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "timestamp": "2026-01-01"},
+            "",
+            "warn",
+            declared_okf_version="0.2",
+            type_cfg=type_cfg,
+        )
+        assert "S208" not in _codes(diags)
+
+    def test_silent_on_declared_okf_v01(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "timestamp": "2026-01-01"},
+            "",
+            "warn",
+            declared_okf_version="0.1",
+        )
+        assert not diags
+
+    def test_silent_with_no_manifest_declared_version(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "timestamp": "2026-01-01"},
+            "",
+            "warn",
+            declared_okf_version=None,
+        )
+        assert not diags
+
+    def test_triggers_on_citations_heading(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference"},
+            "# Citations\n\nSome source.\n",
+            "warn",
+            declared_okf_version="0.2",
+        )
+        assert "S208" in _codes(diags)
+
+    def test_passes_without_citations_heading(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference"},
+            "# Sources\n\nSome source.\n",
+            "warn",
+            declared_okf_version="0.2",
+        )
+        assert "S208" not in _codes(diags)
+
+    def test_citations_never_neutralised_by_profile(self) -> None:
+        type_cfg = TypeConfig(
+            required=[], optional=[], controlled_values={}, aliases=[]
+        )
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference"},
+            "# Citations\n",
+            "warn",
+            declared_okf_version="0.2",
+            type_cfg=type_cfg,
+        )
+        assert "S208" in _codes(diags)
+
+    def test_off_level_returns_empty(self) -> None:
+        diags = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "timestamp": "2026-01-01"},
+            "# Citations\n",
+            "off",
+            declared_okf_version="0.2",
+        )
+        assert not diags
+
+
+# ---------------------------------------------------------------------------
+# S209 — stale content (stale_after reached or passed)
+# ---------------------------------------------------------------------------
+
+
+class TestS209:
+    def test_triggers_when_evaluation_date_reaches_stale_after(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "warn",
+            evaluation_date=date(2026, 6, 1),
+        )
+        assert "S209" in _codes(diags)
+
+    def test_triggers_when_evaluation_date_passes_stale_after(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "warn",
+            evaluation_date=date(2026, 7, 1),
+        )
+        assert "S209" in _codes(diags)
+
+    def test_passes_when_evaluation_date_precedes_stale_after(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "warn",
+            evaluation_date=date(2026, 1, 1),
+        )
+        assert "S209" not in _codes(diags)
+
+    def test_evaluation_date_appears_in_message(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "warn",
+            evaluation_date=date(2026, 6, 1),
+        )
+        assert "2026-06-01" in diags[0].message
+
+    def test_silent_when_stale_after_absent(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference"},
+            "warn",
+            evaluation_date=date(2026, 6, 1),
+        )
+        assert not diags
+
+    def test_silent_when_stale_after_malformed(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "01/06/2026"},
+            "warn",
+            evaluation_date=date(2026, 6, 1),
+        )
+        assert not diags
+
+    def test_off_level_returns_empty(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "off",
+            evaluation_date=date(2026, 6, 1),
+        )
+        assert not diags
+
+    def test_no_regression_on_resolved_okf_v01(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01"},
+            "warn",
+            okf_version="0.1",
+            evaluation_date=date(2026, 6, 1),
         )
         assert not diags
 

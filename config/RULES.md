@@ -522,6 +522,71 @@ computation: /computations/refresh.md
 **Fix**: pick one of `computation` or a `# Computation` block, complete
 `executor`/`attester`/`parameters` per the contract shape above.
 
+### `S208` — legacy OKF v0.1 forms
+
+**Severity**: warning (configurable, `off` by default via
+`hygiene.legacy_forms`) · **Out-of-spec**
+
+Flags OKF v0.1 forms that v0.2 superseded ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md)
+§2): a `timestamp` field used instead of `generated.at`, and a `# Citations`
+body heading used instead of the `sources` field. The `timestamp` check is
+neutralised if `timestamp` is declared (`required` or `optional`) in the
+concept's profile type — a producer may legitimately keep the field under a
+different meaning. The `# Citations` check has no such override. Only fires
+on a base whose **declared** `okf_version` is exactly `"0.2"` — unlike the
+rest of the v0.2 shape family, this does *not* use the resolved version: a
+base with no manifest, or no declared version, resolves to `"0.2"` but must
+stay silent here, since it predates v0.2 support and never used these forms
+on purpose.
+
+```yaml
+# ❌ S208
+---
+type: Reference
+timestamp: "2026-01-01"
+---
+# Citations
+- ...
+```
+
+```yaml
+# ✅ fixed
+---
+type: Reference
+generated:
+  by: "human:matthieu"
+  at: "2026-01-01T00:00:00Z"
+sources:
+  - resource: ...
+---
+```
+
+**Fix**: replace `timestamp` with `generated.at`, replace a `# Citations`
+list with the `sources` field.
+
+### `S209` — stale content
+
+**Severity**: warning (configurable, `off` by default via
+`hygiene.stale_content`) · **Out-of-spec**
+
+Flags a concept whose `stale_after` date has been reached or passed as of
+the evaluation date ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §6). The
+evaluation date is recorded in the diagnostic message so the verdict stays
+reproducible after the fact. Malformed `stale_after` values are left to
+`S204`/`S102`, not re-reported here. Only fires on a base whose resolved
+`okf_version` is `"0.2"`.
+
+```yaml
+# ❌ S209 (if evaluated on or after 2026-06-01)
+---
+type: Reference
+stale_after: "2026-06-01"
+---
+```
+
+**Fix**: refresh the content and move `stale_after` forward, or remove it if
+the concept no longer needs a freshness bound.
+
 ---
 
 ## Quick reference
@@ -551,6 +616,8 @@ computation: /computations/refresh.md
 | `S205` | Hygiene | warning | `generated.at`/`verified[].at` not ISO datetime (v0.2) |
 | `S206` | Hygiene | warning | `generated.by`/`verified[].by` outside actor convention (v0.2) |
 | `S207` | Hygiene | warning | `Attested Computation` contract shape (v0.2) |
+| `S208` | Hygiene | warning | legacy v0.1 forms: `timestamp`, `# Citations` (v0.2) |
+| `S209` | Hygiene | warning | `stale_after` reached or passed (v0.2) |
 
 ---
 

@@ -634,3 +634,86 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - config/RULES.md
 
 ---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 5
+
+- Étape identifiée par lecture de `.claude/progress.log` (dernière entrée :
+  étape 4, commit `8440463`) puis confirmée par lecture complète de
+  `docs/specs/SPEC-002_okf-v0.2.md` et `docs/plans/PLAN-002_okf-v0.2.md`.
+  Périmètre confirmé par l'utilisateur via question de cadrage
+  (« Confirmer et lancer ») avant toute écriture de code.
+- Deux nouvelles règles hygiène, gatées différemment l'une de l'autre :
+  - `S208` (formes héritées v0.1) — nouvelle clé manifeste
+    `hygiene.legacy_forms` (défaut `off`). Deux sous-vérifications :
+    `timestamp` en frontmatter au lieu de `generated.at` (neutralisée si
+    `timestamp` figure dans le `required` ou l'`optional` du type déclaré
+    au profil — pas via `controlled_values` comme S203), et un titre
+    `# Citations` (niveau 1, exact) dans le corps au lieu de `sources`
+    (jamais neutralisée). Gatée sur la version **déclarée**
+    (`manifest.okf_version == "0.2"` strictement), pas la résolue : une
+    base sans manifeste ou sans version déclarée se résout à `"0.2"` mais
+    doit rester silencieuse, car elle précède le support v0.2 et n'a
+    jamais utilisé ces formes intentionnellement. Matrice de test à 4 cas
+    prescrite par le plan, tous couverts.
+  - `S209` (contenu périmé) — nouvelle clé manifeste
+    `hygiene.stale_content` (défaut `off`). Se déclenche quand
+    `stale_after` est présent, bien formé, et que la date d'évaluation
+    (injectable via `evaluation_date`, jamais `date.today()` en dur dans
+    les tests) atteint ou dépasse cette date. Gatée sur la version
+    **résolue**, cohérent avec le reste de la famille v0.2 (choix de
+    conception assumé, confirmé avec l'utilisateur lors du cadrage). La
+    date d'évaluation apparaît dans le `message` du diagnostic (jamais
+    dans une en-tête JSON — le schéma JSON n'est ni documenté ni
+    versionné à ce jour, décision de l'étape 2).
+  - Préalable de l'étape (distinction version déclarée / résolue) déjà
+    satisfait par l'étape 2 (`Manifest.okf_version` vs
+    `resolved_okf_version`) — vérifié par lecture, aucun nouveau champ
+    nécessaire.
+  - Vérifié par lecture d'`audit.py` : aucune modification nécessaire,
+    le chemin sans manifeste n'exécute aucune vérification hygiène
+    (même constat qu'à l'étape 4).
+  - Tests ajoutés : `TestS208` (7 cas — déclenchement `timestamp`,
+    neutralisation par profil, silence sur `"0.1"`, silence sans version
+    déclarée, déclenchement `# Citations`, non-déclenchement,
+    non-neutralisation de `# Citations` par le profil, niveau `off`),
+    `TestS209` (8 cas — déclenchement à la date pivot, déclenchement
+    après, silence avant, présence de la date dans le message, silence
+    si absent, silence si mal formé, niveau `off`, non-régression sur
+    version résolue `"0.1"`).
+  - Documentation ajoutée à `config/RULES.md` : sections `### S208` et
+    `### S209` (même style que S203-S207), deux lignes dans la table
+    Quick reference.
+  - Non-régression vérifiée explicitement (pas supposée) : fixture
+    `nonreg01` étendue avec un fichier `legacy.md` (`timestamp` +
+    `# Citations` + `stale_after` largement dépassé) et les clés
+    `hygiene.legacy_forms`/`hygiene.stale_content` activées à `warn` ;
+    avec `okf_version: "0.2"` déclaré, `S208` (x2) et `S209` se
+    déclenchent comme attendu ; avec `okf_version: "0.1"` déclaré,
+    sortie strictement identique à l'état pré-étape 5
+    (`✅ All files are OKF-conformant.`).
+  - Résultats finaux : `uv run inv lint` → zéro erreur ; `uv run inv test`
+    → 354 tests passés, couverture 95% ; `uv run okflint validate
+    --manifest manifest_okflint.yaml .` → exit 0 (le manifeste du dépôt
+    déclare toujours `okf_version: "0.1"`, non touché, conformément à la
+    règle de ne pas migrer les manifestes du dépôt avant la release).
+  - Hors périmètre, signalé et non traité :
+    - Les deux entrées stub vides de `.claude/progress.log` (sessions du
+      2026-08-28 15:43 et 17:29, produites par un hook on-stop qui
+      double mon entrée détaillée) restent non commitées dans l'arbre de
+      travail, non touchées, pour décision de l'utilisateur.
+    - La modification non commitée dans
+      `docs/plans/PLAN-002_okf-v0.2.md` (précision de doctrine
+      F201/v0.2, présente avant cette session) reste non touchée,
+      exclue de ce commit.
+- Prochaine session : PLAN-002 étape 6 (interaction `Attested
+  Computation` / F101 / F201 — application stricte sans exemption,
+  matrice à trois scénarios : sans manifeste / type déclaré au
+  manifeste / manifeste présent mais type non déclaré).
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+  - tests/test_validate.py
+  - config/RULES.md
+
+---

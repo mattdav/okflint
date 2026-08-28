@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
@@ -769,6 +770,135 @@ def check_hygiene_okf_v02_shapes(
 
 
 @beartype
+def check_hygiene_legacy_forms(
+    path: str,
+    frontmatter: dict[str, Any],
+    safe_body: str,
+    level: Literal["off", "warn", "error"],
+    *,
+    declared_okf_version: str | None = None,
+    type_cfg: TypeConfig | None = None,
+) -> list[Diagnostic]:
+    """Check for residual OKF v0.1 forms in a v0.2 base (S208).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        safe_body: Markdown body with code spans/fences blanked.
+        level: Control level (off | warn | error), from
+            `hygiene.legacy_forms`.
+        declared_okf_version: `manifest.okf_version` (the raw declared
+            value, not the resolved one). S208 must stay silent on a base
+            with no manifest or no declared version — resolving to "0.2"
+            there would flag `timestamp` fields that predate v0.2 support
+            entirely, exactly what this rule must avoid.
+        type_cfg: Resolved profile type configuration, if any. Neutralises
+            the `timestamp` sub-check when the field is declared in the
+            type's `required` or `optional` list.
+
+    Returns:
+        List of Diagnostic (S208).
+    """
+    if level == "off" or declared_okf_version != "0.2":
+        return []
+
+    severity: Literal["warning", "error"] = "warning" if level == "warn" else "error"
+    diags: list[Diagnostic] = []
+
+    timestamp_declared = type_cfg is not None and (
+        "timestamp" in type_cfg.required or "timestamp" in type_cfg.optional
+    )
+    if "timestamp" in frontmatter and not timestamp_declared:
+        diags.append(
+            Diagnostic(
+                code="S208",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message="legacy v0.1 form `timestamp` used instead of `generated.at`",
+            )
+        )
+
+    has_citations = any(
+        h.level == 1 and h.text.strip() == "Citations"
+        for h in extract_headers(safe_body)
+    )
+    if has_citations:
+        diags.append(
+            Diagnostic(
+                code="S208",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message="legacy v0.1 `# Citations` list used instead of `sources`",
+            )
+        )
+
+    return diags
+
+
+@beartype
+def check_hygiene_stale_content(
+    path: str,
+    frontmatter: dict[str, Any],
+    level: Literal["off", "warn", "error"],
+    *,
+    okf_version: str = "0.2",
+    evaluation_date: date | None = None,
+) -> list[Diagnostic]:
+    """Check whether `stale_after` has been reached or passed (S209).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        level: Control level (off | warn | error), from
+            `hygiene.stale_content`.
+        okf_version: Resolved OKF version driving the base. Defaults to
+            `"0.2"`. S209 only fires when this is `"0.2"`, consistent with
+            the rest of the OKF v0.2 shape family.
+        evaluation_date: Date to evaluate staleness against. Defaults to
+            `date.today()` when omitted; injectable so callers (and tests)
+            can obtain reproducible verdicts.
+
+    Returns:
+        List of Diagnostic (S209).
+    """
+    if level == "off" or okf_version != "0.2":
+        return []
+
+    stale_after = frontmatter.get("stale_after")
+    if not stale_after:
+        return []
+
+    val = str(stale_after)
+    if not _ISO_DATE_RE.match(val):
+        return []
+
+    eval_date = evaluation_date or date.today()
+    try:
+        stale_date = date.fromisoformat(val)
+    except ValueError:
+        return []
+
+    if eval_date < stale_date:
+        return []
+
+    severity: Literal["warning", "error"] = "warning" if level == "warn" else "error"
+    return [
+        Diagnostic(
+            code="S209",
+            tier="hygiene",
+            severity=severity,
+            file=path,
+            message=(
+                f"stale: `stale_after={val}` reached as of evaluation date "
+                f"`{eval_date.isoformat()}`"
+            ),
+        )
+    ]
+
+
+@beartype
 def check_hygiene_links(
     path: str,
     wikilinks: list[WikiLink],
@@ -1070,6 +1200,28 @@ def validate_file(
                 date_fields=(
                     manifest.profile.date_fields if manifest.profile is not None else []
                 ),
+                okf_version=manifest.resolved_okf_version,
+            )
+        )
+
+        # Legacy v0.1 forms (S208)
+        diagnostics.extend(
+            check_hygiene_legacy_forms(
+                rel,
+                fm,
+                safe_body,
+                hygiene.legacy_forms,
+                declared_okf_version=manifest.okf_version,
+                type_cfg=resolved_type_cfg,
+            )
+        )
+
+        # Stale content (S209)
+        diagnostics.extend(
+            check_hygiene_stale_content(
+                rel,
+                fm,
+                hygiene.stale_content,
                 okf_version=manifest.resolved_okf_version,
             )
         )
