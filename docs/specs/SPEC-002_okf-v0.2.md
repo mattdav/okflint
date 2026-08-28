@@ -109,13 +109,18 @@ chantier distinct.
   effet sur une base v0.1 : les règles de forme ne se déclenchent que sur les
   familles présentes, et les règles de forme héritée (§2) exigent une
   déclaration explicite de 0.2.
+- La version **résolue** (celle qui pilote les règles) et le fait que la version
+  ait été **déclarée** doivent rester distinguables. `S208` (§2) dépend de la
+  déclaration explicite, pas de la valeur résolue : les deux informations DOIVENT
+  donc être exposées séparément par le manifeste.
 - Quand le manifeste déclare `"0.1"`, okflint DEVRAIT émettre un message
   d'information — pas un diagnostic : pas de code de règle, pas d'effet sur le
   code de sortie, pas d'entrée dans la liste des violations. Formulation
   factuelle, du type « manifest targets OKF 0.1; 0.2 is the current revision ».
-  Émis une fois au chargement du manifeste, jamais par fichier. En sortie
-  `--json`, il appartient à l'en-tête de rapport, pas au tableau des
-  diagnostics.
+  Émis une fois au chargement du manifeste, jamais par fichier. Il DOIT sortir
+  sur **stderr**, dans tous les modes, y compris `--json` : stdout reste réservé
+  à la sortie exploitable, et le schéma JSON — ni documenté ni versionné à ce
+  jour — ne doit pas changer de forme pour porter un message informatif.
 
 ### 2. Les deux renommages, et leurs formes de repli
 
