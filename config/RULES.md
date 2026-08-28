@@ -90,6 +90,92 @@ title: My concept
 **Fix**: set a descriptive `type`. OKF imposes no particular value; if a profile
 is declared, see `F101`.
 
+### `F003` — `generated` present without `generated.by`
+
+**Severity**: error · **Source**: OKF v0.2, [SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §3a
+
+Optional families are never a defect when absent (OKF v0.2 conformance clause,
+§11). But when a concept *does* carry a `generated` block, the spec makes
+`generated.by` REQUIRED inside it — so a `generated` block without a `by` is a
+structural violation, not a missing option. Only fires on a base whose
+resolved `okf_version` is `"0.2"`; a base declaring `"0.1"` is validated
+exactly as before v0.2 support existed.
+
+```yaml
+# ❌ F003: generated without by
+---
+type: Reference
+generated:
+  at: "2026-01-01T00:00:00Z"
+---
+
+# ✅ fixed
+---
+type: Reference
+generated:
+  by: "human:mdaviaud"
+  at: "2026-01-01T00:00:00Z"
+---
+```
+
+**Fix**: add `generated.by`, following the actor convention (`S206`).
+
+### `F004` — `sources` entry without `resource`
+
+**Severity**: error · **Source**: OKF v0.2, [SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §3a
+
+Same principle as `F003`: `sources` is optional, but a present `sources` MUST
+be a list of mappings, and each entry MUST carry `resource`. A `sources`
+value that is not a list of mappings also triggers this code. Only fires on a
+base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ F004: entry without resource
+---
+type: Reference
+sources:
+  - id: s1
+---
+
+# ✅ fixed
+---
+type: Reference
+sources:
+  - id: s1
+    resource: /tables/customers.md
+---
+```
+
+**Fix**: give every `sources` entry a `resource`, or fix the field's shape to
+a list of mappings.
+
+### `F005` — `Attested Computation` concept without `runtime`
+
+**Severity**: error · **Source**: OKF v0.2, [SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §3a, §7
+
+`Attested Computation` is the one concept type v0.2 prescribes in the spec
+itself, not through a manifest — hardcoded in the engine exactly like
+`index.md`/`log.md` are. `runtime` is REQUIRED on that type. This check
+applies with or without a manifest loaded, and creates no exemption to
+`F101`/`F201`: a manifest that declares `Attested Computation` still must
+declare it exhaustively, and okflint still enforces its own schema on top.
+Only fires on a base whose resolved `okf_version` is `"0.2"`.
+
+```yaml
+# ❌ F005: Attested Computation without runtime
+---
+type: Attested Computation
+---
+
+# ✅ fixed
+---
+type: Attested Computation
+runtime: dbt/1.8
+---
+```
+
+**Fix**: set `runtime` on every `Attested Computation` concept.
+
 ### `R001` — Frontmatter forbidden in `index.md`
 
 **Severity**: error · **Source**: OKF §6, §11
@@ -305,6 +391,9 @@ or leave `unknown_fields: off` if the base intentionally allows free fields.
 | --- | --- | --- | --- |
 | `F001` | OKF core | error | frontmatter absent/unparsable |
 | `F002` | OKF core | error | `type` absent or empty |
+| `F003` | OKF core | error | `generated` present without `generated.by` (v0.2) |
+| `F004` | OKF core | error | `sources` entry without `resource` (v0.2) |
+| `F005` | OKF core | error | `Attested Computation` without `runtime` (v0.2) |
 | `R001` | OKF core | error | frontmatter forbidden in `index.md` |
 | `R002` | OKF core | error | non-ISO date in `log.md` |
 | `F101` | Profile | error | `type` not in declared types |

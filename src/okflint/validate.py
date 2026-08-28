@@ -40,6 +40,11 @@ _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # reserved-name set.
 DEFAULT_RESERVED_FILES: dict[str, str] = {"index": "index.md", "log": "log.md"}
 
+# OKF v0.2's one spec-prescribed concept type (SPEC-002 §7): hardcoded in the
+# engine rather than manifest-declared, exactly like the reserved file names
+# above are — the vocabulary comes from the spec, not from a producer.
+_ATTESTED_COMPUTATION_TYPE = "Attested Computation"
+
 # Re-export for importers (cli.py, audit.py)
 __all__ = [
     "DEFAULT_RESERVED_FILES",
@@ -70,15 +75,23 @@ class Diagnostic:
 def check_core_concept(
     path: str,
     frontmatter: dict[str, Any] | None,
+    *,
+    okf_version: str = "0.2",
 ) -> list[Diagnostic]:
     """Check OKF core rules on a concept file.
 
     Args:
         path: Relative file path (for messages).
         frontmatter: Parsed frontmatter, or None if absent/invalid.
+        okf_version: Resolved OKF version driving the base (see
+            ``Manifest.resolved_okf_version``). Defaults to ``"0.2"``,
+            matching the engine's default when no manifest is loaded
+            (SPEC-002 §1). F003/F004/F005 only fire when this is ``"0.2"``:
+            a base declaring ``"0.1"`` must be validated exactly as before
+            v0.2 support was added.
 
     Returns:
-        List of Diagnostic (F001, F002).
+        List of Diagnostic (F001, F002, and — on v0.2 — F003, F004, F005).
     """
     diags: list[Diagnostic] = []
 
@@ -93,7 +106,7 @@ def check_core_concept(
                 message="frontmatter absent or unparsable",
             )
         )
-        return diags  # F002 impossible without frontmatter
+        return diags  # F002-F005 impossible without frontmatter
 
     # F002: type field absent or empty
     if "type" not in frontmatter or str(frontmatter["type"]).strip() == "":
@@ -106,6 +119,69 @@ def check_core_concept(
                 message="`type` field absent or empty",
             )
         )
+
+    if okf_version != "0.2":
+        return diags
+
+    # F003: `generated` present without `generated.by` (SPEC-002 §3a)
+    if "generated" in frontmatter:
+        generated = frontmatter["generated"]
+        by = generated.get("by") if isinstance(generated, dict) else None
+        if not by or str(by).strip() == "":
+            diags.append(
+                Diagnostic(
+                    code="F003",
+                    tier="core",
+                    severity="error",
+                    file=path,
+                    message="`generated` present without `generated.by`",
+                )
+            )
+
+    # F004: `sources` entries without `resource` (SPEC-002 §3a)
+    if "sources" in frontmatter:
+        sources = frontmatter["sources"]
+        if not isinstance(sources, list) or not all(
+            isinstance(entry, dict) for entry in sources
+        ):
+            diags.append(
+                Diagnostic(
+                    code="F004",
+                    tier="core",
+                    severity="error",
+                    file=path,
+                    message="`sources` must be a list of mappings",
+                )
+            )
+        else:
+            for index, entry in enumerate(sources):
+                resource = entry.get("resource")
+                if not resource or str(resource).strip() == "":
+                    diags.append(
+                        Diagnostic(
+                            code="F004",
+                            tier="core",
+                            severity="error",
+                            file=path,
+                            message=f"`sources[{index}]` missing `resource`",
+                        )
+                    )
+
+    # F005: `Attested Computation` concept without `runtime` (SPEC-002 §3a, §7)
+    if str(frontmatter.get("type", "")).strip() == _ATTESTED_COMPUTATION_TYPE:
+        runtime = frontmatter.get("runtime")
+        if not runtime or str(runtime).strip() == "":
+            diags.append(
+                Diagnostic(
+                    code="F005",
+                    tier="core",
+                    severity="error",
+                    file=path,
+                    message=(
+                        f"`{_ATTESTED_COMPUTATION_TYPE}` concept without `runtime`"
+                    ),
+                )
+            )
 
     return diags
 
@@ -643,7 +719,7 @@ def validate_file(
     diagnostics: list[Diagnostic] = []
 
     # OKF core
-    core_diags = check_core_concept(rel, fm)
+    core_diags = check_core_concept(rel, fm, okf_version=manifest.resolved_okf_version)
     diagnostics.extend(core_diags)
 
     # If F001 or F002 → skip subsequent stages

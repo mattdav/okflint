@@ -68,6 +68,115 @@ class TestF002:
 
 
 # ---------------------------------------------------------------------------
+# F003 — `generated` present without `generated.by`
+# ---------------------------------------------------------------------------
+
+
+class TestF003:
+    def test_triggers_on_generated_without_by(self) -> None:
+        diags = check_core_concept(
+            "test.md",
+            {"type": "Reference", "generated": {"at": "2026-01-01T00:00:00Z"}},
+        )
+        assert "F003" in _codes(diags)
+
+    def test_triggers_on_generated_not_a_mapping(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Reference", "generated": "reference_agent/1.0"}
+        )
+        assert "F003" in _codes(diags)
+
+    def test_passes_with_generated_by_present(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Reference", "generated": {"by": "human:mdaviaud"}}
+        )
+        assert "F003" not in _codes(diags)
+
+    def test_absent_generated_produces_nothing(self) -> None:
+        diags = check_core_concept("test.md", {"type": "Reference"})
+        assert "F003" not in _codes(diags)
+
+    def test_does_not_fire_on_okf_version_01(self) -> None:
+        diags = check_core_concept(
+            "test.md",
+            {"type": "Reference", "generated": {"at": "2026-01-01T00:00:00Z"}},
+            okf_version="0.1",
+        )
+        assert "F003" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# F004 — `sources` entry without `resource`
+# ---------------------------------------------------------------------------
+
+
+class TestF004:
+    def test_triggers_on_entry_without_resource(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Reference", "sources": [{"id": "s1"}]}
+        )
+        assert "F004" in _codes(diags)
+
+    def test_triggers_on_non_list_shape(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Reference", "sources": "not-a-list"}
+        )
+        assert "F004" in _codes(diags)
+
+    def test_triggers_on_entry_not_a_mapping(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Reference", "sources": ["not-a-mapping"]}
+        )
+        assert "F004" in _codes(diags)
+
+    def test_passes_with_resource_present(self) -> None:
+        diags = check_core_concept(
+            "test.md",
+            {"type": "Reference", "sources": [{"id": "s1", "resource": "/a.md"}]},
+        )
+        assert "F004" not in _codes(diags)
+
+    def test_absent_sources_produces_nothing(self) -> None:
+        diags = check_core_concept("test.md", {"type": "Reference"})
+        assert "F004" not in _codes(diags)
+
+    def test_does_not_fire_on_okf_version_01(self) -> None:
+        diags = check_core_concept(
+            "test.md",
+            {"type": "Reference", "sources": [{"id": "s1"}]},
+            okf_version="0.1",
+        )
+        assert "F004" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# F005 — `Attested Computation` concept without `runtime`
+# ---------------------------------------------------------------------------
+
+
+class TestF005:
+    def test_triggers_on_missing_runtime(self) -> None:
+        diags = check_core_concept("test.md", {"type": "Attested Computation"})
+        assert "F005" in _codes(diags)
+
+    def test_passes_with_runtime_present(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Attested Computation", "runtime": "dbt/1.8"}
+        )
+        assert "F005" not in _codes(diags)
+
+    def test_absent_type_produces_nothing(self) -> None:
+        diags = check_core_concept("test.md", {"type": "Reference"})
+        assert "F005" not in _codes(diags)
+
+    def test_does_not_fire_on_okf_version_01(self) -> None:
+        diags = check_core_concept(
+            "test.md", {"type": "Attested Computation"}, okf_version="0.1"
+        )
+        assert "F005" not in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
 # R001 — frontmatter forbidden in index.md
 # ---------------------------------------------------------------------------
 

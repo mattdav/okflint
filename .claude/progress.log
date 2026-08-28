@@ -483,3 +483,68 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - tests/test_manifest.py
 
 ---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 3
+
+- Traité l'étape 3 de PLAN-002 : « Règles de cœur conditionnelles — F003,
+  F004, F005 ». Étape 2 marquée complète dans ce log → étape 3 par défaut.
+- Périmètre confirmé avec l'utilisateur avant écriture de code (règle 1).
+- `check_core_concept` (`validate.py`) étendu avec un paramètre
+  `okf_version: str = "0.2"` : les trois règles ne se déclenchent que si
+  cette valeur résolue vaut `"0.2"`, jamais sur `"0.1"` — exigence explicite
+  du spec §1 (« une base déclarant 0.1 DOIT être validée exactement comme
+  aujourd'hui »). Le défaut `"0.2"` correspond au comportement du moteur en
+  l'absence de manifeste (chemin `audit.py` sans manifeste, inchangé).
+  `validate_file` câble `okf_version=manifest.resolved_okf_version`.
+- `F003` : `generated` présent (ou toute valeur non-mapping sous cette clé)
+  sans `by` → erreur. `F004` : `sources` qui n'est pas une liste de mappings,
+  ou une entrée sans `resource` → erreur (une entrée par diagnostic).
+  `F005` : concept `type: Attested Computation` sans `runtime` → erreur.
+  Toutes trois tier `core`, conditionnelles à la présence de la structure
+  (une famille absente ne produit jamais rien, conformément à l'interdiction
+  du §11 de rejeter une famille optionnelle absente).
+- `_ATTESTED_COMPUTATION_TYPE` introduit comme constante module-level dans
+  `validate.py`, documentée comme vocabulaire codé en dur par la spec (au
+  même titre que `index.md`/`log.md`), pas par le manifeste — cf. spec §7.
+  Seul `F005` l'utilise à ce stade ; le reste de §7 (parameters/executor/
+  attester, interaction F101/F201) relève des étapes 4 et 6, non traité ici.
+- Tests ajoutés dans `test_validate.py` : un déclenchant + un non déclenchant
+  par règle, plus une famille absente → rien, plus un test explicite par
+  règle confirmant l'absence de déclenchement quand `okf_version="0.1"`.
+- Doc : `config/RULES.md` complété avec les trois nouvelles entrées (code,
+  étage, sévérité, source spec, exemple non conforme/conforme, fix) et la
+  table de référence rapide — sans la renumérotation complète des sections,
+  réservée à l'étape 7 par le plan.
+- Non-régression vérifiée explicitement (pas supposée) : fixture ad hoc
+  (hors dépôt) avec `okf_version: "0.1"` et des concepts portant les trois
+  formes malformées (`generated` sans `by`, entrée `sources` sans
+  `resource`, `Attested Computation` sans `runtime`) → `exit 0`, aucun
+  F003/F004/F005, identique au comportement pré-étape-3. La même fixture en
+  `okf_version: "0.2"` déclenche bien les trois codes → confirme que le
+  gating fonctionne dans les deux sens, pas seulement par défaut permissif.
+- Vérifié : `inv lint` (0 issue), `inv test` (313 passed, 95% ≥ 93%),
+  `okflint validate --manifest manifest_okflint.yaml .` (exit 0, sortie
+  inchangée hors la ligne d'info déjà présente depuis l'étape 2).
+- Hors périmètre, signalé et non traité :
+  - Deux modifications non commitées trouvées dans l'arbre de travail au
+    début de cette session, non produites par cette étape : (a) un ajout
+    dans `docs/specs/SPEC-002_okf-v0.2.md` (précision « version résolue vs
+    déclarée » + clarification stderr-only) qui documente une décision de
+    l'étape 2 mais n'avait pas été commitée avec `3cd8a45` ; (b) une entrée
+    de log vide/incomplète « Session du 2026-08-28 15:43 — okflint »
+    (mêmes fichiers que l'étape 2, aucun corps) juste après l'entrée de
+    l'étape 2 dans ce fichier, ressemblant à un artefact du hook on-stop.
+    Aucune des deux n'a été touchée ni intégrée à ce commit (périmètre
+    strict de l'étape 3) ; laissées telles quelles dans l'arbre de travail
+    pour décision de l'utilisateur.
+- Prochaine session : PLAN-002 étape 4 (règles d'hygiène de forme S203 à
+  S207, nouvelle clé manifeste `hygiene.okf_v02_shapes` — voir le plan pour
+  le détail exact, notamment la neutralisation de S203 par `status_values`
+  et la forme abrégée de `verified`).
+
+**Fichiers modifiés :**
+  - src/okflint/validate.py
+  - tests/test_validate.py
+  - config/RULES.md
+
+---
