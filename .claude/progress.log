@@ -717,3 +717,79 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - config/RULES.md
 
 ---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 6
+
+**Étape :** Le type `Attested Computation` — vérification stricte de
+l'absence d'exemption pour F101 (profil) et F201 (hygiène), conforme à
+SPEC-002 §7. Étape explicitement annoncée par le plan comme
+"probablement sans code de production" : aucune règle nouvelle, F005
+étant déjà implémenté à l'étape 3.
+
+- Vérifications par lecture (pas d'hypothèse) avant tout code :
+  - `_resolve_type`/`check_profile` (F101, validate.py) : résolution
+    purement générique (exact / insensible à la casse / alias contre
+    `profile.types`), aucun cas spécial pour `Attested Computation`.
+  - `check_hygiene_unknown_fields` (F201, validate.py) : différence
+    d'ensembles purement générique (`required | optional | {"type"}`),
+    aucune exemption.
+  - `check_core_concept` (F005) : gating uniquement sur
+    `okf_version == "0.2"`, indépendant de la présence d'un manifeste —
+    conforme au scénario 1 de SPEC-002 §7 (aucun manifeste → seul le
+    contrôle de cœur s'applique).
+  - `audit.py::run_audit`, branche sans manifeste : appelle
+    `check_core_concept` sans `okf_version` explicite (défaut `"0.2"`),
+    confirmant F005 seul en l'absence de manifeste, sans F101 possible
+    (F101 nécessite un profil, donc un manifeste).
+  - Seul point signalé par le plan comme susceptible de révéler un
+    défaut réel : un fichier `.md` référencé via `computation:` /
+    `executor.resource` / `attester.resource`, s'il vit dans une racine
+    scannée, est-il traité à tort comme un concept OKF ? Vérifié via
+    `scanner.py` et `validate.py::run_validate` (boucle `target.rglob
+    ("*.md")`) : tout `.md` sous une racine scannée est balayé sans
+    distinction, seule exemption existante étant `dispatch_reserved_file`
+    pour `index.md`/`log.md`. Un tel fichier sans frontmatter
+    déclencherait F001 — comportement générique préexistant du scanner,
+    non spécifique à `Attested Computation`, non demandé par SPEC-002 §7
+    (qui ne demande pas au moteur de distinguer ces fichiers). **Aucun
+    défaut réel identifié, aucun changement de code de production.**
+- Tests ajoutés (matrice à trois scénarios, SPEC-002 §7) :
+  - `tests/test_audit.py::TestRunAudit...
+    test_manifest_less_attested_computation_triggers_f005_only` :
+    sans manifeste, `Attested Computation` sans `runtime` → `F005`
+    seul, `F101` absent (impossible sans profil).
+  - `tests/test_validate.py::TestAttestedComputationExemptionMatrix` :
+    - `test_undeclared_type_gets_f101_and_f005_together` : manifeste à
+      liste de types fermée n'incluant pas `Attested Computation` +
+      concept du type sans `runtime` → `F101` (erreur) ET `F005`
+      (erreur) se déclenchent ensemble, aucune exemption.
+    - `test_declared_type_gets_normal_profile_stacking_no_exemption_needed` :
+      manifeste déclarant `Attested Computation` dans son profil +
+      concept avec `runtime` → conformant, empilement normal, ni `F101`
+      ni `F005`.
+- Non-régression vérifiée explicitement (pas supposée) : fixture
+  `nonreg01` (inchangée pour cette étape, `okf_version: "0.1"` déclaré)
+  → sortie strictement identique à l'état pré-étape 6
+  (`✅ All files are OKF-conformant.`, exit 0).
+- Résultats finaux : `uv run inv lint` → zéro erreur ; `uv run inv test`
+  → 357 tests passés, couverture 95% ; `uv run okflint validate
+  --manifest manifest_okflint.yaml .` → exit 0 (manifeste du dépôt
+  toujours `okf_version: "0.1"`, non touché).
+- Hors périmètre, signalé et non traité :
+  - Le contenu historique non commité de `.claude/progress.log`
+    (entrées stub produites par le hook on-stop) reste non touché, pour
+    décision de l'utilisateur.
+  - La modification non commitée dans
+    `docs/plans/PLAN-002_okf-v0.2.md` (précision de doctrine F201/v0.2)
+    reste non touchée, exclue de ce commit.
+- Prochaine session : PLAN-002 étape 7 (documentation finale —
+  `config/RULES.md` table complète et renumérotation des sections,
+  exemple de manifeste `okf_version: "0.2"`, retrait de la mention de
+  la commande fix du README, statuts SPEC-002/PLAN-002 → `implemented`/
+  `done`, retrait de la Track F de la ROADMAP).
+
+**Fichiers modifiés :**
+  - tests/test_audit.py
+  - tests/test_validate.py
+
+---

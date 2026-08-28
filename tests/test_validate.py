@@ -1439,6 +1439,90 @@ class TestValidateFile:
 
 
 # ---------------------------------------------------------------------------
+# `Attested Computation` — no-exemption matrix (SPEC-002 §7)
+#
+# F101 (profile, undeclared type) and F201 (hygiene, unknown fields) must
+# never treat `Attested Computation` specially: a manifest that does not
+# declare the type must still reject it like any other undeclared type,
+# on top of (not instead of) F005 (core). A manifest that does declare it
+# gets normal profile stacking, no special-casing either way.
+# ---------------------------------------------------------------------------
+
+
+class TestAttestedComputationExemptionMatrix:
+    def test_undeclared_type_gets_f101_and_f005_together(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.2'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n"
+            "profile:\n"
+            "  types:\n"
+            "    Reference:\n"
+            "      required: [type]\n"
+            "      optional: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = make_md(
+            root / "computation.md",
+            "---\ntype: Attested Computation\n---\n# Computation\n",
+        )
+        diags = validate_file(f, m, base_index)
+        codes = _codes(diags)
+        assert "F101" in codes
+        assert "F005" in codes
+
+    def test_declared_type_gets_normal_profile_stacking_no_exemption_needed(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        manifest_path.write_text(
+            "okf_version: '0.2'\n"
+            "base:\n"
+            "  name: test-base\n"
+            "  roots:\n"
+            f"    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n"
+            "    index: index.md\n"
+            "    log: log.md\n"
+            "profile:\n"
+            "  types:\n"
+            "    Attested Computation:\n"
+            "      required: [type]\n"
+            "      optional: [runtime]\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = make_md(
+            root / "computation.md",
+            "---\ntype: Attested Computation\nruntime: python3.12\n---\n"
+            "# Computation\n",
+        )
+        diags = validate_file(f, m, base_index)
+        codes = _codes(diags)
+        assert "F101" not in codes
+        assert "F005" not in codes
+
+
+# ---------------------------------------------------------------------------
 # Integration: run_validate
 # ---------------------------------------------------------------------------
 

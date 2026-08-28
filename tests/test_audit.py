@@ -235,6 +235,26 @@ class TestRunAudit:
         report = run_audit(bundle, bundle)
         assert report["diagnostics_summary"]["by_code"].get("F001") == 1
 
+    def test_manifest_less_attested_computation_triggers_f005_only(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        """SPEC-002 §7 scenario 1: no manifest means no profile, so only
+        the core check (F005) applies — F101 cannot fire without a
+        profile to declare types against."""
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        make_md(
+            bundle / "computation.md",
+            "---\ntype: Attested Computation\n---\n# Computation\n",
+        )
+        report = run_audit(bundle, bundle)
+        by_code = report["diagnostics_summary"]["by_code"]
+        assert by_code.get("F005") == 1
+        assert "F101" not in by_code
+
     def test_manifest_less_non_root_index_with_frontmatter_triggers_r001(
         self,
         tmp_path: Path,
