@@ -120,9 +120,12 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
   manifeste). Sous un manifeste v0.1, ce sont les règles de profil (`F102`,
   `F105`, `S102`) qui tiennent l'utilisateur à ses engagements, plus le message
   INFO. Conséquence à documenter dans `RULES.md` : sous un manifeste v0.1, une
-  famille v0.2 employée sans être déclarée n'est contrôlée par rien, `F201`
-  étant `off` par défaut. C'est voulu, et c'est ce que le message INFO invite à
-  corriger.
+  famille v0.2 employée sans être déclarée n'est contrôlée par rien **par
+  défaut** — `F201` étant `off`. Un manifeste qui passe `unknown_fields: error`
+  la fait bien remonter, mais sur le fait qu'elle n'est pas déclarée, jamais sur
+  sa conformité à la spec 0.2 : l'utilisateur est renvoyé à son manifeste, pas à
+  la spec. C'est la doctrine appliquée jusqu'au bout, et c'est ce que le message
+  INFO invite à corriger.
 - Action :
   - `S203` : `status` hors de `draft | stable | deprecated`. **Ne se déclenche
     pas** si le manifeste déclare un `status_values` pour le type du concept —
@@ -167,23 +170,51 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
 
 - Fichiers cibles : moteur de règles + `manifest.py` (clés `legacy_forms`,
   `stale_content`)
+- **Préalable.** `S208` dépend de la version **déclarée**, pas de la version
+  résolue. Vérifier en ouverture que l'étape 2 a bien conservé l'information
+  « la clé `okf_version` était présente » à côté de `resolved_okf_version` ;
+  l'ajouter ici sinon. Sans elle, une base sans manifeste — résolue à `"0.2"` —
+  signalerait ses `timestamp`, exactement ce que la règle doit éviter.
 - Action :
   - `S208` : `timestamp` au lieu de `generated.at`, ou liste `# Citations` dans
     le corps au lieu du champ `sources`. **Ne se déclenche que si la base
     déclare explicitement `okf_version: "0.2"`** — jamais sur la version
     supposée par défaut, sans quoi toutes les bases existantes se mettraient à
     signaler du jour au lendemain.
+    **Neutralisation par le profil** : la règle ne se déclenche pas sur
+    `timestamp` si ce champ figure dans le `required` ou l'`optional` d'un type
+    déclaré au manifeste. Même raisonnement que `S203` — quand le producteur a
+    déclaré le champ, son contrat l'emporte, et le `timestamp` qu'il déclare
+    n'est pas celui de la spec (date de rédaction, pas horodatage de
+    génération). Sans cette neutralisation, la migration des manifestes du
+    dépôt vers `"0.2"` remonterait chaque `Spec`, `Plan` et `Fix` de tous les
+    projets. La règle garde son cas cible : une base migrée depuis v0.1 qui
+    traîne des `timestamp` non déclarés.
+    La détection de `# Citations` DOIT être code-fence aware : un titre à
+    l'intérieur d'un bloc de code ne compte pas.
   - `S209` : concept dont `stale_after` est atteint ou dépassé à la date
     d'exécution. La **date d'évaluation** doit figurer dans la sortie texte et
-    dans le JSON — c'est ce qui rend un verdict reproductible a posteriori.
+    dans le JSON — c'est ce qui rend un verdict reproductible a posteriori. Elle
+    va **dans le message du diagnostic**, jamais dans un en-tête : le schéma JSON
+    ne bouge pas (décision de l'étape 2).
 - Les deux règles acceptent `off | warn | error` comme les autres.
 - Vérification : `S209` testée avec une date injectée, jamais avec `date.today()`
-  en dur dans le test.
+  en dur dans le test. `S208` testée sur quatre cas : déclaré `"0.2"` sans
+  `timestamp` déclaré (déclenche), déclaré `"0.2"` avec `timestamp` déclaré au
+  profil (silence), déclaré `"0.1"` (silence), aucun manifeste (silence).
 - Commit `feat:`
 
 ### 6. Le type `Attested Computation`
 
-- Fichiers cibles : moteur de règles
+**Nature de l'étape.** `F005` a été implémentée à l'étape 3 et la consigne
+« aucune exemption » se vérifie plutôt qu'elle ne s'écrit : cette étape est
+probablement sans code de production. Si c'est le constat, le commit est un
+`test:`, pas un `feat:`. **Ne pas fabriquer de code pour justifier un commit** —
+un rapport disant « rien à coder, voici les tests qui le prouvent » est le résultat
+attendu.
+
+- Fichiers cibles : tests ; moteur de règles seulement si le dernier point
+  ci-dessous révèle un défaut réel
 - Action :
   - Le type est connu du moteur pour la seule règle de cœur `F005` (étape 3) :
     un concept portant `type: Attested Computation` doit porter `runtime`. Ce
@@ -196,7 +227,9 @@ famille absente n'est jamais un défaut : §11 de la spec l'interdit expliciteme
     bundle utilise.
   - Les cibles de `computation`, `executor.resource` et `attester.resource` ne
     sont **pas** des concepts OKF : ne pas les scanner, ne pas exiger leur
-    existence, ne pas leur appliquer `F001`/`F002`.
+    existence, ne pas leur appliquer `F001`/`F002`. **Seul point susceptible de
+    révéler du code manquant** : vérifier le cas d'un `computation` pointant vers
+    un `.md`, qui serait autrement ramassé par le scan et traité comme concept.
 - Vérification : test avec manifeste à liste de types fermée + concept
   `Attested Computation` → un `F101` en erreur, et `F005` s'applique quand même.
   Test sans manifeste + même concept → `F005` seul, aucun `F101`.
