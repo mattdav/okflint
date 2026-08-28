@@ -317,3 +317,22 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - .cruft.json (nouveau)
 
 ---
+
+## Session du 2026-08-28 09:59 — okflint
+
+- Terminé la mission « aligner okflint sur project_template » (7 sous-tâches, commits séparés en anglais).
+- Sous-tâche 5 (0425261) : aligné manifest_okflint.yaml sur manifest_project_template.yaml (exclude_patterns, champs requis Spec/Fix/Plan, status/severity_values), exclusion délibérée de WikiPage.
+- Sous-tâche 6 (4952df6) : aplati docs/code/sphinx/ vers docs/code/, généré les pages API automatiquement via un hook builder-inited (conf.py), supprimé l'orphelin mort docs/code/source/.
+- Sous-tâche 7 (d4d6381) : cruft link vers project_template (commit 2a80160), avec overrides _python_version=3.12 et use_wiki=no.
+- Vérifié la mission complète : inv lint, inv test (276 passed, 94%), inv docs (-W --keep-going), okflint validate, cruft check — tous verts.
+- Ajouté l'entrée de session dans .claude/progress.log du projet (commit df2fb32).
+
+**Fichiers modifiés :**
+  - docs/code/conf.py
+  - docs/code/sphinx/conf.py
+  - tasks.py
+  - tests/conftest.py
+  - tests/test_audit.py
+  - tests/test_manifest.py
+
+---

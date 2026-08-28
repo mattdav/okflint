@@ -27,3 +27,15 @@ donc chargé automatiquement dans le contexte de chaque session.
 ## 2026-06-28 — La logique de résolution manifest/bundle/vault appartient à _cmd_audit (cli.py), pas à run_audit (audit.py)
 
 **Rationale :** Invariant architectural explicite : run_audit est une fonction pure sans effet sur les args CLI.
+
+### 2026-08-28 — manifest_okflint.yaml n'importe pas le type WikiPage du template
+
+**Rationale :** okflint n'a aucune fonctionnalité wiki/ingestion — vérifié par grep exhaustif, seuls des wikilinks Obsidian existent dans le code. Importer WikiPage aurait été du scaffolding spéculatif.
+
+### 2026-08-28 — Les pages API Sphinx sont générées automatiquement (sphinx-apidoc via hook builder-inited dans conf.py) plutôt que hand-written et committées
+
+**Rationale :** CI invoque sphinx-build directement, en contournant toute génération qui ne dépendrait que de `inv docs` — le hook garantit qu'aucun build ne publie une doc API amputée. Vérifié que les docstrings de modules contiennent déjà une information équivalente ou supérieure aux .rst manuscrits supprimés.
+
+### 2026-08-28 — cruft link utilise des overrides de contexte explicites (_python_version=3.12, use_wiki=no) plutôt que les défauts du template (3.13, no par défaut)
+
+**Rationale :** Le contexte cruft doit refléter l'identité réelle du projet pour que les futurs `cruft update` calculent des diffs corrects — _python_version doit matcher requires-python/mypy réels, use_wiki doit rester cohérent avec l'exclusion de WikiPage.
