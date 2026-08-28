@@ -10,7 +10,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from okflint.cli import _cmd_audit, _cmd_validate, build_parser, main
+from okflint.cli import (
+    _cmd_audit,
+    _cmd_validate,
+    _cmd_validate_manifest,
+    build_parser,
+    main,
+)
 
 
 def _write_manifest(path: Path, roots: list[Path]) -> None:
@@ -322,6 +328,147 @@ class TestCmdValidateNoTargets:
         parser = build_parser()
         args = parser.parse_args(["validate", "--manifest", str(manifest_path)])
         assert _cmd_validate(args) == 1
+
+
+# ---------------------------------------------------------------------------
+# _cmd_validate-manifest
+# ---------------------------------------------------------------------------
+
+
+class TestBuildParserValidateManifest:
+    def test_subcommand_parsed(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", "m.yaml"])
+        assert args.command == "validate-manifest"
+        assert args.manifest == "m.yaml"
+        assert args.json_output is False
+
+    def test_json_flag(self) -> None:
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", "--json", "m.yaml"])
+        assert args.json_output is True
+
+
+class TestCmdValidateManifest:
+    def test_valid_manifest_exit_0(
+        self,
+        minimal_manifest: tuple[Path, Path],
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        manifest_path, _root = minimal_manifest
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", str(manifest_path)])
+        assert _cmd_validate_manifest(args) == 0
+        assert capsys.readouterr().out.strip() == "valid"
+
+    def test_valid_manifest_json(
+        self,
+        minimal_manifest: tuple[Path, Path],
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        manifest_path, _root = minimal_manifest
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", "--json", str(manifest_path)])
+        assert _cmd_validate_manifest(args) == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert payload == {"valid": True, "errors": []}
+
+    def test_valid_manifest_does_not_scan_base(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # base.roots points at a directory that does not exist on disk:
+        # validate-manifest must not fail on that, since it never scans it.
+        missing_root = tmp_path / "does-not-exist"
+        manifest_path = tmp_path / "m.yaml"
+        manifest_path.write_text(
+            f"base:\n  roots:\n    - path: '{missing_root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n",
+            encoding="utf-8",
+        )
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", str(manifest_path)])
+        assert _cmd_validate_manifest(args) == 0
+        assert capsys.readouterr().out.strip() == "valid"
+
+    def test_missing_file_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        parser = build_parser()
+        args = parser.parse_args(
+            ["validate-manifest", str(tmp_path / "nonexistent.yaml")]
+        )
+        assert _cmd_validate_manifest(args) == 2
+        assert "Cannot read" in capsys.readouterr().out
+
+    def test_invalid_yaml_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        f = tmp_path / "bad.yaml"
+        f.write_text("key: [unclosed\n", encoding="utf-8")
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", str(f)])
+        assert _cmd_validate_manifest(args) == 2
+        assert "Invalid YAML" in capsys.readouterr().out
+
+    def test_missing_base_key_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        f = tmp_path / "m.yaml"
+        f.write_text("okf_version: '0.1'\n", encoding="utf-8")
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", str(f)])
+        assert _cmd_validate_manifest(args) == 2
+        assert "'base' absent" in capsys.readouterr().out
+
+    def test_empty_roots_exit_2_json(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            "base:\n  roots: []\n  reserved_files:\n"
+            "    index: index.md\n    log: log.md\n",
+            encoding="utf-8",
+        )
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", "--json", str(f)])
+        assert _cmd_validate_manifest(args) == 2
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["valid"] is False
+        assert "roots must be a non-empty list" in payload["errors"][0]
+
+    def test_required_optional_overlap_exit_2(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Decision:\n"
+            "      required: [type, statut]\n"
+            "      optional: [statut]\n"
+            "      statut_values: [Accepté]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        parser = build_parser()
+        args = parser.parse_args(["validate-manifest", str(f)])
+        assert _cmd_validate_manifest(args) == 2
+        assert "required and optional" in capsys.readouterr().out
 
     def test_bad_manifest_no_targets_exit_2(self, tmp_path: Path) -> None:
         bad_manifest = tmp_path / "bad.yaml"

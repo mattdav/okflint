@@ -23,12 +23,14 @@ to a standard — just as code is by a linter. `okflint` verifies, in a
 **deterministic, reproducible, LLM-free** way, that Markdown documents conform to
 an OKF standard declared in a YAML manifest.
 
-Three commands:
+Four commands:
 
 - **`okflint audit`** — inventory and descriptive diagnostic of a base (statistics,
   broken links, split candidates). Always `exit 0`.
 - **`okflint validate`** — normative compliance gate. `exit 0` if conformant,
   `exit 1` otherwise. Designed for pre-commit hooks and CI.
+- **`okflint validate-manifest`** — validates an OKF manifest's structure alone,
+  without scanning the base it declares. `exit 0` if valid, `exit 2` otherwise.
 - **`okflint index`** — generates OKF §6-conformant `index.md` files. Dry-run
   (diff only) by default, writes only with `--apply`.
 
@@ -277,6 +279,40 @@ and the exit code is the maximum across all bundles.
 # .git/hooks/pre-commit
 okflint validate --manifest okf-base.yaml docs/ || exit 1
 ```
+
+---
+
+### `okflint validate-manifest` — Validate a manifest alone
+
+`validate-manifest` exposes the structural validation `load_manifest` already
+performs as a side effect of the other commands, as a standalone command with
+readable output and a dedicated exit code. It does not scan any file of the
+base: `base.roots` need not exist on disk.
+
+```bash
+# Human-readable
+okflint validate-manifest okf-base.yaml
+
+# Machine-readable JSON output
+okflint validate-manifest --json okf-base.yaml
+```
+
+**Options:**
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `<manifest>` | yes | — | Path to the OKF manifest YAML file |
+| `--json` | no | — | JSON output instead of human-readable text |
+
+**Exit codes:**
+
+| Code | Meaning |
+| --- | --- |
+| `0` | The manifest is valid |
+| `2` | The manifest is invalid or unreadable |
+
+There is no `exit 1`: no base is scanned, so no content non-conformance is
+possible.
 
 ---
 

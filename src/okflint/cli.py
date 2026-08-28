@@ -1,9 +1,10 @@
 """Unified CLI entry point for okflint.
 
-Exposes three sub-commands Ruff-style:
-    okflint audit     — inventory and descriptive diagnostic of a base
-    okflint validate  — normative compliance gate (exit 0/1)
-    okflint index     — generate OKF §6 index.md files (dry-run by default)
+Exposes four sub-commands Ruff-style:
+    okflint audit              — inventory and descriptive diagnostic of a base
+    okflint validate           — normative compliance gate (exit 0/1)
+    okflint validate-manifest  — validate a manifest alone (exit 0/2, no base scan)
+    okflint index              — generate OKF §6 index.md files (dry-run by default)
 """
 
 from __future__ import annotations
@@ -569,6 +570,39 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return code_orig
 
 
+def _cmd_validate_manifest(args: argparse.Namespace) -> int:
+    """Execute the validate-manifest sub-command.
+
+    Validates the structure of an OKF manifest on its own, via the same
+    checks ``load_manifest`` already runs as a side effect of the other
+    commands. Does not scan any file of the base: ``base.roots`` need not
+    exist on disk.
+
+    Args:
+        args: argparse Namespace (manifest, json_output).
+
+    Returns:
+        Exit code (0 if the manifest is valid, 2 otherwise).
+    """
+    try:
+        load_manifest(Path(args.manifest))
+    except ManifestError as exc:
+        errors = [str(exc)]
+        if args.json_output:
+            payload = {"valid": False, "errors": errors}
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            for error in errors:
+                print(error)
+        return 2
+
+    if args.json_output:
+        print(json.dumps({"valid": True, "errors": []}, indent=2, ensure_ascii=False))
+    else:
+        print("valid")
+    return 0
+
+
 def _cmd_index(args: argparse.Namespace) -> int:
     """Execute the index sub-command (OKF §6 index.md generation).
 
@@ -703,6 +737,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Files or directories to validate (default: all manifest roots).",
     )
     p_validate.set_defaults(func=_cmd_validate)
+
+    # -- validate-manifest ------------------------------------------------------
+    p_validate_manifest = subparsers.add_parser(
+        "validate-manifest",
+        help="Validate an OKF manifest's structure alone (exit 0/2, no base scan).",
+    )
+    p_validate_manifest.add_argument(
+        "manifest",
+        help="Path to the OKF manifest YAML file.",
+    )
+    p_validate_manifest.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        help="JSON output (for CI).",
+    )
+    p_validate_manifest.set_defaults(func=_cmd_validate_manifest)
 
     # -- index ------------------------------------------------------------------
     p_index = subparsers.add_parser(
