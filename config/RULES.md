@@ -196,8 +196,7 @@ status: in-progress
 If a type declares `aliases`, an alternative spelling is tolerated on reading
 but flagged for normalisation (e.g. `adr` → `Decision`).
 
-**Fix**: replace the spelling with the type's canonical name. Auto-fixable
-(see `okflint fix`, coming soon).
+**Fix**: replace the spelling with the type's canonical name.
 
 ### `S102` — Non-ISO date field
 
@@ -218,7 +217,7 @@ created: 2026-5-1
 created: 2026-05-01
 ```
 
-**Fix**: reformat the date as `YYYY-MM-DD`. Auto-fixable.
+**Fix**: reformat the date as `YYYY-MM-DD`.
 
 ---
 
