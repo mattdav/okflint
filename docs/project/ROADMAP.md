@@ -34,6 +34,26 @@ linter.
 
 ---
 
+## v0.4 — Current state
+
+- OKF v0.2 support: the manifest's `okf_version` drives validation; a base
+  that declares none resolves to `"0.2"` (`Manifest.resolved_okf_version`)
+- `F003`, `F004`, `F005` — OKF core (§3a) shape checks for `generated`,
+  `sources`, and the spec-prescribed `Attested Computation` type
+- `S203`–`S207` — hygiene checks for the v0.2 optional-family shapes
+  (`status`, `stale_after`, `generated.at`/`verified[].at`, the actor
+  convention, the `Attested Computation` contract), opt-in via
+  `hygiene.okf_v02_shapes`
+- `S208` — legacy v0.1 forms (`timestamp`, body `# Citations`) on a base
+  declaring `okf_version: "0.2"`, opt-in via `hygiene.legacy_forms`
+- `S209` — staleness (`stale_after` reached or passed), opt-in via
+  `hygiene.stale_content`
+- Boundary respected: okflint validates that a trust signal is present and
+  well-formed, never that it is true; attestation validation stops at the
+  declaration, execution is left to the consumer of the base
+
+---
+
 ## Track D — `okflint validate-manifest`: expose manifest validation as a command
 
 **Context.** `manifest.py` already validates a manifest's structure and raises
@@ -50,80 +70,6 @@ extract and surface what `manifest.py` already does.
 
 **Boundary.** Additive, non-breaking → candidate for 0.3.0 on its own. Static,
 deterministic, no engine change.
-
----
-
-## Track F — OKF v0.2: provenance, trust, lifecycle, attestation
-
-**Context.** Google Cloud published OKF v0.2 on 2026-07-25, six weeks after v0.1.
-The change is **additive and backward-compatible**: `type` remains the only
-always-required field, every new field is optional, and a v0.1 bundle stays valid
-unchanged. What v0.2 adds is vocabulary, not rules.
-
-The motivating problem is one okflint is well placed to serve. When a human writes
-a concept, accountability is implicit — someone put their name on it. When an agent
-generates ten thousand concepts overnight, that guarantee is gone, and whatever
-reads them next must judge each one on signals it can actually see. v0.2 makes five
-questions answerable from frontmatter:
-
-| Question | Family |
-| --- | --- |
-| What was this created from? | provenance |
-| How much should I trust it? | trust |
-| Is it still true? | freshness |
-| Is it the current version? | lifecycle |
-| Was this number produced the way we said it must be? | attestation |
-
-Two deliberate renames carry a migration cost for every existing bundle:
-
-| v0.1 | v0.2 |
-| --- | --- |
-| `timestamp` | `generated.at` |
-| body `# Citations` list | `sources` field |
-
-A v0.2 consumer is expected to fall back to the v0.1 forms, so nothing breaks.
-
-**Direction.** Make the target spec version an explicit input rather than an
-implicit assumption. The manifest already carries `okf_version`; the engine should
-validate against the version the base declares.
-
-- **Dual-form acceptance.** Recognise both `generated.at` and `timestamp`, both the
-  `sources` field and the body `# Citations` section. When a base declares
-  `okf_version: "0.2"` but still uses v0.1 forms, report it — a warning, not an
-  error, mirroring the spec's own fallback stance.
-- **Shape validation for the new field families.** `sources` records, `verified`,
-  `generated`, and lifecycle `status` all have declared structures. Validating their
-  *shape* is squarely in scope, in the same family as every existing frontmatter rule.
-- **Lifecycle vocabulary.** `status: deprecated` is a closed-vocabulary case the
-  generic `<prop>_values` model already covers — likely little more than a default
-  profile entry.
-- **`Attested Computation`.** v0.2 introduces this concept type, carrying both what a
-  value means and the sanctioned way to compute it. okflint can verify that such a
-  concept declares what the spec requires, and that its declared parameters are
-  well-formed.
-
-**Boundary — essential.** Two lines okflint must not cross, both of which follow
-directly from the guiding principle.
-
-First, **okflint validates that a trust signal is present and well-formed, never
-that it is true.** `verified` is the most load-bearing field in v0.2 precisely
-because it separates *having read* from *having confirmed*. A tool that implied it
-had checked the underlying claim would make the field worthless within a week. The
-linter reports the shape of the assertion; only a human or a consuming agent can
-make the assertion.
-
-Second, **attestation validation stops at the declaration.** Checking that an
-`Attested Computation` is structurally sound is static analysis. Executing the
-sanctioned computation, or verifying at runtime that it was the one that actually
-ran, is orchestration — it belongs to the consumer of the base, not to the linter.
-
-The v0.1 → v0.2 migration — renaming `timestamp` to `generated.at`, converting a
-body `# Citations` list into a `sources` field — is signaled by okflint but never
-rewritten by it: the linter does not rewrite.
-
-**Note on timing.** As of 2026-07-27, an ecosystem observer reported that nearly
-every tool on Google's community list still targeted v0.1. The window in which
-v0.2 support is a differentiator is narrow but real.
 
 ---
 

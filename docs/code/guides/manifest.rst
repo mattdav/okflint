@@ -8,7 +8,7 @@ Structure
 
 .. code-block:: yaml
 
-   okf_version: "0.1"
+   okf_version: "0.2"
 
    base:
      name: My Base
@@ -36,6 +36,9 @@ Structure
      split_candidates: warn
      reserved_files: error
      unknown_fields: off
+     okf_v02_shapes: warn
+     legacy_forms: off
+     stale_content: off
 
 Sections
 --------

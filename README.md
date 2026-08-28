@@ -389,7 +389,7 @@ src/okflint/
 ## Roadmap
 
 Envisioned evolutions beyond v0.1 (verifiable reading-grid expectations,
-broader invocation surfaces, a generic `fix` command) are described in
+broader invocation surfaces) are described in
 [ROADMAP.md](docs/project/ROADMAP.md).
 
 ---

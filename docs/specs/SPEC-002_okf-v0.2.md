@@ -3,7 +3,7 @@ type: Spec
 id: SPEC-002
 title: "Support d'OKF v0.2 dans okflint"
 description: "Rendre la version de spec OKF ciblée explicite et valider les nouvelles familles de frontmatter introduites par OKF v0.2 (provenance, confiance, cycle de vie, fraîcheur, attestation)."
-status: accepted
+status: implemented
 superseded-by:
 work-item:
 tags: [okf, spec, validation, provenance, attestation]

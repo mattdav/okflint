@@ -3,7 +3,7 @@ type: Plan
 id: PLAN-002
 title: "Implémentation du support OKF v0.2"
 description: "Mode opératoire en 7 étapes pour rendre la version de spec cible explicite et valider les familles de frontmatter introduites par OKF v0.2."
-status: draft
+status: done
 implements: SPEC-002
 tags: [okf, validation, provenance, attestation, roadmap]
 timestamp: 2026-08-28T15:00:00Z

@@ -8,7 +8,7 @@ tags: [lint, rules]
 
 # okflint rules
 
-`okflint` verifies that a documentary base conforms to [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) **and** to the framework the base has itself declared in its manifest.
+`okflint` verifies that a documentary base conforms to [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) **and** to the framework the base has itself declared in its manifest.
 
 This document lists all check points, their code, their severity, and how to fix each case.
 
@@ -16,14 +16,14 @@ This document lists all check points, their code, their severity, and how to fix
 
 ## Philosophy: three stages
 
-OKF is deliberately minimal — its conformance clause (§9) imposes only three
+OKF is deliberately minimal — its conformance clause (§11) imposes only three
 rules. But the spec explicitly invites each producer to refine their framework
 beyond that (« anything beyond that is left to the producer »). `okflint`
 materialises this invitation as three stages of distinct authority:
 
 | Stage | Authority | Output prefix | Severity | Exit code effect |
 | --- | --- | --- | --- | --- |
-| **OKF core** | OKF v0.1 spec §9 (universal, non-negotiable) | `OKF non-conformant` | error | `exit 1` |
+| **OKF core** | OKF v0.2 spec §11 (universal, non-negotiable) | `OKF non-conformant` | error | `exit 1` |
 | **Profile** | the manifest *you* declared | `Profile not respected` | error | `exit 1` |
 | **Hygiene** | stricter than OKF (opt-in) | `hygiene (out-of-spec)` | warning | `exit 0` |
 
@@ -37,16 +37,22 @@ The core is hardcoded. Profile and hygiene only fire if your manifest declares
 them: a minimal base (manifest reduced to the bare minimum) will only be checked
 against the OKF core.
 
+Without a manifest, `okflint` only controls the core, on the sole basis of what
+the documents contain. With a manifest, the producer commits to declaring
+exhaustively what the bundle uses, and `okflint` holds it to that commitment
+— including for spec-prescribed vocabulary such as `Attested Computation`
+(see `F005`).
+
 ---
 
 ## Stage 1 — OKF core
 
-Always active. Hardcoded. Corresponds word-for-word to the OKF v0.1 conformance
-clause (§9) and to the structural constraints of reserved files (§6, §7, §11).
+Always active. Hardcoded. Corresponds word-for-word to the OKF v0.2 conformance
+clause (§11) and to the structural constraints of reserved files (§8, §9, §11).
 
 ### `F001` — Frontmatter absent or unparsable
 
-**Severity**: error · **Source**: OKF §9.1
+**Severity**: error · **Source**: OKF §11.1
 
 Every non-reserved `.md` file must begin with a YAML frontmatter block delimited
 by `---`, and that block must be parsable.
@@ -69,7 +75,7 @@ type: Reference
 
 ### `F002` — `type` field absent or empty
 
-**Severity**: error · **Source**: OKF §9.2
+**Severity**: error · **Source**: OKF §11.2
 
 The frontmatter must contain a non-empty `type` field. This is the **only** field
 OKF makes mandatory.
@@ -178,7 +184,7 @@ runtime: dbt/1.8
 
 ### `R001` — Frontmatter forbidden in `index.md`
 
-**Severity**: error · **Source**: OKF §6, §11
+**Severity**: error · **Source**: OKF §8, §11
 
 An `index.md` contains no frontmatter, with one exception: the `index.md` at
 the bundle root may carry `okf_version` (and nothing else).
@@ -201,7 +207,7 @@ okf_version: "0.1"
 
 ### `R002` — Non-ISO date heading in `log.md`
 
-**Severity**: error · **Source**: OKF §7
+**Severity**: error · **Source**: OKF §9
 
 In a `log.md`, date headings must be in ISO 8601 `YYYY-MM-DD` format.
 
@@ -360,7 +366,7 @@ cohesion justifies keeping it together.
 
 An `index.md` or `log.md` is missing at a root's directory level. OKF makes
 these files **optional** (§3) and explicitly forbids rejecting a base for their
-absence (§9). `okflint` only flags them on request, for producers who adopt an
+absence (§11). `okflint` only flags them on request, for producers who adopt an
 internal convention of progressive disclosure (one `index.md` per directory).
 
 > ⚠️ Not to be confused with `R001`/`R002` (OKF core): those check the
@@ -395,6 +401,13 @@ MUSTs), not a structural requirement. It only fires when `status` is present.
 vocabulary for the concept's type (`F105`, Stage 2): the producer's profile
 overrides the spec's default. Only fires on a base whose resolved
 `okf_version` is `"0.2"`.
+
+Overriding the vocabulary via `status_values` costs **portability, not
+conformance**: a third-party consumer knows what to do with `deprecated`,
+not with `archived`. This must be documented as such wherever a profile
+overrides `status`. It also means §5.4's default — `status` absent ⇒
+`stable` — loses its meaning as soon as the vocabulary is overridden: there
+is no longer a single agreed default to fall back to.
 
 ```yaml
 # ❌ S203

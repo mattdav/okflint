@@ -11,7 +11,7 @@
 #   - Profile    : your rules, declared in `profile` below
 #   - Hygiene    : checks stricter than OKF, opt-in via `hygiene`
 
-okf_version: "0.1"
+okf_version: "0.2"
 
 base:
   # Logical name of the documentary base.
@@ -92,3 +92,7 @@ hygiene:
 
   reserved_files: off      # R201 — presence of index.md / log.md
   unknown_fields: off      # F201 — fields outside the declared schema
+
+  okf_v02_shapes: warn     # S203-S207 — OKF v0.2 optional-family shapes
+  legacy_forms: off        # S208 — legacy OKF v0.1 forms superseded by v0.2
+  stale_content: off       # S209 — stale_after reached or passed

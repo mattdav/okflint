@@ -793,3 +793,92 @@ SPEC-002 §7. Étape explicitement annoncée par le plan comme
   - tests/test_validate.py
 
 ---
+
+## Session du 2026-08-28 — okflint — PLAN-002 étape 7 (finale)
+
+Étape 7 « Documentation » du plan, dernière étape de PLAN-002. Travail
+exclusivement documentaire, aucun changement de code de production.
+
+- `config/RULES.md` : déjà substantiellement complet grâce à la doctrine
+  écrite au fil des étapes 3-6 (les 11 règles v0.2 y étaient déjà
+  documentées avec code, étage, sévérité, exemple et section v0.2). Le
+  travail restant, identifié par relecture complète (641 lignes) croisée
+  avec SPEC-002 et le plan :
+  - Renumérotation mécanique des trois citations explicitement visées par
+    le plan : clause de conformité §9→§11 (lien de tête de fichier
+    « OKF v0.1 »→« OKF v0.2 », table Philosophy, Stage 1, `F001`, `F002`,
+    `R201`), fichiers d'index §6→§8 (`R001`), logs §7→§9 (`R002`). Les
+    citations « §11 » déjà présentes avant cette étape (`R001`, aggrégat
+    Stage 1) référencent une section v0.1 distincte, hors des trois
+    translations autorisées par le plan — laissées intactes, conformément
+    au hors-périmètre « ne pas renumeroter hors des références de
+    l'étape 7 ». Les citations internes à SPEC-002 (`S207` §7, `S209` §6)
+    ne sont pas des sections OKF externes : non touchées.
+  - Règle d'usage manifeste-exhaustif (SPEC-002 §7) ajoutée en fin de
+    section « Philosophy: three stages » : sans manifeste, seul le cœur
+    est contrôlé ; avec manifeste, le producteur s'engage à déclarer
+    exhaustivement ce que le bundle utilise, y compris pour un vocabulaire
+    prescrit par la spec (`Attested Computation`).
+  - Note doctrinale S203 ajoutée : la surcharge de `status` coûte de la
+    portabilité (pas de la conformité), et le défaut « `status` absent ⇒
+    `stable` » de §5.4 perd son sens dès que le vocabulaire est surchargé.
+  - La note « `Attested Computation` seul vocabulaire codé en dur, comme
+    `index.md`/`log.md`, aucune exemption `F101`/`F201` » existait déjà
+    dans la section `F005` (écrite à l'étape 3) — vérifiée conforme au
+    texte demandé par le plan, aucun ajout nécessaire.
+- `example/manifest.example.yaml` : `okf_version` → `"0.2"`, ajout des
+  trois clés d'hygiène v0.2 avec leurs défauts documentés
+  (`okf_v02_shapes: warn`, `legacy_forms: off`, `stale_content: off`).
+- `README.md` : retrait de la mention périmée d'une commande `fix`
+  générique dans la section Roadmap (Track E abandonné).
+- `docs/project/ROADMAP.md` : Track F (livrée) retirée et reportée dans
+  une nouvelle section « v0.4 — Current state » résumant ce qui a été
+  livré (F003-F005, S203-S209, S208, S209, limites respectées). Note :
+  la ligne « OKF core (§9) » du bloc « v0.3 — Current state » n'est pas
+  renumérotée — hors périmètre de l'étape 7 (seul `config/RULES.md` et
+  les deux `.rst` sont les cibles explicites de la renumérotation),
+  signalé sans être corrigé.
+- `docs/code/guides/rules.rst` et `docs/code/guides/manifest.rst` :
+  fichiers confirmés existants (recherche initiale infructueuse corrigée
+  par un glob plus large). Renumérotation §9→§11 dans `rules.rst`, ajout
+  des codes v0.2 manquants aux listes par étage (F003-F005 au cœur,
+  S203-S209 à l'hygiène). `manifest.rst` : `okf_version` → `"0.2"` et les
+  trois clés d'hygiène v0.2 ajoutées à l'exemple, par cohérence avec
+  l'exemple de manifeste réel.
+- `docs/specs/SPEC-002_okf-v0.2.md` : `status: accepted` → `implemented`.
+- `docs/plans/PLAN-002_okf-v0.2.md` : `status: draft` → `done`. Le fichier
+  était propre (aucun diff préexistant non commité constaté, contrairement
+  à ce qui avait été signalé à l'étape 6 — probablement résolu entre
+  temps) : édition isolée du seul champ `status`.
+- Non-régression vérifiée explicitement : fixture `nonreg01`
+  (`okf_version: "0.1"` déclaré, inchangée) → `[]` diagnostics, résultat
+  identique à l'état pré-étape 7.
+- Résultats finaux : `uv run inv lint` → zéro erreur ; `uv run inv test`
+  → 357 tests passés, couverture 95% ; `uv run inv docs` (`-W
+  --keep-going` intégré à la tâche) → build réussi, zéro warning ;
+  `uv run okflint validate --manifest manifest_okflint.yaml .` → exit 0
+  (manifeste du dépôt toujours `okf_version: "0.1"`, non migré,
+  conformément au hors-périmètre du plan).
+- Hors périmètre, signalé et non traité :
+  - Le contenu historique non commité de `.claude/progress.log` (entrées
+    stub du hook on-stop) reste non touché.
+  - `docs/project/ROADMAP.md` ligne 25 (« OKF core (§9) ») non
+    renumérotée, hors périmètre explicite de l'étape 7.
+  - Le manifeste du dépôt (`manifest_okflint.yaml`) n'a pas été migré vers
+    `okf_version: "0.2"` — chantier distinct, explicitement hors périmètre
+    de PLAN-002.
+- **PLAN-002 terminé** : les 7 étapes sont livrées et commitées. Statuts
+  `SPEC-002`/`PLAN-002` passés à `implemented`/`done` dans cette même
+  étape.
+
+**Fichiers modifiés :**
+  - config/RULES.md
+  - example/manifest.example.yaml
+  - README.md
+  - docs/project/ROADMAP.md
+  - docs/code/guides/rules.rst
+  - docs/code/guides/manifest.rst
+  - docs/specs/SPEC-002_okf-v0.2.md
+  - docs/plans/PLAN-002_okf-v0.2.md
+
+---
