@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -85,10 +81,11 @@
   <h1>Source code for okflint.cli</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Unified CLI entry point for okflint.</span>
 
-<span class="sd">Exposes three sub-commands Ruff-style:</span>
-<span class="sd">    okflint audit     — inventory and descriptive diagnostic of a base</span>
-<span class="sd">    okflint validate  — normative compliance gate (exit 0/1)</span>
-<span class="sd">    okflint index     — generate OKF §6 index.md files (dry-run by default)</span>
+<span class="sd">Exposes four sub-commands Ruff-style:</span>
+<span class="sd">    okflint audit              — inventory and descriptive diagnostic of a base</span>
+<span class="sd">    okflint validate           — normative compliance gate (exit 0/1)</span>
+<span class="sd">    okflint validate-manifest  — validate a manifest alone (exit 0/2, no base scan)</span>
+<span class="sd">    okflint index              — generate OKF §6 index.md files (dry-run by default)</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -103,7 +100,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_audit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuditError</span><span class="p">,</span> <span class="n">run_audit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.index</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_indexes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">RootConfig</span><span class="p">,</span> <span class="n">load_manifest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_file_index</span>
@@ -453,17 +450,21 @@
                     <span class="s2">&quot;--bundle used as target filter over manifest roots.&quot;</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">target_filter</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
+                <span class="n">target_filter</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">bundle_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">),</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])]</span>
 
-        <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
-            <span class="n">bundle_paths</span><span class="p">,</span>
-            <span class="p">[],</span>
-            <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter</span><span class="p">,</span>
-            <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">,</span>
-            <span class="n">manifest</span><span class="o">=</span><span class="n">manifest_obj</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">report</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
+                <span class="n">bundle_paths</span><span class="p">,</span>
+                <span class="p">[],</span>
+                <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter</span><span class="p">,</span>
+                <span class="n">vault_index</span><span class="o">=</span><span class="n">vault_index</span><span class="p">,</span>
+                <span class="n">manifest</span><span class="o">=</span><span class="n">manifest_obj</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">AuditError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Audit error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">2</span>
         <span class="n">_print_audit_stats</span><span class="p">(</span>
             <span class="n">report</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">],</span> <span class="n">diagnostics_summary</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;diagnostics_summary&quot;</span><span class="p">)</span>
         <span class="p">)</span>
@@ -497,7 +498,7 @@
                 <span class="s2">&quot;--bundle used as target filter over manifest roots.&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">target_filter_orig</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span>
+            <span class="n">target_filter_orig</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="k">elif</span> <span class="n">has_bundle</span> <span class="ow">and</span> <span class="n">has_vault</span><span class="p">:</span>
         <span class="n">bundle_paths_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">RootConfig</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bundle</span><span class="p">),</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="p">[])]</span>
         <span class="n">vault_paths_orig</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">vault</span><span class="p">)]</span>
@@ -508,12 +509,16 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="mi">2</span>
 
-    <span class="n">report_orig</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
-        <span class="n">bundle_paths_orig</span><span class="p">,</span>
-        <span class="n">vault_paths_orig</span><span class="p">,</span>
-        <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter_orig</span><span class="p">,</span>
-        <span class="n">manifest</span><span class="o">=</span><span class="n">manifest_obj_orig</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">report_orig</span> <span class="o">=</span> <span class="n">run_audit</span><span class="p">(</span>
+            <span class="n">bundle_paths_orig</span><span class="p">,</span>
+            <span class="n">vault_paths_orig</span><span class="p">,</span>
+            <span class="n">target_filter</span><span class="o">=</span><span class="n">target_filter_orig</span><span class="p">,</span>
+            <span class="n">manifest</span><span class="o">=</span><span class="n">manifest_obj_orig</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">AuditError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Audit error: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">2</span>
     <span class="n">_print_audit_stats</span><span class="p">(</span>
         <span class="n">report_orig</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">],</span>
         <span class="n">diagnostics_summary</span><span class="o">=</span><span class="n">report_orig</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;diagnostics_summary&quot;</span><span class="p">),</span>
@@ -654,6 +659,39 @@
     <span class="k">return</span> <span class="n">code_orig</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_cmd_validate_manifest</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the validate-manifest sub-command.</span>
+
+<span class="sd">    Validates the structure of an OKF manifest on its own, via the same</span>
+<span class="sd">    checks ``load_manifest`` already runs as a side effect of the other</span>
+<span class="sd">    commands. Does not scan any file of the base: ``base.roots`` need not</span>
+<span class="sd">    exist on disk.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        args: argparse Namespace (manifest, json_output).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Exit code (0 if the manifest is valid, 2 otherwise).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">ManifestError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="n">errors</span><span class="p">}</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json_output</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;valid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="p">[]},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;valid&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_cmd_index</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the index sub-command (OKF §6 index.md generation).</span>
 
@@ -718,7 +756,7 @@
 
 
 <div class="viewcode-block" id="build_parser">
-<a class="viewcode-back" href="../../api/cli.html#okflint.cli.build_parser">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.cli.html#okflint.cli.build_parser">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the argparse parser with sub-commands.</span>
@@ -791,6 +829,23 @@
     <span class="p">)</span>
     <span class="n">p_validate</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_cmd_validate</span><span class="p">)</span>
 
+    <span class="c1"># -- validate-manifest ------------------------------------------------------</span>
+    <span class="n">p_validate_manifest</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">&quot;validate-manifest&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Validate an OKF manifest&#39;s structure alone (exit 0/2, no base scan).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_validate_manifest</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;manifest&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the OKF manifest YAML file.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_validate_manifest</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--json&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;json_output&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;JSON output (for CI).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_validate_manifest</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_cmd_validate_manifest</span><span class="p">)</span>
+
     <span class="c1"># -- index ------------------------------------------------------------------</span>
     <span class="n">p_index</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Generate OKF §6 index.md files (dry-run/diff by default).&quot;</span>
@@ -820,7 +875,7 @@
 
 
 <div class="viewcode-block" id="main">
-<a class="viewcode-back" href="../../api/cli.html#okflint.cli.main">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.cli.html#okflint.cli.main">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Console scripts entry point: okflint &lt;command&gt;.&quot;&quot;&quot;</span>

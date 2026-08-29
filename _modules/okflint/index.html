@@ -1,0 +1,246 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>okflint.index &mdash; okflint 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            okflint
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guides/rules.html">Rules catalogue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">okflint</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">okflint.index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for okflint.index</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;OKF §6 index.md generation.</span>
+
+<span class="sd">Pure computation only: no file is written here. ``cli.py`` owns the</span>
+<span class="sd">dry-run/diff/write orchestration (see ``okflint index``).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">Manifest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_excluded</span><span class="p">,</span> <span class="n">parse_frontmatter</span>
+
+
+<div class="viewcode-block" id="IndexEntry">
+<a class="viewcode-back" href="../../api/okflint.index.html#okflint.index.IndexEntry">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IndexEntry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single concept file to list in an index.md.&quot;&quot;&quot;</span>
+
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="build_index_content">
+<a class="viewcode-back" href="../../api/okflint.index.html#okflint.index.build_index_content">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_index_content</span><span class="p">(</span>
+    <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IndexEntry</span><span class="p">],</span>
+    <span class="n">subdirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the OKF §6 markdown body of an index.md for one directory.</span>
+
+<span class="sd">    No frontmatter is emitted (safe default with respect to R001).</span>
+<span class="sd">    Sub-directories are listed before files, both in case-insensitive</span>
+<span class="sd">    alphabetical order.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dir_path: Directory this index.md belongs to (kept for signature</span>
+<span class="sd">            symmetry with ``generate_indexes``; the content only depends</span>
+<span class="sd">            on ``entries``/``subdirs``).</span>
+<span class="sd">        entries: Concept files to list.</span>
+<span class="sd">        subdirs: Names of sub-directories that own their own index.md.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The markdown body (no frontmatter).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">del</span> <span class="n">dir_path</span>  <span class="c1"># content is fully determined by entries/subdirs</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;- [</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">/](</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">/index.md)&quot;</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">subdirs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- [</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s2">) — </span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- [</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">lines</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="generate_indexes">
+<a class="viewcode-back" href="../../api/okflint.index.html#okflint.index.generate_indexes">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_indexes</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Manifest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the expected index.md content for every directory in the base.</span>
+
+<span class="sd">    Walks every manifest root, respecting ``exclude_patterns`` and skipping</span>
+<span class="sd">    the reserved index/log files. One entry is produced per directory that</span>
+<span class="sd">    contains at least one (non-excluded) ``.md`` file, directly or in a</span>
+<span class="sd">    sub-directory. Performs no write.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        manifest: Loaded and validated OKF manifest.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Mapping from each directory&#39;s expected index.md path to its</span>
+<span class="sd">        expected content.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index_name</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="s2">&quot;index.md&quot;</span><span class="p">)</span>
+    <span class="n">log_name</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;log.md&quot;</span><span class="p">)</span>
+    <span class="n">reserved</span> <span class="o">=</span> <span class="p">{</span><span class="n">index_name</span><span class="p">,</span> <span class="n">log_name</span><span class="p">}</span>
+
+    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">root_cfg</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span>
+        <span class="n">patterns</span> <span class="o">=</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">exclude_patterns</span>
+
+        <span class="n">dirs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">root</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">md_file</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.md&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">patterns</span> <span class="ow">and</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">patterns</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">md_file</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">dirs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">current</span> <span class="o">==</span> <span class="n">root</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">parent</span>
+
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+            <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IndexEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">subdirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                        <span class="n">subdirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.md&quot;</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">reserved</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">patterns</span> <span class="ow">and</span> <span class="n">_is_excluded</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">patterns</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+                <span class="n">fm</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fm</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">fm</span> <span class="ow">and</span> <span class="n">fm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">child</span><span class="o">.</span><span class="n">stem</span>
+                <span class="n">description</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">fm</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">fm</span> <span class="ow">and</span> <span class="n">fm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">)</span>
+                <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">IndexEntry</span><span class="p">(</span>
+                        <span class="n">filename</span><span class="o">=</span><span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="n">result</span><span class="p">[</span><span class="n">d</span> <span class="o">/</span> <span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_index_content</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">subdirs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

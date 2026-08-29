@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>audit &mdash; okflint 0.1.0 documentation</title>
+  <title>okflint.audit module &mdash; okflint 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="validate" href="validate.html" />
-    <link rel="prev" title="manifest" href="manifest.html" /> 
+    <link rel="next" title="okflint.cli module" href="okflint.cli.html" />
+    <link rel="prev" title="okflint package" href="okflint.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,31 +50,23 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="manifest.html">manifest</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">audit</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.FileReport"><code class="docutils literal notranslate"><span class="pre">FileReport</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.chars"><code class="docutils literal notranslate"><span class="pre">FileReport.chars</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.depth"><code class="docutils literal notranslate"><span class="pre">FileReport.depth</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.diagnostics"><code class="docutils literal notranslate"><span class="pre">FileReport.diagnostics</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.frontmatter"><code class="docutils literal notranslate"><span class="pre">FileReport.frontmatter</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.is_reserved"><code class="docutils literal notranslate"><span class="pre">FileReport.is_reserved</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.lines"><code class="docutils literal notranslate"><span class="pre">FileReport.lines</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.markdown_links"><code class="docutils literal notranslate"><span class="pre">FileReport.markdown_links</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.okf_status"><code class="docutils literal notranslate"><span class="pre">FileReport.okf_status</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.path"><code class="docutils literal notranslate"><span class="pre">FileReport.path</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.split_candidate"><code class="docutils literal notranslate"><span class="pre">FileReport.split_candidate</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.audit.FileReport.wikilinks"><code class="docutils literal notranslate"><span class="pre">FileReport.wikilinks</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">okflint</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="okflint.html">okflint package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="okflint.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">okflint.audit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cli.html">okflint.cli module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cohesion.html">okflint.cohesion module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.index.html">okflint.index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.manifest.html">okflint.manifest module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.scanner.html">okflint.scanner module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.validate.html">okflint.validate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.vault.html">okflint.vault module</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.analyze_file"><code class="docutils literal notranslate"><span class="pre">analyze_file()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.compute_stats"><code class="docutils literal notranslate"><span class="pre">compute_stats()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.get_okf_status"><code class="docutils literal notranslate"><span class="pre">get_okf_status()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.audit.run_audit"><code class="docutils literal notranslate"><span class="pre">run_audit()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">cli</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -95,9 +87,11 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">audit</li>
+          <li class="breadcrumb-item"><a href="modules.html">okflint</a></li>
+          <li class="breadcrumb-item"><a href="okflint.html">okflint package</a></li>
+      <li class="breadcrumb-item active">okflint.audit module</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/api/audit.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/api/okflint.audit.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -105,10 +99,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="audit">
-<h1>audit<a class="headerlink" href="#audit" title="Link to this heading"></a></h1>
-<p>Audit descriptif d’un bundle OKF — inventaire et diagnostic de conformité.</p>
-<p id="module-okflint.audit">OKF bundle audit — inventory and conformance diagnostic.</p>
+  <section id="module-okflint.audit">
+<span id="okflint-audit-module"></span><h1>okflint.audit module<a class="headerlink" href="#module-okflint.audit" title="Link to this heading"></a></h1>
+<p>OKF bundle audit — inventory and conformance diagnostic.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="okflint.audit.AuditError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">AuditError</span></span><a class="reference internal" href="../_modules/okflint/audit.html#AuditError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.AuditError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
+<p>Audit cannot be run under the given –bundle/–manifest configuration.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.audit.FileReport">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">FileReport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reserved</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">okf_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontmatter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wikilinks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markdown_links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_candidate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#FileReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.FileReport" title="Link to this definition"></a></dt>
@@ -126,7 +126,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.diagnostics">
-<span class="sig-name descname"><span class="pre">diagnostics</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="validate.html#okflint.validate.Diagnostic" title="okflint.validate.Diagnostic"><span class="pre">Diagnostic</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.diagnostics" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">diagnostics</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="okflint.validate.html#okflint.validate.Diagnostic" title="okflint.validate.Diagnostic"><span class="pre">Diagnostic</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.diagnostics" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -146,7 +146,7 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.markdown_links">
-<span class="sig-name descname"><span class="pre">markdown_links</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="scanner.html#okflint.scanner.MarkdownLink" title="okflint.scanner.MarkdownLink"><span class="pre">MarkdownLink</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.markdown_links" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">markdown_links</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="okflint.scanner.html#okflint.scanner.MarkdownLink" title="okflint.scanner.MarkdownLink"><span class="pre">MarkdownLink</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.markdown_links" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -166,26 +166,29 @@
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="okflint.audit.FileReport.wikilinks">
-<span class="sig-name descname"><span class="pre">wikilinks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="scanner.html#okflint.scanner.WikiLink" title="okflint.scanner.WikiLink"><span class="pre">WikiLink</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.wikilinks" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">wikilinks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="okflint.scanner.html#okflint.scanner.WikiLink" title="okflint.scanner.WikiLink"><span class="pre">WikiLink</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#okflint.audit.FileReport.wikilinks" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.audit.analyze_file">
-<span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.analyze_file" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">okflint.audit.</span></span><span class="sig-name descname"><span class="pre">analyze_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserved_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_roots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/audit.html#analyze_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.audit.analyze_file" title="Link to this definition"></a></dt>
 <dd><p>Full analysis of a .md file in the bundle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the file.</p></li>
-<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root.</p></li>
+<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root owning the file.</p></li>
 <li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span>) – Vault index for wikilink resolution.</p></li>
 <li><p><strong>reserved_files</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – Mapping with “index”/”log” keys to their configured
 filename — <code class="docutils literal notranslate"><span class="pre">manifest.base.reserved_files</span></code> when a manifest is
 loaded, <code class="docutils literal notranslate"><span class="pre">DEFAULT_RESERVED_FILES</span></code> otherwise. Same authority as
 used by diagnostics computation in <code class="docutils literal notranslate"><span class="pre">run_audit</span></code>, so labelling
 and diagnostics never disagree on what counts as reserved.</p></li>
+<li><p><strong>other_roots</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Remaining roots of a multi-root bundle, tried as
+fallback for absolute markdown links not found under
+<code class="docutils literal notranslate"><span class="pre">bundle_path</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -247,7 +250,7 @@ vault and then call <code class="docutils literal notranslate"><span class="pre"
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bundle_paths</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference internal" href="manifest.html#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootConfig</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>] | <a class="reference internal" href="manifest.html#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootConfig</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root(s) of the bundle(s) to audit. RootConfig carries
+<li><p><strong>bundle_paths</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference internal" href="okflint.manifest.html#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootConfig</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>] | <a class="reference internal" href="okflint.manifest.html#okflint.manifest.RootConfig" title="okflint.manifest.RootConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">RootConfig</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root(s) of the bundle(s) to audit. RootConfig carries
 per-root exclusion patterns; plain Path implies no exclusions.</p></li>
 <li><p><strong>vault_paths</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root(s) of the Obsidian vault(s) (for the wikilinks index).
 Ignored when <code class="docutils literal notranslate"><span class="pre">vault_index</span></code> is supplied.</p></li>
@@ -255,7 +258,7 @@ Ignored when <code class="docutils literal notranslate"><span class="pre">vault_
 Used when –bundle is combined with –manifest as a sub-filter.</p></li>
 <li><p><strong>vault_index</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Pre-built file index (stem → list of relative paths).
 When provided, vault indexing is skipped entirely.</p></li>
-<li><p><strong>manifest</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="manifest.html#okflint.manifest.Manifest" title="okflint.manifest.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – When provided, each file is validated through the same
+<li><p><strong>manifest</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="okflint.manifest.html#okflint.manifest.Manifest" title="okflint.manifest.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – When provided, each file is validated through the same
 engine as <code class="docutils literal notranslate"><span class="pre">validate</span></code> (core + profile + hygiene diagnostics).
 When None, diagnostics are core-only (F001/F002), with reserved
 files (index.md/log.md) still routed to R001/R002 instead of
@@ -277,8 +280,8 @@ F001/F002 via <code class="docutils literal notranslate"><span class="pre">dispa
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="manifest.html" class="btn btn-neutral float-left" title="manifest" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="validate.html" class="btn btn-neutral float-right" title="validate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="okflint.html" class="btn btn-neutral float-left" title="okflint package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="okflint.cli.html" class="btn btn-neutral float-right" title="okflint.cli module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

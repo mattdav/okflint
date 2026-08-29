@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -103,21 +99,26 @@
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink.alias">alias (okflint.scanner.WikiLink attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.alias">alias (okflint.scanner.WikiLink attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.TypeConfig.aliases">aliases (okflint.manifest.TypeConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.TypeConfig.aliases">aliases (okflint.manifest.TypeConfig attribute)</a>
+</li>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.ambiguous">ambiguous (okflint.scanner.WikiLink attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink.ambiguous">ambiguous (okflint.scanner.WikiLink attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.analyze_cohesion">analyze_cohesion() (in module okflint.cohesion)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.analyze_file">analyze_file() (in module okflint.audit)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.analyze_file">analyze_file() (in module okflint.audit)</a>
+</li>
+      <li><a href="api/okflint.audit.html#okflint.audit.AuditError">AuditError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -125,25 +126,35 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.Manifest.base">base (okflint.manifest.Manifest attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest.base">base (okflint.manifest.Manifest attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.BaseConfig">BaseConfig (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.BaseConfig">BaseConfig (class in okflint.manifest)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.blank_code_spans">blank_code_spans() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.blank_code_spans">blank_code_spans() (in module okflint.scanner)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.MarkdownLink.broken">broken (okflint.scanner.MarkdownLink attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section.body">body (okflint.cohesion.Section attribute)</a>
+</li>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.MarkdownLink.broken">broken (okflint.scanner.MarkdownLink attribute)</a>
 
       <ul>
-        <li><a href="api/scanner.html#okflint.scanner.WikiLink.broken">(okflint.scanner.WikiLink attribute)</a>
+        <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.broken">(okflint.scanner.WikiLink attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.HygieneConfig.broken_links">broken_links (okflint.manifest.HygieneConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.broken_links">broken_links (okflint.manifest.HygieneConfig attribute)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.build_file_index">build_file_index() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.build_file_index">build_file_index() (in module okflint.scanner)</a>
 </li>
-      <li><a href="api/cli.html#okflint.cli.build_parser">build_parser() (in module okflint.cli)</a>
+      <li><a href="api/okflint.index.html#okflint.index.build_index_content">build_index_content() (in module okflint.index)</a>
+</li>
+      <li><a href="api/okflint.cli.html#okflint.cli.build_parser">build_parser() (in module okflint.cli)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.build_similarity_matrix">build_similarity_matrix() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.vault.html#okflint.vault.BundleEntry">BundleEntry (class in okflint.vault)</a>
+</li>
+      <li><a href="api/okflint.vault.html#okflint.vault.VaultConfig.bundles">bundles (okflint.vault.VaultConfig attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -151,15 +162,23 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.chars">chars (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.chars">chars (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic.code">code (okflint.validate.Diagnostic attribute)</a>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic.code">code (okflint.validate.Diagnostic attribute)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.CohesionResult">CohesionResult (class in okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Component">Component (class in okflint.cohesion)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.compute_stats">compute_stats() (in module okflint.audit)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.CohesionResult.components">components (okflint.cohesion.CohesionResult attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.TypeConfig.controlled_values">controlled_values (okflint.manifest.TypeConfig attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.compute_stats">compute_stats() (in module okflint.audit)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.compute_tfidf_vectors">compute_tfidf_vectors() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.TypeConfig.controlled_values">controlled_values (okflint.manifest.TypeConfig attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -167,17 +186,19 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.ProfileConfig.date_fields">date_fields (okflint.manifest.ProfileConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.ProfileConfig.date_fields">date_fields (okflint.manifest.ProfileConfig attribute)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.FileReport.depth">depth (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.depth">depth (okflint.audit.FileReport attribute)</a>
+</li>
+      <li><a href="api/okflint.index.html#okflint.index.IndexEntry.description">description (okflint.index.IndexEntry attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic">Diagnostic (class in okflint.validate)</a>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic">Diagnostic (class in okflint.validate)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.FileReport.diagnostics">diagnostics (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.diagnostics">diagnostics (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/validate.html#okflint.validate.dispatch_reserved_file">dispatch_reserved_file() (in module okflint.validate)</a>
+      <li><a href="api/okflint.validate.html#okflint.validate.dispatch_reserved_file">dispatch_reserved_file() (in module okflint.validate)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -185,21 +206,21 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.RootConfig.exclude_patterns">exclude_patterns (okflint.manifest.RootConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.RootConfig.exclude_patterns">exclude_patterns (okflint.manifest.RootConfig attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.SplitConfig.exempt_paths">exempt_paths (okflint.manifest.SplitConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.SplitConfig.exempt_paths">exempt_paths (okflint.manifest.SplitConfig attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.SplitConfig.exempt_types">exempt_types (okflint.manifest.SplitConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.SplitConfig.exempt_types">exempt_types (okflint.manifest.SplitConfig attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.BaseConfig.external_refs">external_refs (okflint.manifest.BaseConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.BaseConfig.external_refs">external_refs (okflint.manifest.BaseConfig attribute)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.extract_headers">extract_headers() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.extract_headers">extract_headers() (in module okflint.scanner)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.extract_markdown_links">extract_markdown_links() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.extract_markdown_links">extract_markdown_links() (in module okflint.scanner)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.extract_wikilinks">extract_wikilinks() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.extract_wikilinks">extract_wikilinks() (in module okflint.scanner)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -207,13 +228,17 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic.file">file (okflint.validate.Diagnostic attribute)</a>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic.file">file (okflint.validate.Diagnostic attribute)</a>
+</li>
+      <li><a href="api/okflint.index.html#okflint.index.IndexEntry.filename">filename (okflint.index.IndexEntry attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport">FileReport (class in okflint.audit)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport">FileReport (class in okflint.audit)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.FileReport.frontmatter">frontmatter (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.find_components">find_components() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.frontmatter">frontmatter (okflint.audit.FileReport attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -221,7 +246,11 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.get_okf_status">get_okf_status() (in module okflint.audit)</a>
+      <li><a href="api/okflint.index.html#okflint.index.generate_indexes">generate_indexes() (in module okflint.index)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/okflint.audit.html#okflint.audit.get_okf_status">get_okf_status() (in module okflint.audit)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -229,13 +258,13 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.Header">Header (class in okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.Header">Header (class in okflint.scanner)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.Manifest.hygiene">hygiene (okflint.manifest.Manifest attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest.hygiene">hygiene (okflint.manifest.Manifest attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.HygieneConfig">HygieneConfig (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig">HygieneConfig (class in okflint.manifest)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -243,11 +272,13 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.MarkdownLink.is_external">is_external (okflint.scanner.MarkdownLink attribute)</a>
+      <li><a href="api/okflint.index.html#okflint.index.IndexEntry">IndexEntry (class in okflint.index)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.is_reserved">is_reserved (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.MarkdownLink.is_external">is_external (okflint.scanner.MarkdownLink attribute)</a>
+</li>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.is_reserved">is_reserved (okflint.audit.FileReport attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -255,15 +286,27 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.Header.level">level (okflint.scanner.Header attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.legacy_forms">legacy_forms (okflint.manifest.HygieneConfig attribute)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.Header.line">line (okflint.scanner.Header attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section.level">level (okflint.cohesion.Section attribute)</a>
+
+      <ul>
+        <li><a href="api/okflint.scanner.html#okflint.scanner.Header.level">(okflint.scanner.Header attribute)</a>
 </li>
+      </ul></li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section.line">line (okflint.cohesion.Section attribute)</a>
+
+      <ul>
+        <li><a href="api/okflint.scanner.html#okflint.scanner.Header.line">(okflint.scanner.Header attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.lines">lines (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.lines">lines (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.load_manifest">load_manifest() (in module okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.load_manifest">load_manifest() (in module okflint.manifest)</a>
+</li>
+      <li><a href="api/okflint.vault.html#okflint.vault.load_vault">load_vault() (in module okflint.vault)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -271,35 +314,47 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/cli.html#okflint.cli.main">main() (in module okflint.cli)</a>
+      <li><a href="api/okflint.cli.html#okflint.cli.main">main() (in module okflint.cli)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.Manifest">Manifest (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest">Manifest (class in okflint.manifest)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.ManifestError">ManifestError</a>, <a href="api/validate.html#okflint.validate.ManifestError">[1]</a>
+      <li><a href="api/okflint.vault.html#okflint.vault.BundleEntry.manifest_path">manifest_path (okflint.vault.BundleEntry attribute)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.FileReport.markdown_links">markdown_links (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.ManifestError">ManifestError</a>, <a href="api/okflint.validate.html#okflint.validate.ManifestError">[1]</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.MarkdownLink">MarkdownLink (class in okflint.scanner)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.markdown_links">markdown_links (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic.message">message (okflint.validate.Diagnostic attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.MarkdownLink">MarkdownLink (class in okflint.scanner)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.merge_micro_sections">merge_micro_sections() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic.message">message (okflint.validate.Diagnostic attribute)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.SplitConfig.min_lines">min_lines (okflint.manifest.SplitConfig attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.SplitConfig.min_lines">min_lines (okflint.manifest.SplitConfig attribute)</a>
-</li>
       <li>
     module
 
       <ul>
-        <li><a href="api/audit.html#module-okflint.audit">okflint.audit</a>
+        <li><a href="api/okflint.html#module-okflint">okflint</a>
 </li>
-        <li><a href="api/cli.html#module-okflint.cli">okflint.cli</a>
+        <li><a href="api/okflint.audit.html#module-okflint.audit">okflint.audit</a>
 </li>
-        <li><a href="api/manifest.html#module-okflint.manifest">okflint.manifest</a>
+        <li><a href="api/okflint.cli.html#module-okflint.cli">okflint.cli</a>
 </li>
-        <li><a href="api/scanner.html#module-okflint.scanner">okflint.scanner</a>
+        <li><a href="api/okflint.cohesion.html#module-okflint.cohesion">okflint.cohesion</a>
 </li>
-        <li><a href="api/validate.html#module-okflint.validate">okflint.validate</a>
+        <li><a href="api/okflint.index.html#module-okflint.index">okflint.index</a>
+</li>
+        <li><a href="api/okflint.manifest.html#module-okflint.manifest">okflint.manifest</a>
+</li>
+        <li><a href="api/okflint.scanner.html#module-okflint.scanner">okflint.scanner</a>
+</li>
+        <li><a href="api/okflint.validate.html#module-okflint.validate">okflint.validate</a>
+</li>
+        <li><a href="api/okflint.vault.html#module-okflint.vault">okflint.vault</a>
 </li>
       </ul></li>
   </ul></td>
@@ -308,56 +363,92 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.BaseConfig.name">name (okflint.manifest.BaseConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.BaseConfig.name">name (okflint.manifest.BaseConfig attribute)</a>
+
+      <ul>
+        <li><a href="api/okflint.vault.html#okflint.vault.VaultConfig.name">(okflint.vault.VaultConfig attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.okf_status">okf_status (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.okf_status">okf_status (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.Manifest.okf_version">okf_version (okflint.manifest.Manifest attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.okf_v02_shapes">okf_v02_shapes (okflint.manifest.HygieneConfig attribute)</a>
 </li>
+      <li><a href="api/okflint.vault.html#okflint.vault.VaultConfig.okf_vault_version">okf_vault_version (okflint.vault.VaultConfig attribute)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest.okf_version">okf_version (okflint.manifest.Manifest attribute)</a>
+</li>
+      <li>
+    okflint
+
+      <ul>
+        <li><a href="api/okflint.html#module-okflint">module</a>
+</li>
+      </ul></li>
       <li>
     okflint.audit
 
       <ul>
-        <li><a href="api/audit.html#module-okflint.audit">module</a>
+        <li><a href="api/okflint.audit.html#module-okflint.audit">module</a>
 </li>
       </ul></li>
       <li>
     okflint.cli
 
       <ul>
-        <li><a href="api/cli.html#module-okflint.cli">module</a>
+        <li><a href="api/okflint.cli.html#module-okflint.cli">module</a>
+</li>
+      </ul></li>
+      <li>
+    okflint.cohesion
+
+      <ul>
+        <li><a href="api/okflint.cohesion.html#module-okflint.cohesion">module</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    okflint.index
+
+      <ul>
+        <li><a href="api/okflint.index.html#module-okflint.index">module</a>
+</li>
+      </ul></li>
+      <li>
     okflint.manifest
 
       <ul>
-        <li><a href="api/manifest.html#module-okflint.manifest">module</a>
+        <li><a href="api/okflint.manifest.html#module-okflint.manifest">module</a>
 </li>
       </ul></li>
       <li>
     okflint.scanner
 
       <ul>
-        <li><a href="api/scanner.html#module-okflint.scanner">module</a>
+        <li><a href="api/okflint.scanner.html#module-okflint.scanner">module</a>
 </li>
       </ul></li>
       <li>
     okflint.validate
 
       <ul>
-        <li><a href="api/validate.html#module-okflint.validate">module</a>
+        <li><a href="api/okflint.validate.html#module-okflint.validate">module</a>
 </li>
       </ul></li>
-      <li><a href="api/manifest.html#okflint.manifest.TypeConfig.optional">optional (okflint.manifest.TypeConfig attribute)</a>
+      <li>
+    okflint.vault
+
+      <ul>
+        <li><a href="api/okflint.vault.html#module-okflint.vault">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.TypeConfig.optional">optional (okflint.manifest.TypeConfig attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -365,19 +456,21 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.parse_frontmatter">parse_frontmatter() (in module okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.parse_frontmatter">parse_frontmatter() (in module okflint.scanner)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.FileReport.path">path (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.path">path (okflint.audit.FileReport attribute)</a>
 
       <ul>
-        <li><a href="api/manifest.html#okflint.manifest.RootConfig.path">(okflint.manifest.RootConfig attribute)</a>
+        <li><a href="api/okflint.manifest.html#okflint.manifest.RootConfig.path">(okflint.manifest.RootConfig attribute)</a>
+</li>
+        <li><a href="api/okflint.vault.html#okflint.vault.BundleEntry.path">(okflint.vault.BundleEntry attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.Manifest.profile">profile (okflint.manifest.Manifest attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest.profile">profile (okflint.manifest.Manifest attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.ProfileConfig">ProfileConfig (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.ProfileConfig">ProfileConfig (class in okflint.manifest)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -385,27 +478,29 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink.raw">raw (okflint.scanner.WikiLink attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.raw">raw (okflint.scanner.WikiLink attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.TypeConfig.required">required (okflint.manifest.TypeConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.TypeConfig.required">required (okflint.manifest.TypeConfig attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.BaseConfig.reserved_files">reserved_files (okflint.manifest.BaseConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.BaseConfig.reserved_files">reserved_files (okflint.manifest.BaseConfig attribute)</a>
 
       <ul>
-        <li><a href="api/manifest.html#okflint.manifest.HygieneConfig.reserved_files">(okflint.manifest.HygieneConfig attribute)</a>
+        <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.reserved_files">(okflint.manifest.HygieneConfig attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.Manifest.resolved_okf_version">resolved_okf_version (okflint.manifest.Manifest property)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink.resolved_path">resolved_path (okflint.scanner.WikiLink attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.resolved_path">resolved_path (okflint.scanner.WikiLink attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.RootConfig">RootConfig (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.RootConfig">RootConfig (class in okflint.manifest)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.BaseConfig.roots">roots (okflint.manifest.BaseConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.BaseConfig.roots">roots (okflint.manifest.BaseConfig attribute)</a>
 </li>
-      <li><a href="api/audit.html#okflint.audit.run_audit">run_audit() (in module okflint.audit)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.run_audit">run_audit() (in module okflint.audit)</a>
 </li>
-      <li><a href="api/validate.html#okflint.validate.run_validate">run_validate() (in module okflint.validate)</a>
+      <li><a href="api/okflint.validate.html#okflint.validate.run_validate">run_validate() (in module okflint.validate)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -413,19 +508,29 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink.section">section (okflint.scanner.WikiLink attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section">Section (class in okflint.cohesion)</a>
 </li>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic.severity">severity (okflint.validate.Diagnostic attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.section">section (okflint.scanner.WikiLink attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.HygieneConfig.split">split (okflint.manifest.HygieneConfig attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Component.section_indices">section_indices (okflint.cohesion.Component attribute)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.CohesionResult.sections">sections (okflint.cohesion.CohesionResult attribute)</a>
+</li>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic.severity">severity (okflint.validate.Diagnostic attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.split_candidate">split_candidate (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.split">split (okflint.manifest.HygieneConfig attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.HygieneConfig.split_candidates">split_candidates (okflint.manifest.HygieneConfig attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.split_candidate">split_candidate (okflint.audit.FileReport attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.SplitConfig">SplitConfig (class in okflint.manifest)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.split_candidates">split_candidates (okflint.manifest.HygieneConfig attribute)</a>
+</li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.split_into_sections">split_into_sections() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.SplitConfig">SplitConfig (class in okflint.manifest)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.stale_content">stale_content (okflint.manifest.HygieneConfig attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -433,27 +538,37 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.MarkdownLink.target">target (okflint.scanner.MarkdownLink attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.MarkdownLink.target">target (okflint.scanner.MarkdownLink attribute)</a>
 
       <ul>
-        <li><a href="api/scanner.html#okflint.scanner.WikiLink.target">(okflint.scanner.WikiLink attribute)</a>
+        <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink.target">(okflint.scanner.WikiLink attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api/manifest.html#okflint.manifest.SplitConfig.tau">tau (okflint.manifest.SplitConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.SplitConfig.tau">tau (okflint.manifest.SplitConfig attribute)</a>
 </li>
-      <li><a href="api/scanner.html#okflint.scanner.Header.text">text (okflint.scanner.Header attribute)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.Header.text">text (okflint.scanner.Header attribute)</a>
 
       <ul>
-        <li><a href="api/scanner.html#okflint.scanner.MarkdownLink.text">(okflint.scanner.MarkdownLink attribute)</a>
+        <li><a href="api/okflint.scanner.html#okflint.scanner.MarkdownLink.text">(okflint.scanner.MarkdownLink attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api/okflint.validate.html#okflint.validate.Diagnostic.tier">tier (okflint.validate.Diagnostic attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/validate.html#okflint.validate.Diagnostic.tier">tier (okflint.validate.Diagnostic attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section.title">title (okflint.cohesion.Section attribute)</a>
+
+      <ul>
+        <li><a href="api/okflint.index.html#okflint.index.IndexEntry.title">(okflint.index.IndexEntry attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.TypeConfig">TypeConfig (class in okflint.manifest)</a>
+      </ul></li>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.Section.token_count">token_count (okflint.cohesion.Section attribute)</a>
 </li>
-      <li><a href="api/manifest.html#okflint.manifest.ProfileConfig.types">types (okflint.manifest.ProfileConfig attribute)</a>
+      <li><a href="api/okflint.cohesion.html#okflint.cohesion.tokenize">tokenize() (in module okflint.cohesion)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.TypeConfig">TypeConfig (class in okflint.manifest)</a>
+</li>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.ProfileConfig.types">types (okflint.manifest.ProfileConfig attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -461,7 +576,19 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/manifest.html#okflint.manifest.HygieneConfig.unknown_fields">unknown_fields (okflint.manifest.HygieneConfig attribute)</a>
+      <li><a href="api/okflint.manifest.html#okflint.manifest.HygieneConfig.unknown_fields">unknown_fields (okflint.manifest.HygieneConfig attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/okflint.vault.html#okflint.vault.VaultConfig">VaultConfig (class in okflint.vault)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/okflint.vault.html#okflint.vault.VaultError">VaultError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -469,11 +596,11 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/scanner.html#okflint.scanner.WikiLink">WikiLink (class in okflint.scanner)</a>
+      <li><a href="api/okflint.scanner.html#okflint.scanner.WikiLink">WikiLink (class in okflint.scanner)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/audit.html#okflint.audit.FileReport.wikilinks">wikilinks (okflint.audit.FileReport attribute)</a>
+      <li><a href="api/okflint.audit.html#okflint.audit.FileReport.wikilinks">wikilinks (okflint.audit.FileReport attribute)</a>
 </li>
   </ul></td>
 </tr></table>

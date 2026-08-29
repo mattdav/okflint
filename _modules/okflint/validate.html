@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -89,6 +85,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
@@ -119,11 +116,30 @@
 <span class="c1"># ISO date pattern YYYY-MM-DD</span>
 <span class="n">_ISO_DATE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">)</span>
 
+<span class="c1"># ISO 8601 datetime (date-only strings do not match — SPEC-002 §5 requires a</span>
+<span class="c1"># time component for `generated.at` / `verified[].at`).</span>
+<span class="n">_ISO_DATETIME_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">T\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">(\.\d+)?(Z|[+-]\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)?$&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Actor convention (SPEC-002 §4): `&lt;producer&gt;/&lt;version&gt;`, `human:&lt;id&gt;`, or</span>
+<span class="c1"># `process:&lt;id&gt;`. Existence of the designated identity is never verified.</span>
+<span class="n">_ACTOR_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:human:\S+|process:\S+|[^\s/:]+/[^\s/:]+)$&quot;</span><span class="p">)</span>
+
+<span class="c1"># SPEC-002 §5.4&#39;s default `status` vocabulary (a SHOULD, not among §11&#39;s three</span>
+<span class="c1"># MUSTs) — overridden by a profile&#39;s `status_values` for the concept&#39;s type.</span>
+<span class="n">_DEFAULT_STATUS_VALUES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;draft&quot;</span><span class="p">,</span> <span class="s2">&quot;stable&quot;</span><span class="p">,</span> <span class="s2">&quot;deprecated&quot;</span><span class="p">})</span>
+
 <span class="c1"># OKF v0.1 default reserved file names, used whenever no manifest overrides</span>
 <span class="c1"># them via base.reserved_files. Single source of truth: callers with or</span>
 <span class="c1"># without a loaded manifest must use this instead of re-declaring their own</span>
 <span class="c1"># reserved-name set.</span>
 <span class="n">DEFAULT_RESERVED_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;index.md&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">:</span> <span class="s2">&quot;log.md&quot;</span><span class="p">}</span>
+
+<span class="c1"># OKF v0.2&#39;s one spec-prescribed concept type (SPEC-002 §7): hardcoded in the</span>
+<span class="c1"># engine rather than manifest-declared, exactly like the reserved file names</span>
+<span class="c1"># above are — the vocabulary comes from the spec, not from a producer.</span>
+<span class="n">_ATTESTED_COMPUTATION_TYPE</span> <span class="o">=</span> <span class="s2">&quot;Attested Computation&quot;</span>
 
 <span class="c1"># Re-export for importers (cli.py, audit.py)</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -136,7 +152,7 @@
 
 
 <div class="viewcode-block" id="Diagnostic">
-<a class="viewcode-back" href="../../api/validate.html#okflint.validate.Diagnostic">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.validate.html#okflint.validate.Diagnostic">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Diagnostic</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;OKF validation error or warning.&quot;&quot;&quot;</span>
@@ -158,15 +174,23 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">check_core_concept</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check OKF core rules on a concept file.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Relative file path (for messages).</span>
 <span class="sd">        frontmatter: Parsed frontmatter, or None if absent/invalid.</span>
+<span class="sd">        okf_version: Resolved OKF version driving the base (see</span>
+<span class="sd">            ``Manifest.resolved_okf_version``). Defaults to ``&quot;0.2&quot;``,</span>
+<span class="sd">            matching the engine&#39;s default when no manifest is loaded</span>
+<span class="sd">            (SPEC-002 §1). F003/F004/F005 only fire when this is ``&quot;0.2&quot;``:</span>
+<span class="sd">            a base declaring ``&quot;0.1&quot;`` must be validated exactly as before</span>
+<span class="sd">            v0.2 support was added.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List of Diagnostic (F001, F002).</span>
+<span class="sd">        List of Diagnostic (F001, F002, and — on v0.2 — F003, F004, F005).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -181,7 +205,7 @@
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;frontmatter absent or unparsable&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># F002 impossible without frontmatter</span>
+        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># F002-F005 impossible without frontmatter</span>
 
     <span class="c1"># F002: type field absent or empty</span>
     <span class="k">if</span> <span class="s2">&quot;type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
@@ -194,6 +218,69 @@
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;`type` field absent or empty&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">diags</span>
+
+    <span class="c1"># F003: `generated` present without `generated.by` (SPEC-002 §3a)</span>
+    <span class="k">if</span> <span class="s2">&quot;generated&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
+        <span class="n">generated</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;generated&quot;</span><span class="p">]</span>
+        <span class="n">by</span> <span class="o">=</span> <span class="n">generated</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generated</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">by</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">by</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F003&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;`generated` present without `generated.by`&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># F004: `sources` entries without `resource` (SPEC-002 §3a)</span>
+    <span class="k">if</span> <span class="s2">&quot;sources&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;sources&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sources</span>
+        <span class="p">):</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F004&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;`sources` must be a list of mappings&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sources</span><span class="p">):</span>
+                <span class="n">resource</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">resource</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">Diagnostic</span><span class="p">(</span>
+                            <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F004&quot;</span><span class="p">,</span>
+                            <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                            <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`sources[</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">]` missing `resource`&quot;</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+    <span class="c1"># F005: `Attested Computation` concept without `runtime` (SPEC-002 §3a, §7)</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">_ATTESTED_COMPUTATION_TYPE</span><span class="p">:</span>
+        <span class="n">runtime</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">runtime</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;F005&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">_ATTESTED_COMPUTATION_TYPE</span><span class="si">}</span><span class="s2">` concept without `runtime`&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">diags</span>
 
@@ -276,7 +363,7 @@
 
 
 <div class="viewcode-block" id="dispatch_reserved_file">
-<a class="viewcode-back" href="../../api/validate.html#okflint.validate.dispatch_reserved_file">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.validate.html#okflint.validate.dispatch_reserved_file">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">dispatch_reserved_file</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -507,6 +594,397 @@
     <span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_verified_entries</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise `verified` for iteration, without flagging its own shape.</span>
+
+<span class="sd">    SPEC-002 §5: `verified` is either a list of `{by, at}` events, or a bare</span>
+<span class="sd">    mapping (single verifier, no list dash) that MUST be treated as a</span>
+<span class="sd">    one-element list and MUST NOT be flagged for taking that shorthand form.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        raw: Raw value of the `verified` field, or None if absent.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of verifier mappings to inspect (empty if absent or malformed).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">raw</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">raw</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_s207_attested_computation</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">safe_body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check the `Attested Computation` contract shape (S207).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter of an `Attested Computation` concept.</span>
+<span class="sd">        safe_body: Markdown body with code spans/fences blanked.</span>
+<span class="sd">        severity: Severity to attach to each diagnostic (warning | error).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Diagnostic (S207).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameters&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;required&quot;</span><span class="p">}</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S207&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;`parameters` should be a list of &quot;</span>
+                        <span class="s2">&quot;`{name, type, required}` entries&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;executor&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">executor</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">):</span>
+            <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">)</span>
+        <span class="n">receipt</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;receipt&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">receipt</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">receipt</span><span class="p">:</span>
+            <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;receipt&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S207&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`executor` should carry </span><span class="si">{</span><span class="s1">&#39; and &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="n">attester</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attester&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attester</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">attester</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">):</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S207&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;`attester` should carry `resource`&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">has_field</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;computation&quot;</span><span class="p">))</span>
+    <span class="n">has_block</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Computation&quot;</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_field</span> <span class="ow">and</span> <span class="n">has_block</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S207&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;both a `computation` field and a `# Computation` block are present&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">has_field</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_block</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S207&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;neither a `computation` field nor a `# Computation` &quot;</span>
+                    <span class="s2">&quot;block is present&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">diags</span>
+
+
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_hygiene_okf_v02_shapes</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">safe_body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">date_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check OKF v0.2 shape hygiene rules (S203-S207).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
+<span class="sd">        safe_body: Markdown body with code spans/fences blanked.</span>
+<span class="sd">        level: Control level (off | warn | error), from</span>
+<span class="sd">            `hygiene.okf_v02_shapes`.</span>
+<span class="sd">        type_cfg: Resolved profile type configuration, if any. Used to</span>
+<span class="sd">            neutralise S203 when the type declares a `status_values`</span>
+<span class="sd">            controlled vocabulary (the producer&#39;s profile overrides the</span>
+<span class="sd">            spec&#39;s default `status` vocabulary).</span>
+<span class="sd">        date_fields: `profile.date_fields`, if a profile is declared. Used</span>
+<span class="sd">            to avoid double-reporting `stale_after` when it is already</span>
+<span class="sd">            covered by S102.</span>
+<span class="sd">        okf_version: Resolved OKF version driving the base. Defaults to</span>
+<span class="sd">            `&quot;0.2&quot;`. S203-S207 only fire when this is `&quot;0.2&quot;`: a base</span>
+<span class="sd">            declaring `&quot;0.1&quot;` must be validated exactly as before v0.2</span>
+<span class="sd">            support was added.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Diagnostic (S203, S204, S205, S206, S207).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span> <span class="ow">or</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;warn&quot;</span> <span class="k">else</span> <span class="s2">&quot;error&quot;</span>
+    <span class="n">date_fields</span> <span class="o">=</span> <span class="n">date_fields</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># S203 — status outside draft|stable|deprecated</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span>
+    <span class="n">status_overridden</span> <span class="o">=</span> <span class="n">type_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">controlled_values</span>
+    <span class="k">if</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">status_overridden</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_DEFAULT_STATUS_VALUES</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S203&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`status` outside draft|stable|deprecated: `</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># S204 — stale_after not YYYY-MM-DD (S102 already covers it if declared</span>
+    <span class="c1"># in profile.date_fields — do not double-report)</span>
+    <span class="k">if</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">date_fields</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;stale_after&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)):</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S204&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;`stale_after` incorrectly formatted: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(expected YYYY-MM-DD)&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># S205 — generated.at / verified[].at not ISO 8601 datetime</span>
+    <span class="n">generated</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;generated&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generated</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">generated</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;at&quot;</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">generated</span><span class="p">[</span><span class="s2">&quot;at&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATETIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S205&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`generated.at` not ISO 8601 datetime: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_verified_entries</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verified&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;at&quot;</span><span class="p">):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;at&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATETIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S205&quot;</span><span class="p">,</span>
+                        <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`verified[].at` not ISO 8601 datetime: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+    <span class="c1"># S206 — generated.by / verified[].by outside the actor convention</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generated</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">generated</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by&quot;</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">generated</span><span class="p">[</span><span class="s2">&quot;by&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_ACTOR_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S206&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`generated.by` outside actor convention: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_verified_entries</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verified&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;by&quot;</span><span class="p">):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;by&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_ACTOR_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S206&quot;</span><span class="p">,</span>
+                        <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`verified[].by` outside actor convention: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+    <span class="c1"># S207 — Attested Computation contract shape</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">_ATTESTED_COMPUTATION_TYPE</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">_check_s207_attested_computation</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">,</span> <span class="n">safe_body</span><span class="p">,</span> <span class="n">severity</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">diags</span>
+
+
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_hygiene_legacy_forms</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">safe_body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">declared_okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for residual OKF v0.1 forms in a v0.2 base (S208).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
+<span class="sd">        safe_body: Markdown body with code spans/fences blanked.</span>
+<span class="sd">        level: Control level (off | warn | error), from</span>
+<span class="sd">            `hygiene.legacy_forms`.</span>
+<span class="sd">        declared_okf_version: `manifest.okf_version` (the raw declared</span>
+<span class="sd">            value, not the resolved one). S208 must stay silent on a base</span>
+<span class="sd">            with no manifest or no declared version — resolving to &quot;0.2&quot;</span>
+<span class="sd">            there would flag `timestamp` fields that predate v0.2 support</span>
+<span class="sd">            entirely, exactly what this rule must avoid.</span>
+<span class="sd">        type_cfg: Resolved profile type configuration, if any. Neutralises</span>
+<span class="sd">            the `timestamp` sub-check when the field is declared in the</span>
+<span class="sd">            type&#39;s `required` or `optional` list.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Diagnostic (S208).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span> <span class="ow">or</span> <span class="n">declared_okf_version</span> <span class="o">!=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;warn&quot;</span> <span class="k">else</span> <span class="s2">&quot;error&quot;</span>
+    <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">timestamp_declared</span> <span class="o">=</span> <span class="n">type_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="s2">&quot;timestamp&quot;</span> <span class="ow">in</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">required</span> <span class="ow">or</span> <span class="s2">&quot;timestamp&quot;</span> <span class="ow">in</span> <span class="n">type_cfg</span><span class="o">.</span><span class="n">optional</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;timestamp&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">timestamp_declared</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S208&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;legacy v0.1 form `timestamp` used instead of `generated.at`&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">has_citations</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Citations&quot;</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">has_citations</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S208&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;legacy v0.1 `# Citations` list used instead of `sources`&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">diags</span>
+
+
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_hygiene_stale_content</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
+    <span class="n">evaluation_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `stale_after` has been reached or passed (S209).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
+<span class="sd">        level: Control level (off | warn | error), from</span>
+<span class="sd">            `hygiene.stale_content`.</span>
+<span class="sd">        okf_version: Resolved OKF version driving the base. Defaults to</span>
+<span class="sd">            `&quot;0.2&quot;`. S209 only fires when this is `&quot;0.2&quot;`, consistent with</span>
+<span class="sd">            the rest of the OKF v0.2 shape family.</span>
+<span class="sd">        evaluation_date: Date to evaluate staleness against. Defaults to</span>
+<span class="sd">            `date.today()` when omitted; injectable so callers (and tests)</span>
+<span class="sd">            can obtain reproducible verdicts.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Diagnostic (S209).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span> <span class="ow">or</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">stale_after</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stale_after&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">stale_after</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">stale_after</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">eval_date</span> <span class="o">=</span> <span class="n">evaluation_date</span> <span class="ow">or</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stale_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">eval_date</span> <span class="o">&lt;</span> <span class="n">stale_date</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;warn&quot;</span> <span class="k">else</span> <span class="s2">&quot;error&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">Diagnostic</span><span class="p">(</span>
+            <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S209&quot;</span><span class="p">,</span>
+            <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+            <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+            <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;stale: `stale_after=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` reached as of evaluation date &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">eval_date</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">`&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_hygiene_links</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -734,7 +1212,7 @@
     <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># OKF core</span>
-    <span class="n">core_diags</span> <span class="o">=</span> <span class="n">check_core_concept</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">)</span>
+    <span class="n">core_diags</span> <span class="o">=</span> <span class="n">check_core_concept</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">okf_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">resolved_okf_version</span><span class="p">)</span>
     <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">core_diags</span><span class="p">)</span>
 
     <span class="c1"># If F001 or F002 → skip subsequent stages</span>
@@ -746,14 +1224,18 @@
 
     <span class="n">safe_body</span> <span class="o">=</span> <span class="n">blank_code_spans</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="n">wikilinks</span> <span class="o">=</span> <span class="n">extract_wikilinks</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">base_index</span><span class="p">)</span>
-    <span class="n">md_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">)</span>
+    <span class="n">other_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">roots</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="o">!=</span> <span class="n">applicable_root</span><span class="p">]</span>
+    <span class="n">md_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span>
+        <span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">applicable_root</span><span class="p">,</span> <span class="n">other_roots</span>
+    <span class="p">)</span>
 
     <span class="c1"># Profile</span>
     <span class="n">resolved_type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">profile_diags</span> <span class="o">=</span> <span class="n">check_profile</span><span class="p">(</span><span class="n">rel</span><span class="p">,</span> <span class="n">fm</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">profile_diags</span><span class="p">)</span>
-        <span class="c1"># Resolve type_cfg for F201 (hygiene unknown fields)</span>
+        <span class="c1"># Resolve type_cfg for F201 (hygiene unknown fields) and S203</span>
+        <span class="c1"># (status_values override)</span>
         <span class="n">type_key</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_resolve_type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">type_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">resolved_type_cfg</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">types</span><span class="p">[</span><span class="n">type_key</span><span class="p">]</span>
@@ -794,11 +1276,48 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
+        <span class="c1"># OKF v0.2 shapes (S203-S207)</span>
+        <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">check_hygiene_okf_v02_shapes</span><span class="p">(</span>
+                <span class="n">rel</span><span class="p">,</span>
+                <span class="n">fm</span><span class="p">,</span>
+                <span class="n">safe_body</span><span class="p">,</span>
+                <span class="n">hygiene</span><span class="o">.</span><span class="n">okf_v02_shapes</span><span class="p">,</span>
+                <span class="n">type_cfg</span><span class="o">=</span><span class="n">resolved_type_cfg</span><span class="p">,</span>
+                <span class="n">date_fields</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">date_fields</span> <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">),</span>
+                <span class="n">okf_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">resolved_okf_version</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Legacy v0.1 forms (S208)</span>
+        <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">check_hygiene_legacy_forms</span><span class="p">(</span>
+                <span class="n">rel</span><span class="p">,</span>
+                <span class="n">fm</span><span class="p">,</span>
+                <span class="n">safe_body</span><span class="p">,</span>
+                <span class="n">hygiene</span><span class="o">.</span><span class="n">legacy_forms</span><span class="p">,</span>
+                <span class="n">declared_okf_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">okf_version</span><span class="p">,</span>
+                <span class="n">type_cfg</span><span class="o">=</span><span class="n">resolved_type_cfg</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Stale content (S209)</span>
+        <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="n">check_hygiene_stale_content</span><span class="p">(</span>
+                <span class="n">rel</span><span class="p">,</span>
+                <span class="n">fm</span><span class="p">,</span>
+                <span class="n">hygiene</span><span class="o">.</span><span class="n">stale_content</span><span class="p">,</span>
+                <span class="n">okf_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">resolved_okf_version</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">diagnostics</span>
 
 
 <div class="viewcode-block" id="run_validate">
-<a class="viewcode-back" href="../../api/validate.html#okflint.validate.run_validate">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.validate.html#okflint.validate.run_validate">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_validate</span><span class="p">(</span>
     <span class="n">manifest_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>

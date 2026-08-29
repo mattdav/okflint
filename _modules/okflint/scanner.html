@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -105,7 +101,7 @@
 
 
 <div class="viewcode-block" id="Header">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.Header">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.Header">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an H1 or H2 heading in a file.&quot;&quot;&quot;</span>
@@ -117,7 +113,7 @@
 
 
 <div class="viewcode-block" id="WikiLink">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.WikiLink">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.WikiLink">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WikiLink</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an Obsidian wikilink [[...]] in a file.&quot;&quot;&quot;</span>
@@ -133,7 +129,7 @@
 
 
 <div class="viewcode-block" id="MarkdownLink">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.MarkdownLink">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.MarkdownLink">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MarkdownLink</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a markdown link [text](url) in a file.&quot;&quot;&quot;</span>
@@ -146,7 +142,7 @@
 
 
 <div class="viewcode-block" id="blank_code_spans">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.blank_code_spans">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.blank_code_spans">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">blank_code_spans</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Blank out fenced code blocks and inline code spans.</span>
@@ -199,7 +195,7 @@
 
 
 <div class="viewcode-block" id="parse_frontmatter">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.parse_frontmatter">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.parse_frontmatter">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the YAML frontmatter from a markdown file.</span>
@@ -240,7 +236,7 @@
 
 
 <div class="viewcode-block" id="build_file_index">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.build_file_index">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.build_file_index">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_file_index</span><span class="p">(</span>
     <span class="n">roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
@@ -272,7 +268,7 @@
 
 
 <div class="viewcode-block" id="extract_wikilinks">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_wikilinks">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.extract_wikilinks">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_wikilinks</span><span class="p">(</span>
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -314,12 +310,13 @@
 
 
 <div class="viewcode-block" id="extract_markdown_links">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_markdown_links">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.extract_markdown_links">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_markdown_links</span><span class="p">(</span>
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">bundle_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">other_roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MarkdownLink</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract [text](target) markdown links and verify internal links.</span>
 
@@ -328,7 +325,11 @@
 <span class="sd">    Args:</span>
 <span class="sd">        content: Markdown file body.</span>
 <span class="sd">        file_path: Absolute path of the current file.</span>
-<span class="sd">        bundle_path: Bundle root (for resolving absolute paths).</span>
+<span class="sd">        bundle_path: Root owning the current file (tried first for absolute</span>
+<span class="sd">            paths).</span>
+<span class="sd">        other_roots: Remaining roots of a multi-root base. An absolute path</span>
+<span class="sd">            not found under ``bundle_path`` is tried against each of these,</span>
+<span class="sd">            in order, before being reported broken.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of MarkdownLink.</span>
@@ -346,9 +347,11 @@
         <span class="k">if</span> <span class="n">is_external</span><span class="p">:</span>
             <span class="n">broken</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">path_part</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
-            <span class="c1"># Absolute path relative to the bundle</span>
-            <span class="n">resolved</span> <span class="o">=</span> <span class="n">bundle_path</span> <span class="o">/</span> <span class="n">path_part</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-            <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="c1"># Absolute path, bundle-relative: owning root first, then the</span>
+            <span class="c1"># base&#39;s other roots (mirrors wikilink resolution at base scale).</span>
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">path_part</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">candidate_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">bundle_path</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">other_roots</span> <span class="ow">or</span> <span class="p">[])]</span>
+            <span class="n">broken</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">((</span><span class="n">root</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">candidate_roots</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Path relative to the current file</span>
             <span class="n">resolved</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">path_part</span>
@@ -364,7 +367,7 @@
 
 
 <div class="viewcode-block" id="extract_headers">
-<a class="viewcode-back" href="../../api/scanner.html#okflint.scanner.extract_headers">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.extract_headers">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_headers</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Header</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract H1 and H2 headings with their line number in the body.</span>

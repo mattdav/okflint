@@ -19,7 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="scanner" href="../api/scanner.html" />
+    <link rel="next" title="okflint" href="../api/modules.html" />
     <link rel="prev" title="Manifest format" href="manifest.html" /> 
 </head>
 
@@ -54,11 +54,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -95,12 +91,12 @@
 <section id="stages">
 <h2>Stages<a class="headerlink" href="#stages" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><strong>OKF core</strong> (<code class="docutils literal notranslate"><span class="pre">F001</span></code>, <code class="docutils literal notranslate"><span class="pre">F002</span></code>, <code class="docutils literal notranslate"><span class="pre">R001</span></code>, <code class="docutils literal notranslate"><span class="pre">R002</span></code>) — always active, checks
-minimal conformance to OKF standard §9.</p></li>
+<li><p><strong>OKF core</strong> (<code class="docutils literal notranslate"><span class="pre">F001</span></code>, <code class="docutils literal notranslate"><span class="pre">F002</span></code>, <code class="docutils literal notranslate"><span class="pre">F003</span></code>, <code class="docutils literal notranslate"><span class="pre">F004</span></code>, <code class="docutils literal notranslate"><span class="pre">F005</span></code>, <code class="docutils literal notranslate"><span class="pre">R001</span></code>,
+<code class="docutils literal notranslate"><span class="pre">R002</span></code>) — always active, checks minimal conformance to OKF standard §11.</p></li>
 <li><p><strong>Profile</strong> (<code class="docutils literal notranslate"><span class="pre">F101</span></code>, <code class="docutils literal notranslate"><span class="pre">F102</span></code>, <code class="docutils literal notranslate"><span class="pre">F105</span></code>, <code class="docutils literal notranslate"><span class="pre">F106</span></code>, <code class="docutils literal notranslate"><span class="pre">S102</span></code>) — active when a
 <code class="docutils literal notranslate"><span class="pre">profile</span></code> block is declared in the manifest.</p></li>
-<li><p><strong>Hygiene</strong> (<code class="docutils literal notranslate"><span class="pre">F201</span></code>, <code class="docutils literal notranslate"><span class="pre">L001</span></code>–<code class="docutils literal notranslate"><span class="pre">L003</span></code>, <code class="docutils literal notranslate"><span class="pre">S202</span></code>, <code class="docutils literal notranslate"><span class="pre">R201</span></code>) — opt-in via the
-<code class="docutils literal notranslate"><span class="pre">hygiene</span></code> key in the manifest, level <code class="docutils literal notranslate"><span class="pre">warn</span></code> or <code class="docutils literal notranslate"><span class="pre">error</span></code>.</p></li>
+<li><p><strong>Hygiene</strong> (<code class="docutils literal notranslate"><span class="pre">F201</span></code>, <code class="docutils literal notranslate"><span class="pre">L001</span></code>–<code class="docutils literal notranslate"><span class="pre">L003</span></code>, <code class="docutils literal notranslate"><span class="pre">S202</span></code>, <code class="docutils literal notranslate"><span class="pre">R201</span></code>, <code class="docutils literal notranslate"><span class="pre">S203</span></code>–<code class="docutils literal notranslate"><span class="pre">S209</span></code>)
+— opt-in via the <code class="docutils literal notranslate"><span class="pre">hygiene</span></code> key in the manifest, level <code class="docutils literal notranslate"><span class="pre">warn</span></code> or <code class="docutils literal notranslate"><span class="pre">error</span></code>.</p></li>
 </ul>
 </section>
 <section id="severities">
@@ -117,7 +113,7 @@ minimal conformance to OKF standard §9.</p></li>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="manifest.html" class="btn btn-neutral float-left" title="Manifest format" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../api/scanner.html" class="btn btn-neutral float-right" title="scanner" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../api/modules.html" class="btn btn-neutral float-right" title="okflint" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

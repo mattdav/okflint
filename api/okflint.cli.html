@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cli &mdash; okflint 0.1.0 documentation</title>
+  <title>okflint.cli module &mdash; okflint 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -19,7 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="validate" href="validate.html" /> 
+    <link rel="next" title="okflint.cohesion module" href="okflint.cohesion.html" />
+    <link rel="prev" title="okflint.audit module" href="okflint.audit.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,13 +50,21 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">cli</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">okflint</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="okflint.html">okflint package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="okflint.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="okflint.audit.html">okflint.audit module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">okflint.cli module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cohesion.html">okflint.cohesion module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.index.html">okflint.index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.manifest.html">okflint.manifest module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.scanner.html">okflint.scanner module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.validate.html">okflint.validate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.vault.html">okflint.vault module</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -78,9 +87,11 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">cli</li>
+          <li class="breadcrumb-item"><a href="modules.html">okflint</a></li>
+          <li class="breadcrumb-item"><a href="okflint.html">okflint package</a></li>
+      <li class="breadcrumb-item active">okflint.cli module</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/api/cli.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/api/okflint.cli.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -88,14 +99,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="cli">
-<h1>cli<a class="headerlink" href="#cli" title="Link to this heading"></a></h1>
-<p>Point d’entrée CLI unifié — sous-commandes <code class="docutils literal notranslate"><span class="pre">audit</span></code> et <code class="docutils literal notranslate"><span class="pre">validate</span></code>.</p>
-<p id="module-okflint.cli">Unified CLI entry point for okflint.</p>
+  <section id="module-okflint.cli">
+<span id="okflint-cli-module"></span><h1>okflint.cli module<a class="headerlink" href="#module-okflint.cli" title="Link to this heading"></a></h1>
+<p>Unified CLI entry point for okflint.</p>
 <dl class="simple">
-<dt>Exposes three sub-commands Ruff-style:</dt><dd><p>okflint audit     — inventory and descriptive diagnostic of a base
-okflint validate  — normative compliance gate (exit 0/1)
-okflint index     — generate OKF §6 index.md files (dry-run by default)</p>
+<dt>Exposes four sub-commands Ruff-style:</dt><dd><p>okflint audit              — inventory and descriptive diagnostic of a base
+okflint validate           — normative compliance gate (exit 0/1)
+okflint validate-manifest  — validate a manifest alone (exit 0/2, no base scan)
+okflint index              — generate OKF §6 index.md files (dry-run by default)</p>
 </dd>
 </dl>
 <dl class="py function">
@@ -129,7 +140,8 @@ okflint index     — generate OKF §6 index.md files (dry-run by default)</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="validate.html" class="btn btn-neutral float-left" title="validate" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="okflint.audit.html" class="btn btn-neutral float-left" title="okflint.audit module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="okflint.cohesion.html" class="btn btn-neutral float-right" title="okflint.cohesion module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

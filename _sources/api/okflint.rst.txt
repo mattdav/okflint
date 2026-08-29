@@ -1,0 +1,22 @@
+okflint package
+===============
+
+.. automodule:: okflint
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   okflint.audit
+   okflint.cli
+   okflint.cohesion
+   okflint.index
+   okflint.manifest
+   okflint.scanner
+   okflint.validate
+   okflint.vault

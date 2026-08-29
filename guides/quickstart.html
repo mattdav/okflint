@@ -48,6 +48,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#auditing-a-base">Auditing a base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#validation-ci-gate">Validation (CI gate)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validating-a-manifest-alone">Validating a manifest alone</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="manifest.html">Manifest format</a></li>
@@ -55,11 +56,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -115,6 +112,15 @@ Add <code class="docutils literal notranslate"><span class="pre">--apply</span><
 </div>
 <p>Returns exit 0 if all files are conformant, exit 1 otherwise.
 Add <code class="docutils literal notranslate"><span class="pre">--json</span></code> for machine-readable JSON output suitable for CI.</p>
+</section>
+<section id="validating-a-manifest-alone">
+<h2>Validating a manifest alone<a class="headerlink" href="#validating-a-manifest-alone" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>okflint<span class="w"> </span>validate-manifest<span class="w"> </span>okf-base.yaml
+</pre></div>
+</div>
+<p>Checks the manifest’s own structure, without scanning the base it declares.
+Returns exit 0 if valid, exit 2 otherwise (never exit 1). Add <code class="docutils literal notranslate"><span class="pre">--json</span></code> for
+machine-readable output.</p>
 </section>
 </section>
 

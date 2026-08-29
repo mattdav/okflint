@@ -14,14 +14,10 @@ YAML manifest declaring the base's conventions.
    guides/rules
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: API Reference
 
-   api/scanner
-   api/manifest
-   api/audit
-   api/validate
-   api/cli
+   api/modules
 
 .. toctree::
    :maxdepth: 1

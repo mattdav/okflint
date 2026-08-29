@@ -1,8 +1,7 @@
-manifest
-========
-
-Chargement et validation du manifeste OKF YAML.
+okflint.manifest module
+=======================
 
 .. automodule:: okflint.manifest
    :members:
    :show-inheritance:
+   :undoc-members:

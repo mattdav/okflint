@@ -1,0 +1,7 @@
+okflint.index module
+====================
+
+.. automodule:: okflint.index
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>scanner &mdash; okflint 0.1.0 documentation</title>
+  <title>okflint.scanner module &mdash; okflint 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="manifest" href="manifest.html" />
-    <link rel="prev" title="Rules catalogue" href="../guides/rules.html" /> 
+    <link rel="next" title="okflint.validate module" href="okflint.validate.html" />
+    <link rel="prev" title="okflint.manifest module" href="okflint.manifest.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,42 +50,23 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">scanner</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.Header"><code class="docutils literal notranslate"><span class="pre">Header</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.Header.level"><code class="docutils literal notranslate"><span class="pre">Header.level</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.Header.line"><code class="docutils literal notranslate"><span class="pre">Header.line</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.Header.text"><code class="docutils literal notranslate"><span class="pre">Header.text</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">okflint</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="okflint.html">okflint package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="okflint.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="okflint.audit.html">okflint.audit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cli.html">okflint.cli module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cohesion.html">okflint.cohesion module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.index.html">okflint.index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.manifest.html">okflint.manifest module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">okflint.scanner module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.validate.html">okflint.validate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.vault.html">okflint.vault module</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.MarkdownLink"><code class="docutils literal notranslate"><span class="pre">MarkdownLink</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.MarkdownLink.broken"><code class="docutils literal notranslate"><span class="pre">MarkdownLink.broken</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.MarkdownLink.is_external"><code class="docutils literal notranslate"><span class="pre">MarkdownLink.is_external</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.MarkdownLink.target"><code class="docutils literal notranslate"><span class="pre">MarkdownLink.target</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.MarkdownLink.text"><code class="docutils literal notranslate"><span class="pre">MarkdownLink.text</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.WikiLink"><code class="docutils literal notranslate"><span class="pre">WikiLink</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.alias"><code class="docutils literal notranslate"><span class="pre">WikiLink.alias</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.ambiguous"><code class="docutils literal notranslate"><span class="pre">WikiLink.ambiguous</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.broken"><code class="docutils literal notranslate"><span class="pre">WikiLink.broken</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.raw"><code class="docutils literal notranslate"><span class="pre">WikiLink.raw</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.resolved_path"><code class="docutils literal notranslate"><span class="pre">WikiLink.resolved_path</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.section"><code class="docutils literal notranslate"><span class="pre">WikiLink.section</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#okflint.scanner.WikiLink.target"><code class="docutils literal notranslate"><span class="pre">WikiLink.target</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.blank_code_spans"><code class="docutils literal notranslate"><span class="pre">blank_code_spans()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.build_file_index"><code class="docutils literal notranslate"><span class="pre">build_file_index()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_markdown_links"><code class="docutils literal notranslate"><span class="pre">extract_markdown_links()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.extract_wikilinks"><code class="docutils literal notranslate"><span class="pre">extract_wikilinks()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#okflint.scanner.parse_frontmatter"><code class="docutils literal notranslate"><span class="pre">parse_frontmatter()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">cli</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -106,9 +87,11 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">scanner</li>
+          <li class="breadcrumb-item"><a href="modules.html">okflint</a></li>
+          <li class="breadcrumb-item"><a href="okflint.html">okflint package</a></li>
+      <li class="breadcrumb-item active">okflint.scanner module</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/api/scanner.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/api/okflint.scanner.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -116,10 +99,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="scanner">
-<h1>scanner<a class="headerlink" href="#scanner" title="Link to this heading"></a></h1>
-<p>Primitives partagées de scan de fichiers Markdown OKF.</p>
-<p id="module-okflint.scanner">Shared Markdown file scanning primitives for OKF.</p>
+  <section id="module-okflint.scanner">
+<span id="okflint-scanner-module"></span><h1>okflint.scanner module<a class="headerlink" href="#module-okflint.scanner" title="Link to this heading"></a></h1>
+<p>Shared Markdown file scanning primitives for OKF.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="okflint.scanner.Header">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">Header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#Header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.Header" title="Link to this definition"></a></dt>
@@ -274,7 +256,7 @@ pattern for their root are omitted from the index.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="okflint.scanner.extract_markdown_links">
-<span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">extract_markdown_links</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#extract_markdown_links"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.extract_markdown_links" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">extract_markdown_links</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_roots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#extract_markdown_links"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.extract_markdown_links" title="Link to this definition"></a></dt>
 <dd><p>Extract [text](target) markdown links and verify internal links.</p>
 <p>External URLs (<a class="reference external" href="http://">http://</a> / <a class="reference external" href="https://">https://</a>) are not checked.</p>
 <dl class="field-list simple">
@@ -282,7 +264,11 @@ pattern for their root are omitted from the index.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>content</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Markdown file body.</p></li>
 <li><p><strong>file_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Absolute path of the current file.</p></li>
-<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Bundle root (for resolving absolute paths).</p></li>
+<li><p><strong>bundle_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Root owning the current file (tried first for absolute
+paths).</p></li>
+<li><p><strong>other_roots</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – Remaining roots of a multi-root base. An absolute path
+not found under <code class="docutils literal notranslate"><span class="pre">bundle_path</span></code> is tried against each of these,
+in order, before being reported broken.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -337,8 +323,8 @@ pattern for their root are omitted from the index.</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../guides/rules.html" class="btn btn-neutral float-left" title="Rules catalogue" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="manifest.html" class="btn btn-neutral float-right" title="manifest" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="okflint.manifest.html" class="btn btn-neutral float-left" title="okflint.manifest module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="okflint.validate.html" class="btn btn-neutral float-right" title="okflint.validate module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

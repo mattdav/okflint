@@ -49,11 +49,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -96,6 +92,7 @@ YAML manifest declaring the base’s conventions.</p>
 <li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#auditing-a-base">Auditing a base</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#validation-ci-gate">Validation (CI gate)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/quickstart.html#validating-a-manifest-alone">Validating a manifest alone</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/manifest.html">Manifest format</a><ul>
@@ -113,48 +110,11 @@ YAML manifest declaring the base’s conventions.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/scanner.html">scanner</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.Header"><code class="docutils literal notranslate"><span class="pre">Header</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.MarkdownLink"><code class="docutils literal notranslate"><span class="pre">MarkdownLink</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.WikiLink"><code class="docutils literal notranslate"><span class="pre">WikiLink</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.blank_code_spans"><code class="docutils literal notranslate"><span class="pre">blank_code_spans()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.build_file_index"><code class="docutils literal notranslate"><span class="pre">build_file_index()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_headers"><code class="docutils literal notranslate"><span class="pre">extract_headers()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_markdown_links"><code class="docutils literal notranslate"><span class="pre">extract_markdown_links()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.extract_wikilinks"><code class="docutils literal notranslate"><span class="pre">extract_wikilinks()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/scanner.html#okflint.scanner.parse_frontmatter"><code class="docutils literal notranslate"><span class="pre">parse_frontmatter()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">okflint</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/okflint.html">okflint package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/okflint.html#submodules">Submodules</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/manifest.html">manifest</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.BaseConfig"><code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.HygieneConfig"><code class="docutils literal notranslate"><span class="pre">HygieneConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.Manifest"><code class="docutils literal notranslate"><span class="pre">Manifest</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.ManifestError"><code class="docutils literal notranslate"><span class="pre">ManifestError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.ProfileConfig"><code class="docutils literal notranslate"><span class="pre">ProfileConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.RootConfig"><code class="docutils literal notranslate"><span class="pre">RootConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.SplitConfig"><code class="docutils literal notranslate"><span class="pre">SplitConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.TypeConfig"><code class="docutils literal notranslate"><span class="pre">TypeConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/manifest.html#okflint.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/audit.html">audit</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.FileReport"><code class="docutils literal notranslate"><span class="pre">FileReport</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.analyze_file"><code class="docutils literal notranslate"><span class="pre">analyze_file()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.compute_stats"><code class="docutils literal notranslate"><span class="pre">compute_stats()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.get_okf_status"><code class="docutils literal notranslate"><span class="pre">get_okf_status()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/audit.html#okflint.audit.run_audit"><code class="docutils literal notranslate"><span class="pre">run_audit()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/validate.html">validate</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.Diagnostic"><code class="docutils literal notranslate"><span class="pre">Diagnostic</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.ManifestError"><code class="docutils literal notranslate"><span class="pre">ManifestError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.dispatch_reserved_file"><code class="docutils literal notranslate"><span class="pre">dispatch_reserved_file()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/validate.html#okflint.validate.run_validate"><code class="docutils literal notranslate"><span class="pre">run_validate()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/cli.html">cli</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#okflint.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/cli.html#okflint.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
 </ul>

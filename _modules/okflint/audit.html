@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -118,8 +114,15 @@
 <span class="n">OkfStatus</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;conformant&quot;</span><span class="p">,</span> <span class="s2">&quot;partial&quot;</span><span class="p">,</span> <span class="s2">&quot;non_conformant&quot;</span><span class="p">]</span>
 
 
+<div class="viewcode-block" id="AuditError">
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.AuditError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuditError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Audit cannot be run under the given --bundle/--manifest configuration.&quot;&quot;&quot;</span></div>
+
+
+
 <div class="viewcode-block" id="FileReport">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.FileReport">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.FileReport">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FileReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis report for a .md file in the bundle.&quot;&quot;&quot;</span>
@@ -139,7 +142,7 @@
 
 
 <div class="viewcode-block" id="get_okf_status">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.get_okf_status">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.get_okf_status">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_okf_status</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OkfStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine the OKF status of a concept from its frontmatter.</span>
@@ -159,25 +162,29 @@
 
 
 <div class="viewcode-block" id="analyze_file">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.analyze_file">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.analyze_file">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">analyze_file</span><span class="p">(</span>
     <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">bundle_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">vault_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
     <span class="n">reserved_files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">other_roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Full analysis of a .md file in the bundle.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        file_path: Absolute path of the file.</span>
-<span class="sd">        bundle_path: Bundle root.</span>
+<span class="sd">        bundle_path: Bundle root owning the file.</span>
 <span class="sd">        vault_index: Vault index for wikilink resolution.</span>
 <span class="sd">        reserved_files: Mapping with &quot;index&quot;/&quot;log&quot; keys to their configured</span>
 <span class="sd">            filename — ``manifest.base.reserved_files`` when a manifest is</span>
 <span class="sd">            loaded, ``DEFAULT_RESERVED_FILES`` otherwise. Same authority as</span>
 <span class="sd">            used by diagnostics computation in ``run_audit``, so labelling</span>
 <span class="sd">            and diagnostics never disagree on what counts as reserved.</span>
+<span class="sd">        other_roots: Remaining roots of a multi-root bundle, tried as</span>
+<span class="sd">            fallback for absolute markdown links not found under</span>
+<span class="sd">            ``bundle_path``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        FileReport with all fields populated.</span>
@@ -196,7 +203,9 @@
 
     <span class="n">safe_body</span> <span class="o">=</span> <span class="n">blank_code_spans</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="n">wikilinks</span> <span class="o">=</span> <span class="n">extract_wikilinks</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">)</span>
-    <span class="n">markdown_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">bundle_path</span><span class="p">)</span>
+    <span class="n">markdown_links</span> <span class="o">=</span> <span class="n">extract_markdown_links</span><span class="p">(</span>
+        <span class="n">safe_body</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">bundle_path</span><span class="p">,</span> <span class="n">other_roots</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">FileReport</span><span class="p">(</span>
         <span class="n">path</span><span class="o">=</span><span class="n">rel_path</span><span class="p">,</span>
@@ -216,7 +225,7 @@
 
 
 <div class="viewcode-block" id="compute_stats">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.compute_stats">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.compute_stats">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_stats</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileReport</span><span class="p">],</span> <span class="n">vault_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate global statistics for the report.</span>
@@ -278,7 +287,7 @@
 
 
 <div class="viewcode-block" id="run_audit">
-<a class="viewcode-back" href="../../api/audit.html#okflint.audit.run_audit">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.audit.html#okflint.audit.run_audit">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_audit</span><span class="p">(</span>
     <span class="n">bundle_paths</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RootConfig</span> <span class="o">|</span> <span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="n">RootConfig</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
@@ -357,15 +366,27 @@
             <span class="k">if</span> <span class="n">target_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">md_file</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">target_filter</span><span class="p">):</span>
                 <span class="n">all_md_files</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">md_file</span><span class="p">,</span> <span class="n">root_cfg</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
 
+    <span class="k">if</span> <span class="n">target_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">all_md_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AuditError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;--bundle filter </span><span class="si">{</span><span class="n">target_filter</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">!r}</span><span class="s2"> does not overlap &quot;</span>
+            <span class="s2">&quot;any bundle root; 0 files would be scanned. Refusing to report &quot;</span>
+            <span class="s2">&quot;a false-green audit.&quot;</span>
+        <span class="p">)</span>
+
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_md_files</span><span class="p">)</span><span class="si">}</span><span class="s2"> files found&quot;</span><span class="p">)</span>
 
     <span class="n">reserved_files</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">manifest</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">reserved_files</span> <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">DEFAULT_RESERVED_FILES</span>
     <span class="p">)</span>
 
+    <span class="n">_all_bundle_root_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">_bundle_roots</span><span class="p">]</span>
+
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileReport</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span> <span class="ow">in</span> <span class="n">all_md_files</span><span class="p">:</span>
-        <span class="n">report</span> <span class="o">=</span> <span class="n">analyze_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span><span class="p">,</span> <span class="n">_vault_index</span><span class="p">,</span> <span class="n">reserved_files</span><span class="p">)</span>
+        <span class="n">other_roots</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_all_bundle_root_paths</span> <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="n">bundle_root</span><span class="p">]</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">analyze_file</span><span class="p">(</span>
+            <span class="n">md_file</span><span class="p">,</span> <span class="n">bundle_root</span><span class="p">,</span> <span class="n">_vault_index</span><span class="p">,</span> <span class="n">reserved_files</span><span class="p">,</span> <span class="n">other_roots</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span> <span class="o">=</span> <span class="n">validate_file</span><span class="p">(</span><span class="n">md_file</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">_vault_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>

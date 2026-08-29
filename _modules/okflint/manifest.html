@@ -47,11 +47,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api/scanner.html">scanner</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/manifest.html">manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/audit.html">audit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/validate.html">validate</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api/cli.html">cli</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">okflint</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
@@ -97,14 +93,14 @@
 
 
 <div class="viewcode-block" id="ManifestError">
-<a class="viewcode-back" href="../../api/validate.html#okflint.manifest.ManifestError">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.validate.html#okflint.manifest.ManifestError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ManifestError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Invalid or unreadable OKF manifest.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="TypeConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.TypeConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.TypeConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TypeConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration of a concept type declared in the profile.&quot;&quot;&quot;</span>
@@ -117,7 +113,7 @@
 
 
 <div class="viewcode-block" id="ProfileConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.ProfileConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.ProfileConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProfileConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Profile configuration of the documentary base.&quot;&quot;&quot;</span>
@@ -128,7 +124,7 @@
 
 
 <div class="viewcode-block" id="SplitConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.SplitConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.SplitConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SplitConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gate configuration for the S202 semantic cohesion check.&quot;&quot;&quot;</span>
@@ -144,7 +140,7 @@
 
 
 <div class="viewcode-block" id="HygieneConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.HygieneConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.HygieneConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HygieneConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration of hygiene checks (opt-in).&quot;&quot;&quot;</span>
@@ -153,12 +149,15 @@
     <span class="n">split_candidates</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">reserved_files</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">unknown_fields</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
+    <span class="n">okf_v02_shapes</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
+    <span class="n">legacy_forms</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
+    <span class="n">stale_content</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span>
     <span class="n">split</span><span class="p">:</span> <span class="n">SplitConfig</span></div>
 
 
 
 <div class="viewcode-block" id="RootConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.RootConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.RootConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RootConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration of a single root in the documentary base.&quot;&quot;&quot;</span>
@@ -169,7 +168,7 @@
 
 
 <div class="viewcode-block" id="BaseConfig">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.BaseConfig">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.BaseConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Documentary base configuration.&quot;&quot;&quot;</span>
@@ -182,7 +181,7 @@
 
 
 <div class="viewcode-block" id="Manifest">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.Manifest">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.Manifest">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Manifest</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Loaded and validated OKF manifest.&quot;&quot;&quot;</span>
@@ -190,15 +189,20 @@
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">base</span><span class="p">:</span> <span class="n">BaseConfig</span>
     <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span> <span class="o">|</span> <span class="kc">None</span>
-    <span class="n">hygiene</span><span class="p">:</span> <span class="n">HygieneConfig</span> <span class="o">|</span> <span class="kc">None</span></div>
+    <span class="n">hygiene</span><span class="p">:</span> <span class="n">HygieneConfig</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolved_okf_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Effective OKF version: declared value, or &quot;0.2&quot; if unset.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">okf_version</span> <span class="ow">or</span> <span class="s2">&quot;0.2&quot;</span></div>
 
 
 
 <span class="c1"># Valid hygiene values</span>
 <span class="n">_HYGIENE_VALUES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">})</span>
 
-<span class="c1"># Known OKF version</span>
-<span class="n">_KNOWN_OKF_VERSION</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
+<span class="c1"># Recognised OKF versions</span>
+<span class="n">_VALID_OKF_VERSIONS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;0.1&quot;</span><span class="p">,</span> <span class="s2">&quot;0.2&quot;</span><span class="p">})</span>
 
 <span class="c1"># Default SplitConfig: no length gate, no exemptions</span>
 <span class="n">_DEFAULT_SPLIT_CONFIG</span> <span class="o">=</span> <span class="n">SplitConfig</span><span class="p">(</span>
@@ -213,6 +217,9 @@
     <span class="n">split_candidates</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
     <span class="n">reserved_files</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
     <span class="n">unknown_fields</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
+    <span class="n">okf_v02_shapes</span><span class="o">=</span><span class="s2">&quot;warn&quot;</span><span class="p">,</span>
+    <span class="n">legacy_forms</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
+    <span class="n">stale_content</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">,</span>
     <span class="n">split</span><span class="o">=</span><span class="n">_DEFAULT_SPLIT_CONFIG</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -423,12 +430,15 @@
         <span class="n">split_candidates</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;split_candidates&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
         <span class="n">reserved_files</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;reserved_files&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
         <span class="n">unknown_fields</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;unknown_fields&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
+        <span class="n">okf_v02_shapes</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;okf_v02_shapes&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">),</span>
+        <span class="n">legacy_forms</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;legacy_forms&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
+        <span class="n">stale_content</span><span class="o">=</span><span class="n">_get_level</span><span class="p">(</span><span class="s2">&quot;stale_content&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">),</span>
         <span class="n">split</span><span class="o">=</span><span class="n">_parse_split_config</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;split&quot;</span><span class="p">)),</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="load_manifest">
-<a class="viewcode-back" href="../../api/manifest.html#okflint.manifest.load_manifest">[docs]</a>
+<a class="viewcode-back" href="../../api/okflint.manifest.html#okflint.manifest.load_manifest">[docs]</a>
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Manifest</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Load and validate an OKF YAML manifest.</span>
@@ -519,14 +529,18 @@
         <span class="n">external_refs</span><span class="o">=</span><span class="n">external_refs</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># okf_version (optional, warning if unknown)</span>
+    <span class="c1"># okf_version (optional; must be a recognised value when present)</span>
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="s2">&quot;okf_version&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">okf_version</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;okf_version&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="n">_KNOWN_OKF_VERSION</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">okf_version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_VALID_OKF_VERSIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ManifestError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown okf_version=</span><span class="si">{</span><span class="n">okf_version</span><span class="si">!r}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(expected one of: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALID_OKF_VERSIONS</span><span class="p">)</span><span class="si">}</span><span class="s2">).&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">okf_version</span> <span class="o">==</span> <span class="s2">&quot;0.1&quot;</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Warning: unknown okf_version=</span><span class="si">{</span><span class="n">okf_version</span><span class="si">!r}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(expected: </span><span class="si">{</span><span class="n">_KNOWN_OKF_VERSION</span><span class="si">!r}</span><span class="s2">).&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;manifest targets OKF 0.1; 0.2 is the current revision&quot;</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
             <span class="p">)</span>
 

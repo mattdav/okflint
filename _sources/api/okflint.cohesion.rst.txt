@@ -1,0 +1,7 @@
+okflint.cohesion module
+=======================
+
+.. automodule:: okflint.cohesion
+   :members:
+   :show-inheritance:
+   :undoc-members:

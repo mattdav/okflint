@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>okflint.index module &mdash; okflint 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="okflint.manifest module" href="okflint.manifest.html" />
+    <link rel="prev" title="okflint.cohesion module" href="okflint.cohesion.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            okflint
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/manifest.html">Manifest format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rules.html">Rules catalogue</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">okflint</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="okflint.html">okflint package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="okflint.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="okflint.audit.html">okflint.audit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cli.html">okflint.cli module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.cohesion.html">okflint.cohesion module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">okflint.index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.manifest.html">okflint.manifest module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.scanner.html">okflint.scanner module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.validate.html">okflint.validate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="okflint.vault.html">okflint.vault module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/mattdav/okflint/blob/main/docs/project/ROADMAP.md">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">okflint</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">okflint</a></li>
+          <li class="breadcrumb-item"><a href="okflint.html">okflint package</a></li>
+      <li class="breadcrumb-item active">okflint.index module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/okflint.index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-okflint.index">
+<span id="okflint-index-module"></span><h1>okflint.index module<a class="headerlink" href="#module-okflint.index" title="Link to this heading"></a></h1>
+<p>OKF §6 index.md generation.</p>
+<p>Pure computation only: no file is written here. <code class="docutils literal notranslate"><span class="pre">cli.py</span></code> owns the
+dry-run/diff/write orchestration (see <code class="docutils literal notranslate"><span class="pre">okflint</span> <span class="pre">index</span></code>).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="okflint.index.IndexEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">okflint.index.</span></span><span class="sig-name descname"><span class="pre">IndexEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/index.html#IndexEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.index.IndexEntry" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A single concept file to list in an index.md.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.index.IndexEntry.description">
+<span class="sig-name descname"><span class="pre">description</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#okflint.index.IndexEntry.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.index.IndexEntry.filename">
+<span class="sig-name descname"><span class="pre">filename</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#okflint.index.IndexEntry.filename" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="okflint.index.IndexEntry.title">
+<span class="sig-name descname"><span class="pre">title</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="headerlink" href="#okflint.index.IndexEntry.title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="okflint.index.build_index_content">
+<span class="sig-prename descclassname"><span class="pre">okflint.index.</span></span><span class="sig-name descname"><span class="pre">build_index_content</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdirs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/index.html#build_index_content"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.index.build_index_content" title="Link to this definition"></a></dt>
+<dd><p>Build the OKF §6 markdown body of an index.md for one directory.</p>
+<p>No frontmatter is emitted (safe default with respect to R001).
+Sub-directories are listed before files, both in case-insensitive
+alphabetical order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dir_path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Directory this index.md belongs to (kept for signature
+symmetry with <code class="docutils literal notranslate"><span class="pre">generate_indexes</span></code>; the content only depends
+on <code class="docutils literal notranslate"><span class="pre">entries</span></code>/<code class="docutils literal notranslate"><span class="pre">subdirs</span></code>).</p></li>
+<li><p><strong>entries</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="#okflint.index.IndexEntry" title="okflint.index.IndexEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">IndexEntry</span></code></a>]</span>) – Concept files to list.</p></li>
+<li><p><strong>subdirs</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – Names of sub-directories that own their own index.md.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The markdown body (no frontmatter).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="okflint.index.generate_indexes">
+<span class="sig-prename descclassname"><span class="pre">okflint.index.</span></span><span class="sig-name descname"><span class="pre">generate_indexes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifest</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/index.html#generate_indexes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.index.generate_indexes" title="Link to this definition"></a></dt>
+<dd><p>Compute the expected index.md content for every directory in the base.</p>
+<p>Walks every manifest root, respecting <code class="docutils literal notranslate"><span class="pre">exclude_patterns</span></code> and skipping
+the reserved index/log files. One entry is produced per directory that
+contains at least one (non-excluded) <code class="docutils literal notranslate"><span class="pre">.md</span></code> file, directly or in a
+sub-directory. Performs no write.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>manifest</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="okflint.manifest.html#okflint.manifest.Manifest" title="okflint.manifest.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a></span>) – Loaded and validated OKF manifest.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mapping from each directory’s expected index.md path to its
+expected content.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="okflint.cohesion.html" class="btn btn-neutral float-left" title="okflint.cohesion module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="okflint.manifest.html" class="btn btn-neutral float-right" title="okflint.manifest module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
