@@ -546,6 +546,19 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   - src/okflint/validate.py
   - tests/test_validate.py
   - config/RULES.md
+## Session du 2026-08-28 15:43 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - tests/test_manifest.py
+
+---
+
+## Session du 2026-08-28 17:29 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/validate.py
+  - tests/test_validate.py
 
 ---
 
@@ -709,6 +722,7 @@ ensemble : `inv lint` ✅, `inv test` (276 passed, 94% ≥ 93%) ✅,
   Computation` / F101 / F201 — application stricte sans exemption,
   matrice à trois scénarios : sans manifeste / type déclaré au
   manifeste / manifeste présent mais type non déclaré).
+## Session du 2026-08-28 20:44 — okflint
 
 **Fichiers modifiés :**
   - src/okflint/manifest.py
@@ -787,6 +801,19 @@ SPEC-002 §7. Étape explicitement annoncée par le plan comme
   exemple de manifeste `okf_version: "0.2"`, retrait de la mention de
   la commande fix du README, statuts SPEC-002/PLAN-002 → `implemented`/
   `done`, retrait de la Track F de la ROADMAP).
+
+**Fichiers modifiés :**
+  - tests/test_audit.py
+## Session du 2026-08-28 21:00 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/manifest.py
+  - src/okflint/validate.py
+  - tests/test_validate.py
+
+---
+
+## Session du 2026-08-28 21:20 — okflint
 
 **Fichiers modifiés :**
   - tests/test_audit.py

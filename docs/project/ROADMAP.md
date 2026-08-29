@@ -2,14 +2,14 @@
 type: ProjectLifeCycle
 project: okflint
 status: active
-updated: 2026-08-03
+updated: 2026-08-28
 tags: [python, cli, linter, okf, open-source]
 ---
 
 # okflint Roadmap
 
-This document outlines envisioned evolutions beyond v0.1. It does not commit to
-any timeline — it is a thinking backlog, not a release plan.
+This document outlines envisioned evolutions. It does not commit to any
+timeline — it is a thinking backlog, not a release plan.
 
 okflint follows a stable guiding principle: **deterministically validate the
 conformance of a documentary base to OKF and to the framework the base has itself
@@ -20,26 +20,33 @@ linter.
 
 ---
 
-## v0.3 — Current state
+## v0.3 — Shipped
 
-- 3-stage validation: OKF core (§9), profile (manifest), hygiene (opt-in)
-- 15 catalogued rules (see [`config/RULES.md`](../../config/RULES.md))
+- 3-stage validation: OKF core (§11), profile (manifest), hygiene (opt-in)
 - Generic controlled-vocabulary model: any property constrained via `<prop>_values`, no hardcoded field names (shipped 0.2.0)
 - Unified CLI `okflint audit | validate | index`
 - `audit` aligned with `validate`: same checks, descriptive, always exit 0 (shipped 0.2.0)
-- `okflint index` — deterministic OKF §6 `index.md` generation, dry-run by default (shipped 0.2.0)
+- `okflint index` — deterministic OKF `index.md` generation, dry-run by default (shipped 0.2.0)
 - `S202` — deterministic semantic-cohesion split candidate (TF-IDF section clustering), replacing the coarse structural `S201` (shipped 0.3.0)
 - Generic engine driven by a YAML manifest
 - Manifest self-validation (`manifest.py`)
 
 ---
 
-## v0.4 — Current state
+## v0.4 — Ready to release
 
+25 catalogued rules (see [`config/RULES.md`](../../config/RULES.md)): 7 core,
+5 profile, 13 hygiene.
+
+- `okflint validate-manifest` — checks a hand-written manifest on its own,
+  before scanning any base; exits 0/2. Surfaces what `manifest.py` already
+  validated as a side effect of the other commands (was Track D)
+- Multi-root fix for absolute bundle-relative links: a `/x.md` link whose target
+  lives in another root of the same manifest is no longer reported as `L002`
 - OKF v0.2 support: the manifest's `okf_version` drives validation; a base
   that declares none resolves to `"0.2"` (`Manifest.resolved_okf_version`)
-- `F003`, `F004`, `F005` — OKF core (§3a) shape checks for `generated`,
-  `sources`, and the spec-prescribed `Attested Computation` type
+- `F003`, `F004`, `F005` — OKF core shape checks for `generated` and `sources`
+  (§5) and for the spec-prescribed `Attested Computation` type (§10)
 - `S203`–`S207` — hygiene checks for the v0.2 optional-family shapes
   (`status`, `stale_after`, `generated.at`/`verified[].at`, the actor
   convention, the `Attested Computation` contract), opt-in via
@@ -54,35 +61,39 @@ linter.
 
 ---
 
-## Track D — `okflint validate-manifest`: expose manifest validation as a command
+## Next — migrate the repository manifests to `okf_version: "0.2"`
 
-**Context.** `manifest.py` already validates a manifest's structure and raises
-`ManifestError` on virtually anything malformed (missing `base`, empty `roots`,
-`_values` on an undeclared property, `required ∩ optional ≠ ∅`, out-of-range
-hygiene levels, …). But that validation only fires as a side effect of
-`validate`/`audit`/`index`, surfacing as a muddled exit 2 — there is no way to
-check a manifest on its own, before scanning any base.
+`manifest_okflint.yaml` and the sibling project manifests still declare
+`okf_version: "0.1"`, so none of the v0.2 rules fire on okflint's own base. The
+engine now emits an informational line saying so on every run.
 
-**Direction.** Expose it as a dedicated command — `okflint validate-manifest
-<manifest>` — that checks a hand-written manifest **before** scanning anything,
-reports « valid » or lists its defects, and exits 0/2. No new validation logic:
-extract and surface what `manifest.py` already does.
+Migrating is a distinct piece of work, deliberately kept out of the v0.4
+implementation so the new rules were never exercised on the repository while
+they were being written. It is also the first real end-to-end test of the
+feature: dogfooding on a base that declares no v0.2 family at all should be a
+no-op, and any diagnostic it produces is a finding about the rules, not about
+the base.
 
-**Boundary.** Additive, non-breaking → candidate for 0.3.0 on its own. Static,
-deterministic, no engine change.
+Points to watch:
+
+- `S208` must stay silent on `timestamp`, which is declared in the profile for
+  `Spec`, `Fix` and `Plan` — the neutralisation by declared field exists
+  precisely for this case
+- `unknown_fields: error` is active, so any v0.2 family added to the base must
+  be declared in the manifest first
 
 ---
 
 ## Discarded directions
 
-- *Track B (reading-grid expectations)* — la partie utile (vocabulaire contrôlé
-  sur un champ arbitraire) est livrée en 0.2.0 ; le reste relève de la
-  méthodologie propre à chaque organisation, pas d'un standard outillé.
-- *Track C (MCP server, standalone binary, .mcpb)* — décision de positionnement,
-  pas de périmètre : okflint reste un CLI Python ; la surface MCP est couverte
-  par des bibliothèques complémentaires comme `okf-parser`.
-- *Track E (`okflint fix`)* — okflint signale, il ne réécrit pas. La réécriture
-  appartient à l'humain ou à l'agent consommateur.
+- *Track B (reading-grid expectations)* — the useful part (controlled vocabulary
+  on an arbitrary property) shipped in 0.2.0; the rest is methodology specific to
+  each organisation, not something a standard should tool.
+- *Track C (MCP server, standalone binary, `.mcpb`)* — a positioning decision,
+  not a scope one: okflint stays a Python CLI, and the MCP surface is covered by
+  complementary libraries such as `okf-parser`.
+- *Track E (`okflint fix`)* — okflint reports, it does not rewrite. Rewriting
+  belongs to the human or to the consuming agent.
 
 ---
 
@@ -97,3 +108,7 @@ Small, bounded chores — not exploratory tracks, but tracked so they are not lo
   breaking change. Fix: let `cz bump` infer the increment from commits by
   default (drop the forced `--increment`), keeping `--part` as an optional
   override — the version then follows the commits, not a flag one can forget.
+- **`.claude/progress.log` stub entries.** The `on-stop` hook has produced an
+  empty entry at the end of most PLAN-002 sessions. Harmless, but the file is
+  what drives session-to-session continuity, so the stubs erode the one thing it
+  is for. Worth a look at `~/.claude/hooks/`.
