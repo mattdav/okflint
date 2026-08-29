@@ -16,11 +16,17 @@ repos:
   # Hook local (pas mirrors-mypy) : mypy a besoin des dépendances du projet
   # pour typer correctement, il tourne donc dans le venv via `uv run` plutôt
   # que dans l'environnement isolé du miroir.
+  #
+  # --no-sync : sans lui, `uv run` resynchronise l'environnement et réécrit
+  # uv.lock au passage. pre-commit voit alors un fichier modifié après coup et
+  # refuse le commit (« files were modified by this hook ») alors que mypy est
+  # vert. L'environnement est déjà synchronisé quand pre-commit tourne : la
+  # resynchronisation n'apporte rien et casse le commit.
   - repo: local
     hooks:
       - id: mypy
         name: mypy
-        entry: uv run python -m mypy src/. tests/. tasks.py
+        entry: uv run --no-sync python -m mypy src/. tests/. tasks.py
         language: system
         types: [python]
         files: ^(src/.*|tests/.*|tasks\.py)$
@@ -67,6 +73,6 @@ repos:
     hooks:
       - id: okflint
         name: okflint
-        entry: uv run okflint validate --manifest manifest_okflint.yaml .
+        entry: uv run --no-sync okflint validate --manifest manifest_okflint.yaml .
         language: system
         pass_filenames: false
