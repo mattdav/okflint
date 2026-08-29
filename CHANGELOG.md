@@ -18,6 +18,22 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.4.0 (2026-08-29)
+
+### Feat
+
+- add S208/S209 hygiene rules for legacy forms and stale content
+- add hygiene shape rules S203-S207 for OKF v0.2
+- add core rules F003/F004/F005 for OKF v0.2 optional families
+- validate okf_version against known values, add resolved_okf_version
+- **cli**: add validate-manifest command for standalone manifest checks
+
+### Fix
+
+- **release**: bypass pre-commit hooks on the version bump commit
+- resoudre le filtre --bundle relatif combine a --manifest
+- resolve bundle-relative absolute links across all manifest roots
+
 ## v0.3.1 (2026-07-20)
 
 ### Fix
