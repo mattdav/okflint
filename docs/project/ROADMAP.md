@@ -41,6 +41,7 @@ linter.
 - `okflint validate-manifest` — checks a hand-written manifest on its own,
   before scanning any base; exits 0/2. Surfaces what `manifest.py` already
   validated as a side effect of the other commands (was Track D)
+- `manifest_okflint.yaml` migrated to `okf_version: "0.2"` — dogfooding, green
 - Multi-root fix for absolute bundle-relative links: a `/x.md` link whose target
   lives in another root of the same manifest is no longer reported as `L002`
 - OKF v0.2 support: the manifest's `okf_version` drives validation; a base
@@ -61,26 +62,27 @@ linter.
 
 ---
 
-## Next — migrate the repository manifests to `okf_version: "0.2"`
+## Next — migrate the sibling project manifests to `okf_version: "0.2"`
 
-`manifest_okflint.yaml` and the sibling project manifests still declare
-`okf_version: "0.1"`, so none of the v0.2 rules fire on okflint's own base. The
-engine now emits an informational line saying so on every run.
+`manifest_okflint.yaml` was migrated as part of the 0.4.0 release and is green:
+the base declares no v0.2 family, so the new rules are a strict no-op on it, and
+`S208` stays silent on the `timestamp` declared in the profile for `Spec`, `Fix`
+and `Plan` — the neutralisation by declared field working exactly as designed.
 
-Migrating is a distinct piece of work, deliberately kept out of the v0.4
-implementation so the new rules were never exercised on the repository while
-they were being written. It is also the first real end-to-end test of the
-feature: dogfooding on a base that declares no v0.2 family at all should be a
-no-op, and any diagnostic it produces is a finding about the rules, not about
-the base.
+The sibling project manifests (`manifest_project_template.yaml`, the per-project
+`okf-base.yaml` files, and the Home Lab `mattdav-base.yaml`) still declare
+`"0.1"`, so the engine emits the informational line on every run there.
 
-Points to watch:
+Points to watch when migrating each one:
 
-- `S208` must stay silent on `timestamp`, which is declared in the profile for
-  `Spec`, `Fix` and `Plan` — the neutralisation by declared field exists
-  precisely for this case
-- `unknown_fields: error` is active, so any v0.2 family added to the base must
-  be declared in the manifest first
+- `S208` stays silent on `timestamp` only where the profile declares it. A
+  manifest that does not declare the field will report every document carrying
+  one.
+- Bases running `unknown_fields: error` must declare any v0.2 family before
+  using it.
+- The French Home Lab base uses its own vocabulary (`statut`), so `S203` is
+  neutralised there by the declared `<prop>_values` rather than by the field
+  name.
 
 ---
 

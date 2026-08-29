@@ -1,4 +1,4 @@
-okf_version: "0.1"
+okf_version: "0.2"
 
 base:
   name: "okflint"
@@ -91,3 +91,6 @@ hygiene:
 
   reserved_files: error
   unknown_fields: error
+  okf_v02_shapes: warn
+  legacy_forms: warn
+  stale_content: warn
