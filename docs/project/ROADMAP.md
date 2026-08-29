@@ -33,7 +33,7 @@ linter.
 
 ---
 
-## v0.4 — Ready to release
+## v0.4 — Shipped
 
 25 catalogued rules (see [`config/RULES.md`](../../config/RULES.md)): 7 core,
 5 profile, 13 hygiene.
@@ -62,30 +62,6 @@ linter.
 
 ---
 
-## Next — migrate the sibling project manifests to `okf_version: "0.2"`
-
-`manifest_okflint.yaml` was migrated as part of the 0.4.0 release and is green:
-the base declares no v0.2 family, so the new rules are a strict no-op on it, and
-`S208` stays silent on the `timestamp` declared in the profile for `Spec`, `Fix`
-and `Plan` — the neutralisation by declared field working exactly as designed.
-
-The sibling project manifests (`manifest_project_template.yaml`, the per-project
-`okf-base.yaml` files, and the Home Lab `mattdav-base.yaml`) still declare
-`"0.1"`, so the engine emits the informational line on every run there.
-
-Points to watch when migrating each one:
-
-- `S208` stays silent on `timestamp` only where the profile declares it. A
-  manifest that does not declare the field will report every document carrying
-  one.
-- Bases running `unknown_fields: error` must declare any v0.2 family before
-  using it.
-- The French Home Lab base uses its own vocabulary (`statut`), so `S203` is
-  neutralised there by the declared `<prop>_values` rather than by the field
-  name.
-
----
-
 ## Discarded directions
 
 - *Track B (reading-grid expectations)* — the useful part (controlled vocabulary
@@ -102,15 +78,4 @@ Points to watch when migrating each one:
 ## Maintenance / technical debt
 
 Small, bounded chores — not exploratory tracks, but tracked so they are not lost.
-
-- **`inv release` forces `part=patch` by default.** `tasks.py` always passes
-  `--increment {part}` to `cz bump`, so commitizen never infers the bump level
-  from the commit history: a `feat!` / `BREAKING CHANGE` released without an
-  explicit `--part=minor` would ship as a patch, silently under-versioning a
-  breaking change. Fix: let `cz bump` infer the increment from commits by
-  default (drop the forced `--increment`), keeping `--part` as an optional
-  override — the version then follows the commits, not a flag one can forget.
-- **`.claude/progress.log` stub entries.** The `on-stop` hook has produced an
-  empty entry at the end of most PLAN-002 sessions. Harmless, but the file is
-  what drives session-to-session continuity, so the stubs erode the one thing it
-  is for. Worth a look at `~/.claude/hooks/`.
+Nothing outstanding.

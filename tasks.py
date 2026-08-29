@@ -199,7 +199,7 @@ def build(c: Context) -> None:
 @task
 def release(
     c: Context,
-    part: str = "patch",
+    part: str | None = None,
     dry_run: bool = False,
     skip_tests: bool = False,
 ) -> None:
@@ -208,16 +208,19 @@ def release(
     Sequence:
       1. Verify we are on the main branch with a clean working tree
       2. Run lint + tests (safety before publishing) — unless --skip-tests
-      3. Bump the version via commitizen (patch | minor | major)
+      3. Bump the version via commitizen. Without --part, commitizen infers the
+         increment from the commit history (a `feat` yields a minor, a
+         `BREAKING CHANGE` a major). --part overrides that inference.
       4. Create a release commit + a signed vX.Y.Z tag
       5. Push the commit AND the tag to origin/main
       6. The tag automatically triggers the GitHub Actions release.yml workflow
          which builds, publishes to PyPI, and creates the GitHub Release.
 
     Usage:
-        inv release                  # bump patch (0.1.0 → 0.1.1)
-        inv release --part=minor     # bump minor (0.1.0 → 0.2.0)
-        inv release --part=major     # bump major (0.1.0 → 1.0.0)
+        inv release                  # increment inferred from the commits
+        inv release --part=patch     # force patch (0.1.0 → 0.1.1)
+        inv release --part=minor     # force minor (0.1.0 → 0.2.0)
+        inv release --part=major     # force major (0.1.0 → 1.0.0)
         inv release --dry-run        # simulate without modifying anything
         inv release --skip-tests     # for local development only
     """
@@ -234,7 +237,7 @@ def release(
         return result.returncode
 
     print("\n🔍 Release workflow")
-    print(f"  Bump type  : {part}")
+    print(f"  Bump type  : {part or 'inferred from commits'}")
     print(f"  Dry run    : {dry_run}")
     print(f"  Branch     : {RELEASE_BRANCH}")
 
@@ -271,13 +274,19 @@ def release(
         print("\n⚠️  Step 2/5: lint + tests skipped (--skip-tests)")
 
     # ── Step 2: bump version + changelog ─────────────────────────────────────
-    print(f"\n📦 Step 3/5: bump version ({part})...")
+    print(f"\n📦 Step 3/5: bump version ({part or 'inferred'})...")
+    # Sans --part, on laisse commitizen déduire l'incrément de l'historique :
+    # forcer --increment ferait passer un `feat!` en patch si le flag était
+    # oublié, sous-versionnant silencieusement un breaking change.
+    #
     # --no-verify : lint et tests ont déjà tourné à l'étape 2/5. Rejouer les hooks
     # sur le commit de version est redondant, et le `uv run` du hook mypy
     # réécrit uv.lock avec la version fraîchement bumpée : pre-commit voit un
     # fichier modifié après coup, refuse le commit, et la release échoue à
     # mi-parcours (fichiers bumpés, aucun commit, aucun tag).
-    bump_cmd = f"uv run cz bump --increment {part.upper()} --no-verify"
+    bump_cmd = "uv run cz bump --no-verify"
+    if part:
+        bump_cmd += f" --increment {part.upper()}"
     if dry_run:
         bump_cmd += " --dry-run"
         # cz bump --dry-run is itself non-destructive, so run it directly
