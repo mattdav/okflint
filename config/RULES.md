@@ -1,7 +1,7 @@
 ---
 type: ProjectStandards
 project: okflint
-updated: 2026-06-28
+updated: 2026-08-29
 tags: [lint, rules]
 ---
 
@@ -640,8 +640,9 @@ the concept no longer needs a freshness bound.
 - **`exit 1`**: at least one OKF core or profile error.
 
 A base is said to be **OKF-conformant** if it triggers no core errors
-(`F001`, `F002`, `R001`, `R002`). It is **profile-conformant** if it additionally
-triggers no profile errors. `okflint validate` requires both to return `exit 0`.
+(`F001`, `F002`, `F003`, `F004`, `F005`, `R001`, `R002`). It is
+**profile-conformant** if it additionally triggers no profile errors.
+`okflint validate` requires both to return `exit 0`.
 
 `okflint audit` applies these same checks in descriptive mode (`exit 0` always),
 with the severities declared in the manifest. The difference with `validate` is

@@ -909,3 +909,81 @@ exclusivement documentaire, aucun changement de code de production.
   - docs/plans/PLAN-002_okf-v0.2.md
 
 ---
+
+## Session du 2026-08-29 — okflint — FIX-001
+
+- Mission FIX-001 : `okflint audit --manifest ... --bundle .` rendait un
+  rapport vide et vert (0 fichier, exit 0) au lieu de scanner la base
+  entière (22 fichiers sans le filtre à l'ouverture de la mission).
+- Étape 0 (diagnostic avant correctif, exigé par la mission) : lecture de
+  `audit.py` (`run_audit`, comparaison `is_relative_to` L264) et de `cli.py`
+  (construction de `target_filter`/`target_filter_orig` depuis
+  `Path(args.bundle)`, deux branches identiques). Cause confirmée dans le
+  code, pas supposée : `target_filter` n'était jamais résolu, alors que les
+  racines du manifeste le sont toujours (`manifest.py:385`) —
+  `Path.is_relative_to()` échoue par mismatch d'ancre (relatif vs absolu)
+  indépendamment de toute inclusion réelle. Précédent déjà présent dans la
+  codebase (`validate.py:1263`, `vault.py:107` : résoudre avant de
+  comparer) — seule comparaison non résolue de `src/okflint`.
+  Périmètre exact établi par lecture de code (plus large que l'hypothèse de
+  départ) : tout `--bundle` relatif combiné à `--manifest` était cassé (pas
+  seulement `.`) ; `--bundle` absolu fonctionnait déjà ; `--bundle` sans
+  `--manifest` non affecté (pas de filtre appliqué) ; `scanner.py` sans
+  logique liée ; `validate` n'accepte pas `--bundle` (absent de son parser)
+  et n'est pas concerné. Diagnostic et périmètre présentés à l'utilisateur
+  avant toute modification, conformément à l'instruction bloquante de la
+  mission.
+- Correctif (`src/okflint/cli.py`, `src/okflint/audit.py`) :
+  - `target_filter`/`target_filter_orig` résolus (`.resolve()`) dans les
+    deux branches (`--vault` JSON et `--vault` dossier), avant comparaison
+    aux racines déjà absolues.
+  - Nouvelle exception `AuditError` dans `audit.py` : `run_audit` lève
+    désormais une erreur explicite quand un `target_filter` est fourni mais
+    ne recoupe aucune racine (0 fichier) — plus de rapport vert silencieux.
+    `cli.py` intercepte `AuditError` dans les deux branches et rend
+    `exit 2` avec message explicite. Warning existant (« Both --manifest
+    and --bundle provided ») conservé inchangé.
+- Tests ajoutés : `tests/test_audit.py` (unitaire, `AuditError` levée quand
+  le filtre ne recoupe aucune racine) et `tests/test_cli.py` (5 scénarios
+  CLI : `--bundle .` périmètre complet, sous-dossier relatif, équivalence
+  relatif/absolu, filtre hors-racines → exit 2, multi-root avec filtre
+  relatif sur une seule racine).
+- Documentation : `docs/fixes/FIX-001_bundle-filter-empty-scan.md` créé
+  depuis le template (`status: fixed`, `severity: major`). `config/RULES.md`
+  section « Conformance and exit code » : `F003`, `F004`, `F005` ajoutés à
+  la définition OKF-conformant (même étage `OKF core / error` que `F001`,
+  `F002`) ; `updated:` rafraîchi (2026-06-28 → 2026-08-29). README et guides
+  Sphinx vérifiés : le comportement documenté de `--bundle` (sub-filtre
+  quand `--manifest` est fourni) était déjà correct dans son intention,
+  seule l'implémentation était en défaut — aucune mise à jour nécessaire.
+- Résultats finaux : `uv run inv lint` → zéro erreur ; `uv run inv test` →
+  363 tests passés, couverture 95% (`audit.py` 100%) ; `uv run inv docs` →
+  build réussi, zéro warning ; `uv run okflint validate --manifest
+  manifest_okflint.yaml .` → exit 0.
+- Écart signalé sur le critère de done littéral : la commande de
+  vérification `okflint audit --bundle . --vault . --manifest
+  manifest_okflint.yaml` scanne **23** fichiers, pas 22 comme spécifié dans
+  la mission. Cause : le 22 était le compte constaté à l'ouverture de la
+  mission (avant tout fichier ajouté) ; la mission exige elle-même la
+  création de `docs/fixes/FIX-001_bundle-filter-empty-scan.md`, qui tombe
+  sous la racine du manifeste et porte le compte à 23 — vérifié identique
+  avec et sans `--bundle` (23 des deux côtés), donc le correctif est
+  cohérent : aucune perte de fichier, l'écart vient uniquement du livrable
+  documentaire requis par la mission elle-même.
+- Hors périmètre, non touché (conformément à la liste « Ne pas faire ») :
+  règles v0.2, `manifest_okflint.yaml`, version/`inv release`, refactoring
+  du scanner au-delà du correctif ciblé.
+- `manifest_okflint.yaml` et `docs/project/ROADMAP.md` constatés modifiés
+  sur disque en dehors de cette session (migration `okf_version: "0.2"` et
+  mise à jour de la roadmap) — état externe, non touché, non commité par
+  cette mission.
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - tests/test_audit.py
+  - tests/test_cli.py
+  - docs/fixes/FIX-001_bundle-filter-empty-scan.md
+  - config/RULES.md
+
+---
