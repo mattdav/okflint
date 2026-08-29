@@ -272,7 +272,12 @@ def release(
 
     # ── Step 2: bump version + changelog ─────────────────────────────────────
     print(f"\n📦 Step 3/5: bump version ({part})...")
-    bump_cmd = f"uv run cz bump --increment {part.upper()}"
+    # --no-verify : lint et tests ont déjà tourné à l'étape 2/5. Rejouer les hooks
+    # sur le commit de version est redondant, et le `uv run` du hook mypy
+    # réécrit uv.lock avec la version fraîchement bumpée : pre-commit voit un
+    # fichier modifié après coup, refuse le commit, et la release échoue à
+    # mi-parcours (fichiers bumpés, aucun commit, aucun tag).
+    bump_cmd = f"uv run cz bump --increment {part.upper()} --no-verify"
     if dry_run:
         bump_cmd += " --dry-run"
         # cz bump --dry-run is itself non-destructive, so run it directly
