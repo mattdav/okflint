@@ -987,3 +987,13 @@ exclusivement documentaire, aucun changement de code de production.
   - config/RULES.md
 
 ---
+
+## Session du 2026-08-29 13:25 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/audit.py
+  - src/okflint/cli.py
+  - tests/test_audit.py
+  - tests/test_cli.py
+
+---
