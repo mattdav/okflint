@@ -33,6 +33,10 @@ from okflint.validate import (
 OkfStatus = Literal["conformant", "partial", "non_conformant"]
 
 
+class AuditError(Exception):
+    """Audit cannot be run under the given --bundle/--manifest configuration."""
+
+
 @dataclass
 class FileReport:
     """Analysis report for a .md file in the bundle."""
@@ -263,6 +267,13 @@ def run_audit(
                 continue
             if target_filter is None or md_file.is_relative_to(target_filter):
                 all_md_files.append((md_file, root_cfg.path))
+
+    if target_filter is not None and not all_md_files:
+        raise AuditError(
+            f"--bundle filter {target_filter.as_posix()!r} does not overlap "
+            "any bundle root; 0 files would be scanned. Refusing to report "
+            "a false-green audit."
+        )
 
     print(f"   {len(all_md_files)} files found")
 

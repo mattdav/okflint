@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
+import pytest
+
 from okflint.audit import (
+    AuditError,
     FileReport,
     analyze_file,
     compute_stats,
@@ -402,6 +405,19 @@ class TestRunAuditExclude:
         make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
         report = run_audit([root1, root2], [root1, root2], target_filter=root1)
         assert report["stats"]["total_files"] == 1
+
+    def test_target_filter_no_overlap_raises_audit_error(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        make_md(root / "a.md", "---\ntype: Reference\n---\n")
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        with pytest.raises(AuditError, match="does not overlap"):
+            run_audit(root, root, target_filter=outside)
 
 
 # ---------------------------------------------------------------------------

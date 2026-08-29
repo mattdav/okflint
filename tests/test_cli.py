@@ -302,6 +302,125 @@ class TestCmdAuditManifest:
 
 
 # ---------------------------------------------------------------------------
+# _cmd_audit — FIX-001: --bundle filter normalization vs --manifest roots
+# ---------------------------------------------------------------------------
+
+
+class TestCmdAuditBundleFilterNormalization:
+    def test_relative_bundle_dot_scans_full_base(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        make_md(tmp_path / "a.md", "---\ntype: Reference\n---\n")
+        make_md(tmp_path / "b.md", "---\ntype: Reference\n---\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [tmp_path])
+        monkeypatch.chdir(tmp_path)
+        parser = build_parser()
+        args = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", "."]
+        )
+        assert _cmd_audit(args) == 0
+        assert "2 files found" in capsys.readouterr().out
+
+    def test_relative_bundle_subfolder_scans_only_subfolder(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        make_md(tmp_path / "root.md", "---\ntype: Reference\n---\n")
+        (tmp_path / "docs").mkdir()
+        make_md(tmp_path / "docs" / "sub.md", "---\ntype: Reference\n---\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [tmp_path])
+        monkeypatch.chdir(tmp_path)
+        parser = build_parser()
+        args = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", "docs"]
+        )
+        assert _cmd_audit(args) == 0
+        assert "1 files found" in capsys.readouterr().out
+
+    def test_relative_and_absolute_bundle_are_equivalent(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        make_md(tmp_path / "a.md", "---\ntype: Reference\n---\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [tmp_path])
+        monkeypatch.chdir(tmp_path)
+        parser = build_parser()
+
+        args_rel = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", "."]
+        )
+        assert _cmd_audit(args_rel) == 0
+        rel_out = capsys.readouterr().out
+
+        args_abs = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", str(tmp_path)]
+        )
+        assert _cmd_audit(args_abs) == 0
+        abs_out = capsys.readouterr().out
+
+        assert "1 files found" in rel_out
+        assert "1 files found" in abs_out
+
+    def test_bundle_outside_all_roots_exit_2(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        make_md(root / "a.md", "---\ntype: Reference\n---\n")
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [root])
+        parser = build_parser()
+        args = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", str(outside)]
+        )
+        assert _cmd_audit(args) == 2
+        err = capsys.readouterr().err
+        assert "Audit error" in err
+        assert "does not overlap" in err
+
+    def test_multi_root_relative_bundle_filters_to_one_root(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        root1 = tmp_path / "root1"
+        root1.mkdir()
+        root2 = tmp_path / "root2"
+        root2.mkdir()
+        make_md(root1 / "a.md", "---\ntype: Reference\n---\n")
+        make_md(root2 / "b.md", "---\ntype: Reference\n---\n")
+        manifest_path = tmp_path / "manifest.yaml"
+        _write_manifest(manifest_path, [root1, root2])
+        monkeypatch.chdir(tmp_path)
+        parser = build_parser()
+        args = parser.parse_args(
+            ["audit", "--manifest", str(manifest_path), "--bundle", "root1"]
+        )
+        assert _cmd_audit(args) == 0
+        assert "1 files found" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
 # _cmd_validate — optional targets
 # ---------------------------------------------------------------------------
 

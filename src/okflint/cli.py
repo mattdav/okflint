@@ -19,7 +19,7 @@ from typing import Any
 
 from beartype import beartype
 
-from okflint.audit import run_audit
+from okflint.audit import AuditError, run_audit
 from okflint.index import generate_indexes
 from okflint.manifest import Manifest, RootConfig, load_manifest
 from okflint.scanner import build_file_index
@@ -369,17 +369,21 @@ def _cmd_audit(args: argparse.Namespace) -> int:
                     "--bundle used as target filter over manifest roots.",
                     file=sys.stderr,
                 )
-                target_filter = Path(args.bundle)
+                target_filter = Path(args.bundle).resolve()
         else:
             bundle_paths = [RootConfig(path=Path(args.bundle), exclude_patterns=[])]
 
-        report = run_audit(
-            bundle_paths,
-            [],
-            target_filter=target_filter,
-            vault_index=vault_index,
-            manifest=manifest_obj,
-        )
+        try:
+            report = run_audit(
+                bundle_paths,
+                [],
+                target_filter=target_filter,
+                vault_index=vault_index,
+                manifest=manifest_obj,
+            )
+        except AuditError as exc:
+            print(f"Audit error: {exc}", file=sys.stderr)
+            return 2
         _print_audit_stats(
             report["stats"], diagnostics_summary=report.get("diagnostics_summary")
         )
@@ -413,7 +417,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
                 "--bundle used as target filter over manifest roots.",
                 file=sys.stderr,
             )
-            target_filter_orig = Path(args.bundle)
+            target_filter_orig = Path(args.bundle).resolve()
     elif has_bundle and has_vault:
         bundle_paths_orig = [RootConfig(path=Path(args.bundle), exclude_patterns=[])]
         vault_paths_orig = [Path(args.vault)]
@@ -424,12 +428,16 @@ def _cmd_audit(args: argparse.Namespace) -> int:
         )
         return 2
 
-    report_orig = run_audit(
-        bundle_paths_orig,
-        vault_paths_orig,
-        target_filter=target_filter_orig,
-        manifest=manifest_obj_orig,
-    )
+    try:
+        report_orig = run_audit(
+            bundle_paths_orig,
+            vault_paths_orig,
+            target_filter=target_filter_orig,
+            manifest=manifest_obj_orig,
+        )
+    except AuditError as exc:
+        print(f"Audit error: {exc}", file=sys.stderr)
+        return 2
     _print_audit_stats(
         report_orig["stats"],
         diagnostics_summary=report_orig.get("diagnostics_summary"),
