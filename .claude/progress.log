@@ -997,3 +997,39 @@ exclusivement documentaire, aucun changement de code de production.
   - tests/test_cli.py
 
 ---
+
+## Session du 2026-09-14 — okflint
+
+**Contexte :** L002 remontait à tort les liens `mailto:`, `tel:`,
+`obsidian://` (et tout autre schéma hors `http://` / `https://` / `ftp://`)
+comme liens cassés. Cause : `extract_markdown_links` (scanner.py) testait
+une liste blanche de préfixes au lieu de reconnaître un schéma d'URI au
+sens RFC 3986.
+
+- Correctif : ajout de `_URI_SCHEME_RE` (`^[A-Za-z][A-Za-z0-9+.\-]+:`,
+  quantifieur `+` pour exclure les lettres de lecteur Windows type `C:`) ;
+  tout `target` matchant ce schéma est classé `is_external=True,
+  broken=False` avant le `partition("#")`, sans passer par la résolution
+  de chemin. Suppression de l'ancienne liste blanche `startswith(...)`.
+- `config/RULES.md` (L002) et la docstring de `extract_markdown_links`
+  mis à jour pour refléter la portée « tout schéma d'URI », plus que
+  `http(s)`.
+- Tests ajoutés dans `tests/test_scanner.py` : `mailto:`, `tel:`,
+  `obsidian://` (non cassés) ; non-régression sur lien relatif voisin
+  existant/absent (`./voisin.md`).
+- Résultats : `uv run inv lint` → zéro erreur ; `uv run inv test` → 368
+  tests passés, couverture 95%.
+- Hors périmètre, non touché : `external_refs` (mécanisme propre aux
+  wikilinks L001, sur des noms de fichiers — sans rapport avec les
+  schémas d'URI), manifeste.
+- Release patch effectuée : `uv run inv release --part=patch` →
+  0.4.0 → 0.4.1 (commit `bump: version 0.4.0 → 0.4.1`, tag `v0.4.1`
+  poussés). Workflow `release.yml` (run 34882809889) vérifié entièrement
+  vert : Lint+Tests, Smoke install, Build+Publish PyPI, GitHub Release.
+
+**Fichiers modifiés :**
+  - src/okflint/scanner.py
+  - config/RULES.md
+  - tests/test_scanner.py
+
+---
