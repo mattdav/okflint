@@ -17,6 +17,11 @@ _MD_LINK_RE = re.compile(r"\[([^\[\]]*)\]\(([^()]+)\)")
 _FRONTMATTER_RE = re.compile(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*\r?\n?", re.DOTALL)
 _INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 _HEADER_RE = re.compile(r"^(#{1,2})\s+(.+)$")
+# RFC 3986 — un lien porteur d'un schéma est une URI absolue, jamais un
+# chemin de la base : okflint ne le résout pas. Le quantifieur "+" (≥ 2
+# caractères) évite de prendre une lettre de lecteur Windows (C:/...) pour
+# un schéma.
+_URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]+:")
 
 
 @dataclass
@@ -216,7 +221,8 @@ def extract_markdown_links(
 ) -> list[MarkdownLink]:
     """Extract [text](target) markdown links and verify internal links.
 
-    External URLs (http:// / https://) are not checked.
+    Targets carrying a URI scheme (RFC 3986), e.g. http://, mailto:, tel:,
+    obsidian://, are absolute URIs and are not checked.
 
     Args:
         content: Markdown file body.
@@ -234,15 +240,16 @@ def extract_markdown_links(
     for m in _MD_LINK_RE.finditer(content):
         text = m.group(1)
         target = m.group(2).strip()
+        if _URI_SCHEME_RE.match(target):
+            results.append(
+                MarkdownLink(text=text, target=target, is_external=True, broken=False)
+            )
+            continue
         path_part, _, _fragment = target.partition("#")
         # Ignore same-file anchors (#section)
         if path_part == "":
             continue
-        is_external = path_part.startswith(("http://", "https://", "ftp://"))
-
-        if is_external:
-            broken = False
-        elif path_part.startswith("/"):
+        if path_part.startswith("/"):
             # Absolute path, bundle-relative: owning root first, then the
             # base's other roots (mirrors wikilink resolution at base scale).
             rel = path_part.lstrip("/")
@@ -254,9 +261,7 @@ def extract_markdown_links(
             broken = not resolved.exists()
 
         results.append(
-            MarkdownLink(
-                text=text, target=target, is_external=is_external, broken=broken
-            )
+            MarkdownLink(text=text, target=target, is_external=False, broken=broken)
         )
     return results
 

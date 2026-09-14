@@ -218,6 +218,44 @@ class TestExtractMarkdownLinks:
         links = extract_markdown_links("[Missing](/absent.md)", src, root_a, [root_b])
         assert links[0].broken
 
+    def test_mailto_link_not_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Mail](mailto:a@b.com)", src, tmp_path)
+        assert links[0].is_external
+        assert not links[0].broken
+
+    def test_tel_link_not_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Call](tel:+123456789)", src, tmp_path)
+        assert links[0].is_external
+        assert not links[0].broken
+
+    def test_obsidian_scheme_link_not_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links(
+            "[Open](obsidian://open?vault=V&file=F)", src, tmp_path
+        )
+        assert links[0].is_external
+        assert not links[0].broken
+
+    def test_relative_link_neighbor_missing_still_broken(self, tmp_path: Path) -> None:
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Neighbor](./voisin.md)", src, tmp_path)
+        assert links[0].broken
+
+    def test_relative_link_neighbor_existing_still_not_broken(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "voisin.md").touch()
+        src = tmp_path / "src.md"
+        src.touch()
+        links = extract_markdown_links("[Neighbor](./voisin.md)", src, tmp_path)
+        assert not links[0].broken
+
 
 # ---------------------------------------------------------------------------
 # build_file_index

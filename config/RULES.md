@@ -337,6 +337,9 @@ are an Obsidian convention, not OKF (which uses markdown links).
 
 A link `[text](/path.md)` whose target does not exist in the base.
 
+A target carrying a URI scheme (RFC 3986), e.g. `http://`, `mailto:`, `tel:`,
+`obsidian://`, is an absolute URI and out of scope for this check.
+
 **Fix**: fix the destination path.
 
 ### `L003` — Ambiguous wikilink
