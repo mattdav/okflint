@@ -18,6 +18,14 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.4.1 (2026-09-14)
+
+### Fix
+
+- **scanner**: treat any URI scheme as external in markdown links
+- **release**: let commitizen infer the version bump from commits
+- **release**: let commitizen infer the version bump from commits
+
 ## v0.4.0 (2026-08-29)
 
 ### Feat
