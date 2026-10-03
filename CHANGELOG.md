@@ -18,6 +18,12 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.5.0 (2026-10-03)
+
+### Feat
+
+- **validate**: signale generated/verified présents mais mal formés (S210)
+
 ## v0.4.1 (2026-09-14)
 
 ### Fix

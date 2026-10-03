@@ -1033,3 +1033,11 @@ sens RFC 3986.
   - tests/test_scanner.py
 
 ---
+
+## Session du 2026-09-14 20:49 — okflint
+
+**Fichiers modifiés :**
+  - src/okflint/scanner.py
+  - tests/test_scanner.py
+
+---
