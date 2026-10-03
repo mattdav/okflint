@@ -642,7 +642,7 @@ def check_hygiene_okf_v02_shapes(
     date_fields: list[str] | None = None,
     okf_version: str = "0.2",
 ) -> list[Diagnostic]:
-    """Check OKF v0.2 shape hygiene rules (S203-S207).
+    """Check OKF v0.2 shape hygiene rules (S203-S207, S210).
 
     Args:
         path: Relative file path.
@@ -663,7 +663,7 @@ def check_hygiene_okf_v02_shapes(
             support was added.
 
     Returns:
-        List of Diagnostic (S203, S204, S205, S206, S207).
+        List of Diagnostic (S203, S204, S205, S206, S207, S210).
     """
     if level == "off" or okf_version != "0.2":
         return []
@@ -764,6 +764,40 @@ def check_hygiene_okf_v02_shapes(
     if str(frontmatter.get("type", "")).strip() == _ATTESTED_COMPUTATION_TYPE:
         diags.extend(
             _check_s207_attested_computation(path, frontmatter, safe_body, severity)
+        )
+
+    # S210 — generated / verified present but not a structure (e.g. a JSON
+    # string typed in Obsidian's Properties panel). An absent field is never
+    # flagged: both families are optional.
+    if generated is not None and not isinstance(generated, dict):
+        diags.append(
+            Diagnostic(
+                code="S210",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message=(
+                    f"`generated` should be a mapping, got "
+                    f"{type(generated).__name__}: `{generated}`"
+                ),
+            )
+        )
+    verified = frontmatter.get("verified")
+    verified_ok = isinstance(verified, dict) or (
+        isinstance(verified, list) and all(isinstance(e, dict) for e in verified)
+    )
+    if verified is not None and not verified_ok:
+        diags.append(
+            Diagnostic(
+                code="S210",
+                tier="hygiene",
+                severity=severity,
+                file=path,
+                message=(
+                    f"`verified` should be a mapping or a list of mappings, got "
+                    f"{type(verified).__name__}: `{verified}`"
+                ),
+            )
         )
 
     return diags

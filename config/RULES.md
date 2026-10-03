@@ -603,6 +603,30 @@ stale_after: "2026-06-01"
 **Fix**: refresh the content and move `stale_after` forward, or remove it if
 the concept no longer needs a freshness bound.
 
+### `S210` — `generated` / `verified` not a structure
+
+**Severity**: warning (configurable, `warn` by default via
+`hygiene.okf_v02_shapes`) · **Out-of-spec**
+
+`generated`, if present, should be a mapping; `verified`, if present, should be
+a mapping or a list of mappings ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md)
+§5). A scalar, typically a JSON string typed in Obsidian's Properties panel,
+is stored as text: the `by`/`at` checks (`S205`, `S206`) never see it. Only a
+value that is **present but of an invalid shape** is flagged; an absent
+optional field never is. Only fires on a base whose resolved `okf_version` is
+`"0.2"`.
+
+```yaml
+# ❌ S210: a JSON string, not a mapping
+---
+type: Task
+verified: '{"by": "human:matthieu", "at": "2026-10-02"}'
+---
+```
+
+**Fix**: edit the property in source mode and write it as YAML
+(`verified:` followed by an indented `by:` / `at:`).
+
 ---
 
 ## Quick reference
@@ -634,6 +658,7 @@ the concept no longer needs a freshness bound.
 | `S207` | Hygiene | warning | `Attested Computation` contract shape (v0.2) |
 | `S208` | Hygiene | warning | legacy v0.1 forms: `timestamp`, `# Citations` (v0.2) |
 | `S209` | Hygiene | warning | `stale_after` reached or passed (v0.2) |
+| `S210` | Hygiene | warning | `generated`/`verified` present but not a structure (v0.2) |
 
 ---
 

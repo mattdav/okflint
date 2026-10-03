@@ -349,6 +349,37 @@ class TestF105:
         )
         assert "F105" in _codes(diags)
 
+    def test_impact_values_checked_on_task_type(self, tmp_path: Path) -> None:
+        # AA-005: `impact` is a controlled vocabulary on the `Task` type.
+        root = tmp_path / "root"
+        root.mkdir()
+        f = tmp_path / "m.yaml"
+        f.write_text(
+            f"base:\n  roots:\n    - path: '{root.as_posix()}'\n"
+            "  reserved_files:\n    index: index.md\n    log: log.md\n"
+            "profile:\n  types:\n    Task:\n"
+            "      required: [created]\n"
+            "      optional: [impact]\n"
+            "      impact_values: [lecture, reversible, prod, destructif]\n"
+            "      aliases: []\n"
+            "  date_fields: []\n",
+            encoding="utf-8",
+        )
+        m = load_manifest(f)
+        assert m.profile is not None
+        bad = check_profile(
+            "doc.md",
+            {"type": "Task", "created": "2026-10-03", "impact": "inconnu"},
+            m.profile,
+        )
+        good = check_profile(
+            "doc.md",
+            {"type": "Task", "created": "2026-10-03", "impact": "prod"},
+            m.profile,
+        )
+        assert "F105" in _codes(bad)
+        assert "F105" not in _codes(good)
+
     def test_absent_optional_property_does_not_trigger(self, tmp_path: Path) -> None:
         root = tmp_path / "root"
         root.mkdir()
@@ -981,6 +1012,61 @@ class TestVerifiedShorthand:
             "warn",
         )
         assert "S206" in _codes(diags)
+
+
+# ---------------------------------------------------------------------------
+# S210 — generated / verified present but not a structure
+# ---------------------------------------------------------------------------
+
+
+class TestS210:
+    def test_triggers_on_verified_json_string(self) -> None:
+        # Real case: a nested property typed in Obsidian's Properties panel.
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Task",
+                "verified": '{"by": "human:matthieu", "at": "2026-10-02"}',
+            },
+            "",
+            "warn",
+        )
+        assert "S210" in _codes(diags)
+
+    def test_triggers_on_generated_string(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Task", "generated": "claude"}, "", "warn"
+        )
+        assert "S210" in _codes(diags)
+
+    def test_triggers_on_verified_list_of_strings(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Task", "verified": ["human:mat"]}, "", "warn"
+        )
+        assert "S210" in _codes(diags)
+
+    def test_passes_on_mapping_and_list_of_mappings(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Task",
+                "generated": {"by": "human:mat", "at": "2026-01-01T00:00:00Z"},
+                "verified": [{"by": "human:mat", "at": "2026-01-01T00:00:00Z"}],
+            },
+            "",
+            "warn",
+        )
+        assert "S210" not in _codes(diags)
+
+    def test_absent_optional_families_do_not_trigger(self) -> None:
+        diags = check_hygiene_okf_v02_shapes("doc.md", {"type": "Task"}, "", "warn")
+        assert "S210" not in _codes(diags)
+
+    def test_silent_when_level_off(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md", {"type": "Task", "verified": "x"}, "", "off"
+        )
+        assert not diags
 
 
 # ---------------------------------------------------------------------------
