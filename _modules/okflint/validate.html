@@ -729,7 +729,7 @@
     <span class="n">date_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check OKF v0.2 shape hygiene rules (S203-S207).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check OKF v0.2 shape hygiene rules (S203-S207, S210).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Relative file path.</span>
@@ -750,7 +750,7 @@
 <span class="sd">            support was added.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List of Diagnostic (S203, S204, S205, S206, S207).</span>
+<span class="sd">        List of Diagnostic (S203, S204, S205, S206, S207, S210).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;off&quot;</span> <span class="ow">or</span> <span class="n">okf_version</span> <span class="o">!=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -851,6 +851,40 @@
     <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">_ATTESTED_COMPUTATION_TYPE</span><span class="p">:</span>
         <span class="n">diags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="n">_check_s207_attested_computation</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">,</span> <span class="n">safe_body</span><span class="p">,</span> <span class="n">severity</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># S210 — generated / verified present but not a structure (e.g. a JSON</span>
+    <span class="c1"># string typed in Obsidian&#39;s Properties panel). An absent field is never</span>
+    <span class="c1"># flagged: both families are optional.</span>
+    <span class="k">if</span> <span class="n">generated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generated</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S210&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;`generated` should be a mapping, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">generated</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: `</span><span class="si">{</span><span class="n">generated</span><span class="si">}</span><span class="s2">`&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">verified</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verified&quot;</span><span class="p">)</span>
+    <span class="n">verified_ok</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verified</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">verified</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">verified</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">verified</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">verified_ok</span><span class="p">:</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Diagnostic</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S210&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;`verified` should be a mapping or a list of mappings, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">verified</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: `</span><span class="si">{</span><span class="n">verified</span><span class="si">}</span><span class="s2">`&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">diags</span>
