@@ -8,7 +8,7 @@ on:
 jobs:
   validate:
     name: Lint + Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
 
   smoke-install:
     name: Smoke install (clean venv, wheel only)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: validate
 
     steps:
@@ -71,7 +71,7 @@ jobs:
 
   publish:
     name: Build + Publish PyPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [validate, smoke-install]
 
     environment:
@@ -105,7 +105,7 @@ jobs:
 
   github-release:
     name: GitHub Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: publish
 
     permissions:
