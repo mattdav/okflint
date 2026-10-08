@@ -13,7 +13,7 @@ concurrency:
 jobs:
   lint:
     name: Lint (pre-commit)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +41,7 @@ jobs:
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint
 
     strategy:
@@ -69,7 +69,7 @@ jobs:
 
   commitizen:
     name: Commitizen (format des commits)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
