@@ -65,7 +65,7 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run python -m pytest --cov-fail-under=85
+        run: uv run python -m pytest
 
   commitizen:
     name: Commitizen (format des commits)

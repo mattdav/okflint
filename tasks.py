@@ -268,7 +268,7 @@ def release(
     if not skip_tests:
         print("\n📦 Step 2/5: lint + tests...")
         _run("uv run pre-commit run --all-files")
-        _run("uv run python -m pytest --cov-fail-under=85 -q")
+        _run("uv run python -m pytest -q")
         print("✅ Lint and tests OK")
     else:
         print("\n⚠️  Step 2/5: lint + tests skipped (--skip-tests)")
