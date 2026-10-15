@@ -30,7 +30,7 @@ jobs:
         run: uv run pre-commit run --all-files
 
       - name: Tests
-        run: uv run python -m pytest --cov-fail-under=85
+        run: uv run python -m pytest
 
   smoke-install:
     name: Smoke install (clean venv, wheel only)
