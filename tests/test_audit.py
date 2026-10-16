@@ -225,6 +225,20 @@ class TestRunAudit:
         report = run_audit(bundle, bundle, manifest=manifest)
         assert "F001" not in report["diagnostics_summary"]["by_code"]
 
+    def test_non_utf8_file_reports_f001_and_audit_continues(
+        self,
+        tmp_path: Path,
+        make_md: Callable[[Path, str], Path],
+        capsys: object,
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        (bundle / "latin1.md").write_bytes(b"---\ntype: X\n---\n\xe9\n")
+        make_md(bundle / "ok.md", "---\ntype: Reference\n---\n# Title\n")
+        report = run_audit(bundle, bundle)
+        assert report["diagnostics_summary"]["by_code"].get("F001") == 1
+        assert len(report["files"]) == 2
+
     def test_manifest_less_non_reserved_file_still_triggers_f001(
         self,
         tmp_path: Path,

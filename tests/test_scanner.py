@@ -37,6 +37,13 @@ class TestParseFrontmatter:
         fm, _ = parse_frontmatter(content)
         assert fm is None
 
+    def test_impossible_calendar_date_returns_none(self) -> None:
+        # PyYAML raises ValueError (not YAMLError) for 2026-02-30
+        content = "---\ntype: Reference\ncreated: 2026-02-30\n---\n# Body\n"
+        fm, body = parse_frontmatter(content)
+        assert fm is None
+        assert body == content
+
     def test_non_dict_yaml_returns_none(self) -> None:
         content = "---\n- item1\n- item2\n---\n# Body\n"
         fm, _ = parse_frontmatter(content)

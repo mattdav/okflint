@@ -21,12 +21,14 @@ from okflint.scanner import (
     extract_markdown_links,
     extract_wikilinks,
     parse_frontmatter,
+    read_markdown,
 )
 from okflint.validate import (
     DEFAULT_RESERVED_FILES,
     Diagnostic,
     check_core_concept,
     dispatch_reserved_file,
+    undecodable_diagnostic,
     validate_file,
 )
 
@@ -102,7 +104,8 @@ def analyze_file(
     reserved_names = {name.lower() for name in reserved_files.values()}
     is_reserved = file_path.name.lower() in reserved_names
 
-    content = file_path.read_text(encoding="utf-8")
+    # Statistics only: an undecodable file is reported by the validation stage.
+    content = read_markdown(file_path, errors="replace")
     lines = len(content.splitlines())
     chars = len(content)
 
@@ -293,19 +296,23 @@ def run_audit(
             report.diagnostics = validate_file(md_file, manifest, _vault_index)
         else:
             is_root = md_file.parent == bundle_root
-            content = md_file.read_text(encoding="utf-8")
-            reserved_diags = dispatch_reserved_file(
-                report.path,
-                md_file,
-                content,
-                reserved_files=reserved_files,
-                is_root=is_root,
-            )
-            report.diagnostics = (
-                reserved_diags
-                if reserved_diags is not None
-                else check_core_concept(report.path, report.frontmatter)
-            )
+            try:
+                content = read_markdown(md_file)
+            except UnicodeDecodeError:
+                report.diagnostics = [undecodable_diagnostic(report.path)]
+            else:
+                reserved_diags = dispatch_reserved_file(
+                    report.path,
+                    md_file,
+                    content,
+                    reserved_files=reserved_files,
+                    is_root=is_root,
+                )
+                report.diagnostics = (
+                    reserved_diags
+                    if reserved_diags is not None
+                    else check_core_concept(report.path, report.frontmatter)
+                )
         report.split_candidate = any(d.code == "S202" for d in report.diagnostics)
         files.append(report)
 

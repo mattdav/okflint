@@ -12,7 +12,7 @@ from pathlib import Path
 from beartype import beartype
 
 from okflint.manifest import Manifest
-from okflint.scanner import _is_excluded, parse_frontmatter
+from okflint.scanner import _is_excluded, parse_frontmatter, read_markdown
 
 
 @dataclass
@@ -109,7 +109,7 @@ def generate_indexes(manifest: Manifest) -> dict[Path, str]:
                     continue
                 if patterns and _is_excluded(child, root, patterns):
                     continue
-                content = child.read_text(encoding="utf-8")
+                content = read_markdown(child, errors="replace")
                 fm, _ = parse_frontmatter(content)
                 title = str(fm["title"]) if fm and fm.get("title") else child.stem
                 description = (
