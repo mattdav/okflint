@@ -196,13 +196,21 @@
     <span class="n">reserved_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reserved_files</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
     <span class="n">is_reserved</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">reserved_names</span>
 
-    <span class="c1"># Statistics only: an undecodable file is reported by the validation stage.</span>
-    <span class="n">content</span> <span class="o">=</span> <span class="n">read_markdown</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+    <span class="c1"># Statistics read leniently; the undecodable file is still non-conformant</span>
+    <span class="c1"># (the validation stage reports it as F001).</span>
+    <span class="n">undecodable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">read_markdown</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+        <span class="n">undecodable</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">read_markdown</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
     <span class="n">chars</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
 
     <span class="n">frontmatter</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">parse_frontmatter</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-    <span class="n">okf_status</span> <span class="o">=</span> <span class="n">get_okf_status</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">)</span>
+    <span class="n">okf_status</span><span class="p">:</span> <span class="n">OkfStatus</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;non_conformant&quot;</span> <span class="k">if</span> <span class="n">undecodable</span> <span class="k">else</span> <span class="n">get_okf_status</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="n">safe_body</span> <span class="o">=</span> <span class="n">blank_code_spans</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
     <span class="n">wikilinks</span> <span class="o">=</span> <span class="n">extract_wikilinks</span><span class="p">(</span><span class="n">safe_body</span><span class="p">,</span> <span class="n">vault_index</span><span class="p">)</span>

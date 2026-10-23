@@ -188,11 +188,27 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">_AsWrittenLoader</span><span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">SafeLoader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SafeLoader keeping dates and timestamps as the strings written.&quot;&quot;&quot;</span>
+
+
+<span class="c1"># Drop the implicit timestamp resolver (OKF v0.2 §5: keep each value as</span>
+<span class="c1"># written). The resolver table is shared with SafeLoader, so copy it first.</span>
+<span class="n">_AsWrittenLoader</span><span class="o">.</span><span class="n">yaml_implicit_resolvers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">first</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">regexp</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">regexp</span> <span class="ow">in</span> <span class="n">resolvers</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">!=</span> <span class="s2">&quot;tag:yaml.org,2002:timestamp&quot;</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">first</span><span class="p">,</span> <span class="n">resolvers</span> <span class="ow">in</span> <span class="n">yaml</span><span class="o">.</span><span class="n">SafeLoader</span><span class="o">.</span><span class="n">yaml_implicit_resolvers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_json_safe</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert non-JSON-serialisable types from YAML parsing.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        obj: Arbitrary value returned by yaml.safe_load.</span>
+<span class="sd">        obj: Arbitrary value returned by the frontmatter loader.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Equivalent JSON-serialisable value.</span>
@@ -243,13 +259,12 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">fm</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">fm</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">Loader</span><span class="o">=</span><span class="n">_AsWrittenLoader</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
         <span class="k">return</span> <span class="n">_to_json_safe</span><span class="p">(</span><span class="n">fm</span><span class="p">),</span> <span class="n">body</span>
-    <span class="k">except</span> <span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-        <span class="c1"># PyYAML raises ValueError, not YAMLError, for impossible dates (2026-02-30).</span>
+    <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span></div>
 
 

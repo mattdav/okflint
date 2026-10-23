@@ -103,7 +103,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuditError</span><span class="p">,</span> <span class="n">run_audit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.index</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_indexes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">RootConfig</span><span class="p">,</span> <span class="n">load_manifest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_file_index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">okflint.scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_file_index</span><span class="p">,</span> <span class="n">read_markdown</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.validate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Diagnostic</span><span class="p">,</span> <span class="n">ManifestError</span><span class="p">,</span> <span class="n">run_validate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">okflint.vault</span><span class="w"> </span><span class="kn">import</span> <span class="n">VaultConfig</span><span class="p">,</span> <span class="n">VaultError</span><span class="p">,</span> <span class="n">load_vault</span>
 
@@ -211,7 +211,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diffs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">indexes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">read_markdown</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="n">current</span> <span class="o">==</span> <span class="n">expected</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">diff_lines</span> <span class="o">=</span> <span class="n">difflib</span><span class="o">.</span><span class="n">unified_diff</span><span class="p">(</span>

@@ -85,7 +85,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
@@ -117,11 +117,71 @@
 <span class="c1"># ISO date pattern YYYY-MM-DD</span>
 <span class="n">_ISO_DATE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">)</span>
 
-<span class="c1"># ISO 8601 datetime (date-only strings do not match — SPEC-002 §5 requires a</span>
-<span class="c1"># time component for `generated.at` / `verified[].at`).</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_calendar_date</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if a YYYY-MM-DD string is a real calendar day.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        val: String already matching ``_ISO_DATE_RE``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        False for impossible dates such as ``2026-02-30``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="c1"># ISO 8601 datetime (OKF v0.2 §5, as amended by OKF PR #6): date and time</span>
+<span class="c1"># separated by `T` or a space, with an optional offset (group 2). Date-only</span>
+<span class="c1"># strings do not match. The offset is mandatory for a conformant value.</span>
 <span class="n">_ISO_DATETIME_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">T\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">(\.\d+)?(Z|[+-]\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)?$&quot;</span>
+    <span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">[T ]\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">(\.\d+)?(Z|[+-]\d</span><span class="si">{2}</span><span class="s2">:\d</span><span class="si">{2}</span><span class="s2">)?$&quot;</span>
 <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_classify_timestamp</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;datetime&quot;</span><span class="p">,</span> <span class="s2">&quot;naive&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;invalid&quot;</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Classify a frontmatter timestamp value as written.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        val: Timestamp string.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``&quot;datetime&quot;`` for an ISO 8601 date-time with an explicit offset,</span>
+<span class="sd">        ``&quot;naive&quot;`` for one without offset, ``&quot;date&quot;`` for a bare calendar</span>
+<span class="sd">        date, ``&quot;invalid&quot;`` for anything else (including impossible dates).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;date&quot;</span> <span class="k">if</span> <span class="n">_is_calendar_date</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;invalid&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_ISO_DATETIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;invalid&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;invalid&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;datetime&quot;</span> <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;naive&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_utc_instant</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a bare date or offset date-time to a UTC instant.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        val: Timestamp string.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The instant in UTC (a bare date is the start of that day), or None</span>
+<span class="sd">        for any other form.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">_classify_timestamp</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;date&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;datetime&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
 
 <span class="c1"># Actor convention (SPEC-002 §4): `&lt;producer&gt;/&lt;version&gt;`, `human:&lt;id&gt;`, or</span>
 <span class="c1"># `process:&lt;id&gt;`. Existence of the designated identity is never verified.</span>
@@ -470,6 +530,54 @@
     <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_date_fields</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">profile</span><span class="p">:</span> <span class="n">ProfileConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check the ISO calendar format of `profile.date_fields` (S102).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Relative file path.</span>
+<span class="sd">        frontmatter: Parsed frontmatter (not None).</span>
+<span class="sd">        profile: Profile configuration.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Diagnostic (S102).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">diags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">date_fields</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">]:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_calendar_date</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S102&quot;</span><span class="p">,</span>
+                        <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;impossible calendar date: `</span><span class="si">{</span><span class="n">date_field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;(no such day)&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S102&quot;</span><span class="p">,</span>
+                        <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;incorrectly formatted date: `</span><span class="si">{</span><span class="n">date_field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;(expected YYYY-MM-DD)&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">diags</span>
+
+
 <span class="nd">@beartype</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_profile</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -501,7 +609,9 @@
                 <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`type` value not in declared types: `</span><span class="si">{</span><span class="n">val_type</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># no further checks without a resolved type</span>
+        <span class="c1"># Date fields are profile-wide: S102 does not depend on the type.</span>
+        <span class="n">diags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_date_fields</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">diags</span>  <span class="c1"># no further type checks without a resolved type</span>
 
     <span class="k">if</span> <span class="n">f106_msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -551,23 +661,7 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># S102 — incorrectly formatted dates</span>
-    <span class="k">for</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">date_fields</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">date_field</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">]:</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">[</span><span class="n">date_field</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-                <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">Diagnostic</span><span class="p">(</span>
-                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S102&quot;</span><span class="p">,</span>
-                        <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;profile&quot;</span><span class="p">,</span>
-                        <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                        <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;incorrectly formatted date: `</span><span class="si">{</span><span class="n">date_field</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
-                            <span class="sa">f</span><span class="s2">&quot;(expected YYYY-MM-DD)&quot;</span>
-                        <span class="p">),</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+    <span class="n">diags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_date_fields</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">diags</span>
 
@@ -632,6 +726,31 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">raw</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)]</span>
     <span class="k">return</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_timestamp_keys</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List the timestamp keys other than ``generated.at``/``verified[].at``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        frontmatter: Parsed frontmatter.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(label, raw value)`` pairs for ``stale_after``,</span>
+<span class="sd">        ``sources[].last_modified`` and ``usage_window.from``/``to`` that are</span>
+<span class="sd">        present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span><span class="p">:</span>
+        <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;stale_after&quot;</span><span class="p">,</span> <span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;stale_after&quot;</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_verified_entries</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sources&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="s2">&quot;last_modified&quot;</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;sources[].last_modified&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="p">[</span><span class="s2">&quot;last_modified&quot;</span><span class="p">]))</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;usage_window&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">bound</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">window</span><span class="p">:</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;usage_window.</span><span class="si">{</span><span class="n">bound</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="n">bound</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">found</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_s207_attested_computation</span><span class="p">(</span>
@@ -794,11 +913,17 @@
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="c1"># S204 — stale_after not YYYY-MM-DD (S102 already covers it if declared</span>
-    <span class="c1"># in profile.date_fields — do not double-report)</span>
-    <span class="k">if</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">in</span> <span class="n">frontmatter</span> <span class="ow">and</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">date_fields</span><span class="p">:</span>
-        <span class="n">val</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="p">[</span><span class="s2">&quot;stale_after&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)):</span>
+    <span class="c1"># S204 — timestamp key (other than generated/verified) not an ISO 8601</span>
+    <span class="c1"># date-time with offset. A bare date is a pre-amendment form left to S208;</span>
+    <span class="c1"># S102 already covers `stale_after` if declared in profile.date_fields —</span>
+    <span class="c1"># do not double-report.</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">_timestamp_keys</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">and</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">date_fields</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_classify_timestamp</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;datetime&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">):</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
                     <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S204&quot;</span><span class="p">,</span>
@@ -806,8 +931,8 @@
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;`stale_after` incorrectly formatted: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;(expected YYYY-MM-DD)&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">` incorrectly formatted: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(expected ISO 8601 date-time with offset)&quot;</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -816,27 +941,32 @@
     <span class="n">generated</span> <span class="o">=</span> <span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;generated&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generated</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">generated</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;at&quot;</span><span class="p">):</span>
         <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">generated</span><span class="p">[</span><span class="s2">&quot;at&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATETIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">_classify_timestamp</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;datetime&quot;</span><span class="p">:</span>
             <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Diagnostic</span><span class="p">(</span>
                     <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S205&quot;</span><span class="p">,</span>
                     <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                     <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                     <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`generated.at` not ISO 8601 datetime: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;`generated.at` not ISO 8601 datetime with offset: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_verified_entries</span><span class="p">(</span><span class="n">frontmatter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verified&quot;</span><span class="p">)):</span>
         <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;at&quot;</span><span class="p">):</span>
             <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">&quot;at&quot;</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATETIME_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_classify_timestamp</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;datetime&quot;</span><span class="p">:</span>
                 <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">Diagnostic</span><span class="p">(</span>
                         <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S205&quot;</span><span class="p">,</span>
                         <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
                         <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
                         <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;`verified[].at` not ISO 8601 datetime: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;`verified[].at` not ISO 8601 datetime with &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;offset: `</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">`&quot;</span>
+                        <span class="p">),</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -919,6 +1049,7 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">declared_okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">type_cfg</span><span class="p">:</span> <span class="n">TypeConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">date_fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for residual OKF v0.1 forms in a v0.2 base (S208).</span>
 
@@ -960,6 +1091,23 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">_timestamp_keys</span><span class="p">(</span><span class="n">frontmatter</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s2">&quot;stale_after&quot;</span> <span class="ow">and</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="n">date_fields</span> <span class="ow">or</span> <span class="p">[]):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">and</span> <span class="n">_classify_timestamp</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span> <span class="o">==</span> <span class="s2">&quot;date&quot;</span><span class="p">:</span>
+            <span class="n">diags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Diagnostic</span><span class="p">(</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;S208&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;hygiene&quot;</span><span class="p">,</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;legacy bare date `</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">raw</span><span class="si">}</span><span class="s2">` instead of an &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;ISO 8601 date-time with offset&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
     <span class="n">has_citations</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">h</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">h</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Citations&quot;</span>
         <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">extract_headers</span><span class="p">(</span><span class="n">safe_body</span><span class="p">)</span>
@@ -985,9 +1133,11 @@
     <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;warn&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">okf_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
-    <span class="n">evaluation_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">evaluation_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">|</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `stale_after` has been reached or passed (S209).</span>
+
+<span class="sd">    Instants are compared in UTC: a bare date is the start of that day.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        path: Relative file path.</span>
@@ -997,9 +1147,11 @@
 <span class="sd">        okf_version: Resolved OKF version driving the base. Defaults to</span>
 <span class="sd">            `&quot;0.2&quot;`. S209 only fires when this is `&quot;0.2&quot;`, consistent with</span>
 <span class="sd">            the rest of the OKF v0.2 shape family.</span>
-<span class="sd">        evaluation_date: Date to evaluate staleness against. Defaults to</span>
-<span class="sd">            `date.today()` when omitted; injectable so callers (and tests)</span>
-<span class="sd">            can obtain reproducible verdicts.</span>
+<span class="sd">        evaluation_date: Date or date-time to evaluate staleness against</span>
+<span class="sd">            (a date is the start of that day in UTC, a naive date-time is</span>
+<span class="sd">            read as UTC). Defaults to the current instant in UTC when</span>
+<span class="sd">            omitted; injectable so callers (and tests) can obtain</span>
+<span class="sd">            reproducible verdicts.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of Diagnostic (S209).</span>
@@ -1012,16 +1164,21 @@
         <span class="k">return</span> <span class="p">[]</span>
 
     <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">stale_after</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_ISO_DATE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="n">stale_instant</span> <span class="o">=</span> <span class="n">_to_utc_instant</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stale_instant</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="n">eval_date</span> <span class="o">=</span> <span class="n">evaluation_date</span> <span class="ow">or</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">stale_date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">evaluated</span><span class="p">:</span> <span class="n">date</span> <span class="o">|</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">evaluation_date</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evaluated</span><span class="p">,</span> <span class="n">datetime</span><span class="p">):</span>
+        <span class="n">eval_instant</span> <span class="o">=</span> <span class="n">evaluated</span> <span class="k">if</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">tzinfo</span> <span class="k">else</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span><span class="p">)</span>
+        <span class="n">eval_label</span> <span class="o">=</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">&quot;seconds&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eval_instant</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span>
+            <span class="n">evaluated</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span>
+        <span class="p">)</span>
+        <span class="n">eval_label</span> <span class="o">=</span> <span class="n">evaluated</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="n">eval_date</span> <span class="o">&lt;</span> <span class="n">stale_date</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">eval_instant</span> <span class="o">&lt;</span> <span class="n">stale_instant</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
     <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;warning&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;warn&quot;</span> <span class="k">else</span> <span class="s2">&quot;error&quot;</span>
@@ -1033,7 +1190,7 @@
             <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;stale: `stale_after=</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">` reached as of evaluation date &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">eval_date</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">`&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">eval_label</span><span class="si">}</span><span class="s2">`&quot;</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -1357,6 +1514,9 @@
                 <span class="n">hygiene</span><span class="o">.</span><span class="n">legacy_forms</span><span class="p">,</span>
                 <span class="n">declared_okf_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">okf_version</span><span class="p">,</span>
                 <span class="n">type_cfg</span><span class="o">=</span><span class="n">resolved_type_cfg</span><span class="p">,</span>
+                <span class="n">date_fields</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">date_fields</span> <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
