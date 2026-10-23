@@ -37,12 +37,27 @@ class TestParseFrontmatter:
         fm, _ = parse_frontmatter(content)
         assert fm is None
 
-    def test_impossible_calendar_date_returns_none(self) -> None:
-        # PyYAML raises ValueError (not YAMLError) for 2026-02-30
+    def test_impossible_calendar_date_kept_as_written(self) -> None:
+        # Valid YAML: an impossible date is a value for the rules, not F001.
         content = "---\ntype: Reference\ncreated: 2026-02-30\n---\n# Body\n"
         fm, body = parse_frontmatter(content)
-        assert fm is None
-        assert body == content
+        assert fm == {"type": "Reference", "created": "2026-02-30"}
+        assert body == "# Body\n"
+
+    def test_parse_frontmatter_keeps_timestamps_as_written(self) -> None:
+        content = (
+            "---\ntype: Reference\n"
+            "stale_after: 2026-01-01T00:00:00Z\n"
+            "other: 2026-01-01 00:00:00+00:00\n"
+            "day: 2026-01-01\n---\n"
+        )
+        fm, _ = parse_frontmatter(content)
+        assert fm == {
+            "type": "Reference",
+            "stale_after": "2026-01-01T00:00:00Z",
+            "other": "2026-01-01 00:00:00+00:00",
+            "day": "2026-01-01",
+        }
 
     def test_non_dict_yaml_returns_none(self) -> None:
         content = "---\n- item1\n- item2\n---\n# Body\n"

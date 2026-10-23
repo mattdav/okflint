@@ -489,6 +489,21 @@ class TestS102:
         )
         assert "S102" not in _codes(diags)
 
+    def test_s102_impossible_date_rejected(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        diags = check_profile(
+            "doc.md",
+            {"type": "Decision", "statut": "Accepté", "created": "2026-02-30"},
+            m.profile,
+        )
+        s102 = [d for d in diags if d.code == "S102"]
+        assert len(s102) == 1
+        assert "calendar" in s102[0].message
+
 
 # ---------------------------------------------------------------------------
 # L001 — broken wikilink

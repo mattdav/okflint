@@ -55,7 +55,9 @@ clause (§11) and to the structural constraints of reserved files (§8, §9, §1
 **Severity**: error · **Source**: OKF §11.1
 
 Every non-reserved `.md` file must begin with a YAML frontmatter block delimited
-by `---`, and that block must be parsable.
+by `---`, and that block must be parsable YAML. Dates and datetimes are kept as
+written: an impossible date (`2026-02-30`) is valid YAML and never triggers
+`F001` (see `S102` for `profile.date_fields`).
 
 A file that is not valid UTF-8 also triggers `F001`: the diagnostic names the
 file and validation continues with the other files.
@@ -298,7 +300,8 @@ but flagged for normalisation (e.g. `adr` → `Decision`).
 **Severity**: error
 
 Fields listed in `profile.date_fields` must be in ISO `YYYY-MM-DD` format
-when present.
+when present, and must be a real calendar day: `2026-02-30` is reported with
+an "impossible calendar date" message.
 
 ```yaml
 # profile.date_fields = [created, updated]

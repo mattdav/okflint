@@ -95,11 +95,27 @@ def blank_code_spans(content: str) -> str:
     return "\n".join(result)
 
 
+class _AsWrittenLoader(yaml.SafeLoader):
+    """SafeLoader keeping dates and timestamps as the strings written."""
+
+
+# Drop the implicit timestamp resolver (OKF v0.2 §5: keep each value as
+# written). The resolver table is shared with SafeLoader, so copy it first.
+_AsWrittenLoader.yaml_implicit_resolvers = {
+    first: [
+        (tag, regexp)
+        for tag, regexp in resolvers
+        if tag != "tag:yaml.org,2002:timestamp"
+    ]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+
 def _to_json_safe(obj: Any) -> Any:
     """Convert non-JSON-serialisable types from YAML parsing.
 
     Args:
-        obj: Arbitrary value returned by yaml.safe_load.
+        obj: Arbitrary value returned by the frontmatter loader.
 
     Returns:
         Equivalent JSON-serialisable value.
@@ -145,13 +161,12 @@ def parse_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
     if not match:
         return None, content
     try:
-        fm = yaml.safe_load(match.group(1))
+        fm = yaml.load(match.group(1), Loader=_AsWrittenLoader)
         if not isinstance(fm, dict):
             return None, content
         body = content[match.end() :]
         return _to_json_safe(fm), body
-    except (yaml.YAMLError, ValueError):
-        # PyYAML raises ValueError, not YAMLError, for impossible dates (2026-02-30).
+    except yaml.YAMLError:
         return None, content
 
 

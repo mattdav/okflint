@@ -36,10 +36,27 @@ from okflint.scanner import (
 # ISO date pattern YYYY-MM-DD
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
+
+def _is_calendar_date(val: str) -> bool:
+    """Return True if a YYYY-MM-DD string is a real calendar day.
+
+    Args:
+        val: String already matching ``_ISO_DATE_RE``.
+
+    Returns:
+        False for impossible dates such as ``2026-02-30``.
+    """
+    try:
+        date.fromisoformat(val)
+    except ValueError:
+        return False
+    return True
+
+
 # ISO 8601 datetime (date-only strings do not match — SPEC-002 §5 requires a
 # time component for `generated.at` / `verified[].at`).
 _ISO_DATETIME_RE = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$"
+    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$"
 )
 
 # Actor convention (SPEC-002 §4): `<producer>/<version>`, `human:<id>`, or
@@ -468,7 +485,20 @@ def check_profile(
     for date_field in profile.date_fields:
         if date_field in frontmatter and frontmatter[date_field]:
             val = str(frontmatter[date_field])
-            if not _ISO_DATE_RE.match(val):
+            if _ISO_DATE_RE.match(val) and not _is_calendar_date(val):
+                diags.append(
+                    Diagnostic(
+                        code="S102",
+                        tier="profile",
+                        severity="error",
+                        file=path,
+                        message=(
+                            f"impossible calendar date: `{date_field}={val}` "
+                            f"(no such day)"
+                        ),
+                    )
+                )
+            elif not _ISO_DATE_RE.match(val):
                 diags.append(
                     Diagnostic(
                         code="S102",
