@@ -22,7 +22,7 @@ from beartype import beartype
 from okflint.audit import AuditError, run_audit
 from okflint.index import generate_indexes
 from okflint.manifest import Manifest, RootConfig, load_manifest
-from okflint.scanner import build_file_index
+from okflint.scanner import build_file_index, read_markdown
 from okflint.validate import Diagnostic, ManifestError, run_validate
 from okflint.vault import VaultConfig, VaultError, load_vault
 
@@ -130,7 +130,7 @@ def _diff_indexes(indexes: dict[Path, str]) -> dict[Path, str]:
     """
     diffs: dict[Path, str] = {}
     for path, expected in indexes.items():
-        current = path.read_text(encoding="utf-8") if path.exists() else ""
+        current = read_markdown(path) if path.exists() else ""
         if current == expected:
             continue
         diff_lines = difflib.unified_diff(
