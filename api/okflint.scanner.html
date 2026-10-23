@@ -318,6 +318,30 @@ in order, before being reported broken.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="okflint.scanner.read_markdown">
+<span class="sig-prename descclassname"><span class="pre">okflint.scanner.</span></span><span class="sig-name descname"><span class="pre">read_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'strict'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/okflint/scanner.html#read_markdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#okflint.scanner.read_markdown" title="Link to this definition"></a></dt>
+<dd><p>Read a markdown file as UTF-8, dropping a leading byte-order mark.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Path of the file to read.</p></li>
+<li><p><strong>errors</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Codec error handler (<code class="docutils literal notranslate"><span class="pre">&quot;strict&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;replace&quot;</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>File content without a leading BOM.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#UnicodeDecodeError" title="(in Python v3.15)"><strong>UnicodeDecodeError</strong></a> – If the file is not valid UTF-8 and <code class="docutils literal notranslate"><span class="pre">errors</span></code>
+    is <code class="docutils literal notranslate"><span class="pre">&quot;strict&quot;</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 

@@ -206,6 +206,27 @@
     <span class="k">return</span> <span class="n">obj</span>
 
 
+<div class="viewcode-block" id="read_markdown">
+<a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.read_markdown">[docs]</a>
+<span class="nd">@beartype</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_markdown</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">errors</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;strict&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a markdown file as UTF-8, dropping a leading byte-order mark.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Path of the file to read.</span>
+<span class="sd">        errors: Codec error handler (``&quot;strict&quot;`` or ``&quot;replace&quot;``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        File content without a leading BOM.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        UnicodeDecodeError: If the file is not valid UTF-8 and ``errors``</span>
+<span class="sd">            is ``&quot;strict&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8-sig&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="parse_frontmatter">
 <a class="viewcode-back" href="../../api/okflint.scanner.html#okflint.scanner.parse_frontmatter">[docs]</a>
 <span class="nd">@beartype</span>
@@ -227,7 +248,8 @@
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
         <span class="k">return</span> <span class="n">_to_json_safe</span><span class="p">(</span><span class="n">fm</span><span class="p">),</span> <span class="n">body</span>
-    <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="c1"># PyYAML raises ValueError, not YAMLError, for impossible dates (2026-02-30).</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">content</span></div>
 
 
