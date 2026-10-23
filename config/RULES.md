@@ -301,7 +301,8 @@ but flagged for normalisation (e.g. `adr` → `Decision`).
 
 Fields listed in `profile.date_fields` must be in ISO `YYYY-MM-DD` format
 when present, and must be a real calendar day: `2026-02-30` is reported with
-an "impossible calendar date" message.
+an "impossible calendar date" message. The rule applies to every concept,
+including one whose `type` is not declared (`F101`).
 
 ```yaml
 # profile.date_fields = [created, updated]

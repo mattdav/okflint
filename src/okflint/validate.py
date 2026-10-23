@@ -443,6 +443,54 @@ def _resolve_type(
     return None, None
 
 
+def _check_date_fields(
+    path: str,
+    frontmatter: dict[str, Any],
+    profile: ProfileConfig,
+) -> list[Diagnostic]:
+    """Check the ISO calendar format of `profile.date_fields` (S102).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        profile: Profile configuration.
+
+    Returns:
+        List of Diagnostic (S102).
+    """
+    diags: list[Diagnostic] = []
+    for date_field in profile.date_fields:
+        if date_field in frontmatter and frontmatter[date_field]:
+            val = str(frontmatter[date_field])
+            if _ISO_DATE_RE.match(val) and not _is_calendar_date(val):
+                diags.append(
+                    Diagnostic(
+                        code="S102",
+                        tier="profile",
+                        severity="error",
+                        file=path,
+                        message=(
+                            f"impossible calendar date: `{date_field}={val}` "
+                            f"(no such day)"
+                        ),
+                    )
+                )
+            elif not _ISO_DATE_RE.match(val):
+                diags.append(
+                    Diagnostic(
+                        code="S102",
+                        tier="profile",
+                        severity="error",
+                        file=path,
+                        message=(
+                            f"incorrectly formatted date: `{date_field}={val}` "
+                            f"(expected YYYY-MM-DD)"
+                        ),
+                    )
+                )
+    return diags
+
+
 @beartype
 def check_profile(
     path: str,
@@ -474,7 +522,9 @@ def check_profile(
                 message=f"`type` value not in declared types: `{val_type}`",
             )
         )
-        return diags  # no further checks without a resolved type
+        # Date fields are profile-wide: S102 does not depend on the type.
+        diags.extend(_check_date_fields(path, frontmatter, profile))
+        return diags  # no further type checks without a resolved type
 
     if f106_msg is not None:
         diags.append(
@@ -524,36 +574,7 @@ def check_profile(
                 )
             )
 
-    # S102 — incorrectly formatted dates
-    for date_field in profile.date_fields:
-        if date_field in frontmatter and frontmatter[date_field]:
-            val = str(frontmatter[date_field])
-            if _ISO_DATE_RE.match(val) and not _is_calendar_date(val):
-                diags.append(
-                    Diagnostic(
-                        code="S102",
-                        tier="profile",
-                        severity="error",
-                        file=path,
-                        message=(
-                            f"impossible calendar date: `{date_field}={val}` "
-                            f"(no such day)"
-                        ),
-                    )
-                )
-            elif not _ISO_DATE_RE.match(val):
-                diags.append(
-                    Diagnostic(
-                        code="S102",
-                        tier="profile",
-                        severity="error",
-                        file=path,
-                        message=(
-                            f"incorrectly formatted date: `{date_field}={val}` "
-                            f"(expected YYYY-MM-DD)"
-                        ),
-                    )
-                )
+    diags.extend(_check_date_fields(path, frontmatter, profile))
 
     return diags
 
