@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -36,11 +36,71 @@ from okflint.scanner import (
 # ISO date pattern YYYY-MM-DD
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
-# ISO 8601 datetime (date-only strings do not match — SPEC-002 §5 requires a
-# time component for `generated.at` / `verified[].at`).
+
+def _is_calendar_date(val: str) -> bool:
+    """Return True if a YYYY-MM-DD string is a real calendar day.
+
+    Args:
+        val: String already matching ``_ISO_DATE_RE``.
+
+    Returns:
+        False for impossible dates such as ``2026-02-30``.
+    """
+    try:
+        date.fromisoformat(val)
+    except ValueError:
+        return False
+    return True
+
+
+# ISO 8601 datetime (OKF v0.2 §5, as amended by OKF PR #6): date and time
+# separated by `T` or a space, with an optional offset (group 2). Date-only
+# strings do not match. The offset is mandatory for a conformant value.
 _ISO_DATETIME_RE = re.compile(
-    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$"
+    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$"
 )
+
+
+def _classify_timestamp(val: str) -> Literal["datetime", "naive", "date", "invalid"]:
+    """Classify a frontmatter timestamp value as written.
+
+    Args:
+        val: Timestamp string.
+
+    Returns:
+        ``"datetime"`` for an ISO 8601 date-time with an explicit offset,
+        ``"naive"`` for one without offset, ``"date"`` for a bare calendar
+        date, ``"invalid"`` for anything else (including impossible dates).
+    """
+    if _ISO_DATE_RE.match(val):
+        return "date" if _is_calendar_date(val) else "invalid"
+    match = _ISO_DATETIME_RE.match(val)
+    if match is None:
+        return "invalid"
+    try:
+        datetime.fromisoformat(val)
+    except ValueError:
+        return "invalid"
+    return "datetime" if match.group(2) else "naive"
+
+
+def _to_utc_instant(val: str) -> datetime | None:
+    """Convert a bare date or offset date-time to a UTC instant.
+
+    Args:
+        val: Timestamp string.
+
+    Returns:
+        The instant in UTC (a bare date is the start of that day), or None
+        for any other form.
+    """
+    kind = _classify_timestamp(val)
+    if kind == "date":
+        return datetime.fromisoformat(val).replace(tzinfo=UTC)
+    if kind == "datetime":
+        return datetime.fromisoformat(val).astimezone(UTC)
+    return None
+
 
 # Actor convention (SPEC-002 §4): `<producer>/<version>`, `human:<id>`, or
 # `process:<id>`. Existence of the designated identity is never verified.
@@ -383,6 +443,54 @@ def _resolve_type(
     return None, None
 
 
+def _check_date_fields(
+    path: str,
+    frontmatter: dict[str, Any],
+    profile: ProfileConfig,
+) -> list[Diagnostic]:
+    """Check the ISO calendar format of `profile.date_fields` (S102).
+
+    Args:
+        path: Relative file path.
+        frontmatter: Parsed frontmatter (not None).
+        profile: Profile configuration.
+
+    Returns:
+        List of Diagnostic (S102).
+    """
+    diags: list[Diagnostic] = []
+    for date_field in profile.date_fields:
+        if date_field in frontmatter and frontmatter[date_field]:
+            val = str(frontmatter[date_field])
+            if _ISO_DATE_RE.match(val) and not _is_calendar_date(val):
+                diags.append(
+                    Diagnostic(
+                        code="S102",
+                        tier="profile",
+                        severity="error",
+                        file=path,
+                        message=(
+                            f"impossible calendar date: `{date_field}={val}` "
+                            f"(no such day)"
+                        ),
+                    )
+                )
+            elif not _ISO_DATE_RE.match(val):
+                diags.append(
+                    Diagnostic(
+                        code="S102",
+                        tier="profile",
+                        severity="error",
+                        file=path,
+                        message=(
+                            f"incorrectly formatted date: `{date_field}={val}` "
+                            f"(expected YYYY-MM-DD)"
+                        ),
+                    )
+                )
+    return diags
+
+
 @beartype
 def check_profile(
     path: str,
@@ -414,7 +522,9 @@ def check_profile(
                 message=f"`type` value not in declared types: `{val_type}`",
             )
         )
-        return diags  # no further checks without a resolved type
+        # Date fields are profile-wide: S102 does not depend on the type.
+        diags.extend(_check_date_fields(path, frontmatter, profile))
+        return diags  # no further type checks without a resolved type
 
     if f106_msg is not None:
         diags.append(
@@ -464,23 +574,7 @@ def check_profile(
                 )
             )
 
-    # S102 — incorrectly formatted dates
-    for date_field in profile.date_fields:
-        if date_field in frontmatter and frontmatter[date_field]:
-            val = str(frontmatter[date_field])
-            if not _ISO_DATE_RE.match(val):
-                diags.append(
-                    Diagnostic(
-                        code="S102",
-                        tier="profile",
-                        severity="error",
-                        file=path,
-                        message=(
-                            f"incorrectly formatted date: `{date_field}={val}` "
-                            f"(expected YYYY-MM-DD)"
-                        ),
-                    )
-                )
+    diags.extend(_check_date_fields(path, frontmatter, profile))
 
     return diags
 
@@ -545,6 +639,31 @@ def _verified_entries(raw: Any) -> list[dict[str, Any]]:
     if isinstance(raw, list):
         return [entry for entry in raw if isinstance(entry, dict)]
     return []
+
+
+def _timestamp_keys(frontmatter: dict[str, Any]) -> list[tuple[str, Any]]:
+    """List the timestamp keys other than ``generated.at``/``verified[].at``.
+
+    Args:
+        frontmatter: Parsed frontmatter.
+
+    Returns:
+        ``(label, raw value)`` pairs for ``stale_after``,
+        ``sources[].last_modified`` and ``usage_window.from``/``to`` that are
+        present.
+    """
+    found: list[tuple[str, Any]] = []
+    if "stale_after" in frontmatter:
+        found.append(("stale_after", frontmatter["stale_after"]))
+    for entry in _verified_entries(frontmatter.get("sources")):
+        if "last_modified" in entry:
+            found.append(("sources[].last_modified", entry["last_modified"]))
+    window = frontmatter.get("usage_window")
+    if isinstance(window, dict):
+        for bound in ("from", "to"):
+            if bound in window:
+                found.append((f"usage_window.{bound}", window[bound]))
+    return found
 
 
 def _check_s207_attested_computation(
@@ -707,11 +826,17 @@ def check_hygiene_okf_v02_shapes(
                 )
             )
 
-    # S204 — stale_after not YYYY-MM-DD (S102 already covers it if declared
-    # in profile.date_fields — do not double-report)
-    if "stale_after" in frontmatter and "stale_after" not in date_fields:
-        val = frontmatter["stale_after"]
-        if val and not _ISO_DATE_RE.match(str(val)):
+    # S204 — timestamp key (other than generated/verified) not an ISO 8601
+    # date-time with offset. A bare date is a pre-amendment form left to S208;
+    # S102 already covers `stale_after` if declared in profile.date_fields —
+    # do not double-report.
+    for label, raw in _timestamp_keys(frontmatter):
+        if label == "stale_after" and label in date_fields:
+            continue
+        if not raw:
+            continue
+        val = str(raw)
+        if _classify_timestamp(val) not in ("datetime", "date"):
             diags.append(
                 Diagnostic(
                     code="S204",
@@ -719,8 +844,8 @@ def check_hygiene_okf_v02_shapes(
                     severity=severity,
                     file=path,
                     message=(
-                        f"`stale_after` incorrectly formatted: `{val}` "
-                        f"(expected YYYY-MM-DD)"
+                        f"`{label}` incorrectly formatted: `{val}` "
+                        f"(expected ISO 8601 date-time with offset)"
                     ),
                 )
             )
@@ -729,27 +854,32 @@ def check_hygiene_okf_v02_shapes(
     generated = frontmatter.get("generated")
     if isinstance(generated, dict) and generated.get("at"):
         val = str(generated["at"])
-        if not _ISO_DATETIME_RE.match(val):
+        if _classify_timestamp(val) != "datetime":
             diags.append(
                 Diagnostic(
                     code="S205",
                     tier="hygiene",
                     severity=severity,
                     file=path,
-                    message=f"`generated.at` not ISO 8601 datetime: `{val}`",
+                    message=(
+                        f"`generated.at` not ISO 8601 datetime with offset: `{val}`"
+                    ),
                 )
             )
     for entry in _verified_entries(frontmatter.get("verified")):
         if entry.get("at"):
             val = str(entry["at"])
-            if not _ISO_DATETIME_RE.match(val):
+            if _classify_timestamp(val) != "datetime":
                 diags.append(
                     Diagnostic(
                         code="S205",
                         tier="hygiene",
                         severity=severity,
                         file=path,
-                        message=f"`verified[].at` not ISO 8601 datetime: `{val}`",
+                        message=(
+                            f"`verified[].at` not ISO 8601 datetime with "
+                            f"offset: `{val}`"
+                        ),
                     )
                 )
 
@@ -832,6 +962,7 @@ def check_hygiene_legacy_forms(
     *,
     declared_okf_version: str | None = None,
     type_cfg: TypeConfig | None = None,
+    date_fields: list[str] | None = None,
 ) -> list[Diagnostic]:
     """Check for residual OKF v0.1 forms in a v0.2 base (S208).
 
@@ -873,6 +1004,23 @@ def check_hygiene_legacy_forms(
             )
         )
 
+    for label, raw in _timestamp_keys(frontmatter):
+        if label == "stale_after" and label in (date_fields or []):
+            continue
+        if raw and _classify_timestamp(str(raw)) == "date":
+            diags.append(
+                Diagnostic(
+                    code="S208",
+                    tier="hygiene",
+                    severity=severity,
+                    file=path,
+                    message=(
+                        f"legacy bare date `{label}={raw}` instead of an "
+                        f"ISO 8601 date-time with offset"
+                    ),
+                )
+            )
+
     has_citations = any(
         h.level == 1 and h.text.strip() == "Citations"
         for h in extract_headers(safe_body)
@@ -898,9 +1046,11 @@ def check_hygiene_stale_content(
     level: Literal["off", "warn", "error"],
     *,
     okf_version: str = "0.2",
-    evaluation_date: date | None = None,
+    evaluation_date: date | datetime | None = None,
 ) -> list[Diagnostic]:
     """Check whether `stale_after` has been reached or passed (S209).
+
+    Instants are compared in UTC: a bare date is the start of that day.
 
     Args:
         path: Relative file path.
@@ -910,9 +1060,11 @@ def check_hygiene_stale_content(
         okf_version: Resolved OKF version driving the base. Defaults to
             `"0.2"`. S209 only fires when this is `"0.2"`, consistent with
             the rest of the OKF v0.2 shape family.
-        evaluation_date: Date to evaluate staleness against. Defaults to
-            `date.today()` when omitted; injectable so callers (and tests)
-            can obtain reproducible verdicts.
+        evaluation_date: Date or date-time to evaluate staleness against
+            (a date is the start of that day in UTC, a naive date-time is
+            read as UTC). Defaults to the current instant in UTC when
+            omitted; injectable so callers (and tests) can obtain
+            reproducible verdicts.
 
     Returns:
         List of Diagnostic (S209).
@@ -925,16 +1077,21 @@ def check_hygiene_stale_content(
         return []
 
     val = str(stale_after)
-    if not _ISO_DATE_RE.match(val):
+    stale_instant = _to_utc_instant(val)
+    if stale_instant is None:
         return []
 
-    eval_date = evaluation_date or date.today()
-    try:
-        stale_date = date.fromisoformat(val)
-    except ValueError:
-        return []
+    evaluated: date | datetime = evaluation_date or datetime.now(UTC)
+    if isinstance(evaluated, datetime):
+        eval_instant = evaluated if evaluated.tzinfo else evaluated.replace(tzinfo=UTC)
+        eval_label = evaluated.isoformat(timespec="seconds")
+    else:
+        eval_instant = datetime(
+            evaluated.year, evaluated.month, evaluated.day, tzinfo=UTC
+        )
+        eval_label = evaluated.isoformat()
 
-    if eval_date < stale_date:
+    if eval_instant < stale_instant:
         return []
 
     severity: Literal["warning", "error"] = "warning" if level == "warn" else "error"
@@ -946,7 +1103,7 @@ def check_hygiene_stale_content(
             file=path,
             message=(
                 f"stale: `stale_after={val}` reached as of evaluation date "
-                f"`{eval_date.isoformat()}`"
+                f"`{eval_label}`"
             ),
         )
     ]
@@ -1270,6 +1427,9 @@ def validate_file(
                 hygiene.legacy_forms,
                 declared_okf_version=manifest.okf_version,
                 type_cfg=resolved_type_cfg,
+                date_fields=(
+                    manifest.profile.date_fields if manifest.profile is not None else []
+                ),
             )
         )
 

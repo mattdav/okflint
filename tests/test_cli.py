@@ -14,6 +14,7 @@ from okflint.cli import (
     _cmd_audit,
     _cmd_validate,
     _cmd_validate_manifest,
+    _diff_indexes,
     build_parser,
     main,
 )
@@ -595,3 +596,15 @@ class TestCmdValidateManifest:
         parser = build_parser()
         args = parser.parse_args(["validate", "--manifest", str(bad_manifest)])
         assert _cmd_validate(args) == 2
+
+
+class TestDiffIndexes:
+    def test_index_bom_alone_produces_no_diff(self, tmp_path: Path) -> None:
+        index = tmp_path / "index.md"
+        index.write_bytes(b"\xef\xbb\xbf# Index\n")
+        assert _diff_indexes({index: "# Index\n"}) == {}
+
+    def test_index_content_change_produces_diff(self, tmp_path: Path) -> None:
+        index = tmp_path / "index.md"
+        index.write_bytes(b"\xef\xbb\xbf# Old\n")
+        assert index in _diff_indexes({index: "# New\n"})

@@ -104,13 +104,21 @@ def analyze_file(
     reserved_names = {name.lower() for name in reserved_files.values()}
     is_reserved = file_path.name.lower() in reserved_names
 
-    # Statistics only: an undecodable file is reported by the validation stage.
-    content = read_markdown(file_path, errors="replace")
+    # Statistics read leniently; the undecodable file is still non-conformant
+    # (the validation stage reports it as F001).
+    undecodable = False
+    try:
+        content = read_markdown(file_path)
+    except UnicodeDecodeError:
+        undecodable = True
+        content = read_markdown(file_path, errors="replace")
     lines = len(content.splitlines())
     chars = len(content)
 
     frontmatter, body = parse_frontmatter(content)
-    okf_status = get_okf_status(frontmatter)
+    okf_status: OkfStatus = (
+        "non_conformant" if undecodable else get_okf_status(frontmatter)
+    )
 
     safe_body = blank_code_spans(body)
     wikilinks = extract_wikilinks(safe_body, vault_index)

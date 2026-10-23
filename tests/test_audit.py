@@ -71,6 +71,16 @@ class TestAnalyzeFile:
         report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
         assert report.okf_status == "non_conformant"
 
+    def test_analyze_file_undecodable_marked_non_conformant(
+        self, tmp_path: Path
+    ) -> None:
+        bundle = tmp_path / "bundle"
+        bundle.mkdir()
+        f = bundle / "latin1.md"
+        f.write_bytes(b"---\ntype: X\n---\n\xe9\n")
+        report = analyze_file(f, bundle, {}, DEFAULT_RESERVED_FILES)
+        assert report.okf_status == "non_conformant"
+
     def test_subdirectory_depth(
         self, tmp_path: Path, make_md: Callable[[Path, str], Path]
     ) -> None:

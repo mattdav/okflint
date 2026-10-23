@@ -4,7 +4,7 @@ F101, F102, F105, F106, S102, L001-L003, S202, R201, F201)."""
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -489,6 +489,32 @@ class TestS102:
         )
         assert "S102" not in _codes(diags)
 
+    def test_s102_checked_even_when_type_undeclared(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        diags = check_profile(
+            "doc.md", {"type": "Undeclared", "created": "2026-02-30"}, m.profile
+        )
+        assert _codes(diags) == ["F101", "S102"]
+
+    def test_s102_impossible_date_rejected(
+        self, profile_manifest: tuple[Path, Path]
+    ) -> None:
+        manifest_path, _ = profile_manifest
+        m = load_manifest(manifest_path)
+        assert m.profile is not None
+        diags = check_profile(
+            "doc.md",
+            {"type": "Decision", "statut": "Accepté", "created": "2026-02-30"},
+            m.profile,
+        )
+        s102 = [d for d in diags if d.code == "S102"]
+        assert len(s102) == 1
+        assert "calendar" in s102[0].message
+
 
 # ---------------------------------------------------------------------------
 # L001 — broken wikilink
@@ -899,6 +925,61 @@ class TestS204:
         )
         assert "S204" not in _codes(diags)
 
+    def test_s204_datetime_with_offset_accepted(self) -> None:
+        for value in ("2026-01-01T00:00:00Z", "2026-01-01 00:00:00+02:00"):
+            diags = check_hygiene_okf_v02_shapes(
+                "doc.md", {"type": "Reference", "stale_after": value}, "", "warn"
+            )
+            assert "S204" not in _codes(diags)
+
+    def test_s204_naive_datetime_rejected(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-01-01T00:00:00"},
+            "",
+            "warn",
+        )
+        assert "S204" in _codes(diags)
+
+    def test_s204_bare_date_reported_as_legacy(self) -> None:
+        fm = {"type": "Reference", "stale_after": "2026-01-01"}
+        shapes = check_hygiene_okf_v02_shapes("doc.md", fm, "", "warn")
+        legacy = check_hygiene_legacy_forms(
+            "doc.md", fm, "", "warn", declared_okf_version="0.2"
+        )
+        assert "S204" not in _codes(shapes)
+        assert _codes(legacy) == ["S208"]
+
+    def test_s204_bare_date_declared_in_date_fields_not_legacy(self) -> None:
+        legacy = check_hygiene_legacy_forms(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-01-01"},
+            "",
+            "warn",
+            declared_okf_version="0.2",
+            date_fields=["stale_after"],
+        )
+        assert not legacy
+
+    def test_s204_sources_last_modified_checked(self) -> None:
+        def run(value: str) -> list[str]:
+            fm = {
+                "type": "Reference",
+                "sources": [{"resource": "x.md", "last_modified": value}],
+            }
+            return _codes(check_hygiene_okf_v02_shapes("doc.md", fm, "", "warn"))
+
+        assert "S204" in run("01/06/2026")
+        assert "S204" in run("2026-01-01T00:00:00")
+        assert "S204" not in run("2026-01-01T00:00:00Z")
+
+    def test_s204_usage_window_checked(self) -> None:
+        fm = {"type": "Reference", "usage_window": {"from": "bad", "to": "2026-01-01"}}
+        diags = check_hygiene_okf_v02_shapes("doc.md", fm, "", "warn")
+        assert [d.message.split("`")[1] for d in diags if d.code == "S204"] == [
+            "usage_window.from"
+        ]
+
 
 # ---------------------------------------------------------------------------
 # S205 — generated.at / verified[].at not ISO 8601 datetime
@@ -924,6 +1005,30 @@ class TestS205:
             {
                 "type": "Reference",
                 "generated": {"by": "human:mat", "at": "2026-01-01T00:00:00Z"},
+            },
+            "",
+            "warn",
+        )
+        assert "S205" not in _codes(diags)
+
+    def test_s205_naive_datetime_rejected(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "generated": {"by": "human:mat", "at": "2026-01-01T00:00:00"},
+            },
+            "",
+            "warn",
+        )
+        assert "S205" in _codes(diags)
+
+    def test_passes_on_generated_at_space_separator_with_offset(self) -> None:
+        diags = check_hygiene_okf_v02_shapes(
+            "doc.md",
+            {
+                "type": "Reference",
+                "generated": {"by": "human:mat", "at": "2026-01-01 00:00:00+00:00"},
             },
             "",
             "warn",
@@ -1343,6 +1448,33 @@ class TestS209:
             {"type": "Reference"},
             "warn",
             evaluation_date=date(2026, 6, 1),
+        )
+        assert not diags
+
+    def test_s209_past_datetime_stale(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01T12:00:00+02:00"},
+            "warn",
+            evaluation_date=datetime(2026, 6, 1, 10, 0, tzinfo=UTC),
+        )
+        assert "S209" in _codes(diags)
+
+    def test_s209_future_datetime_not_stale(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-06-01T12:00:00+02:00"},
+            "warn",
+            evaluation_date=datetime(2026, 6, 1, 9, 59, tzinfo=UTC),
+        )
+        assert "S209" not in _codes(diags)
+
+    def test_silent_when_stale_after_naive_datetime(self) -> None:
+        diags = check_hygiene_stale_content(
+            "doc.md",
+            {"type": "Reference", "stale_after": "2026-01-01T00:00:00"},
+            "warn",
+            evaluation_date=date(2027, 1, 1),
         )
         assert not diags
 

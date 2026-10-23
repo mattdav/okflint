@@ -37,12 +37,27 @@ class TestParseFrontmatter:
         fm, _ = parse_frontmatter(content)
         assert fm is None
 
-    def test_impossible_calendar_date_returns_none(self) -> None:
-        # PyYAML raises ValueError (not YAMLError) for 2026-02-30
+    def test_impossible_calendar_date_kept_as_written(self) -> None:
+        # Valid YAML: an impossible date is a value for the rules, not F001.
         content = "---\ntype: Reference\ncreated: 2026-02-30\n---\n# Body\n"
         fm, body = parse_frontmatter(content)
-        assert fm is None
-        assert body == content
+        assert fm == {"type": "Reference", "created": "2026-02-30"}
+        assert body == "# Body\n"
+
+    def test_parse_frontmatter_keeps_timestamps_as_written(self) -> None:
+        content = (
+            "---\ntype: Reference\n"
+            "stale_after: 2026-01-01T00:00:00Z\n"
+            "other: 2026-01-01 00:00:00+00:00\n"
+            "day: 2026-01-01\n---\n"
+        )
+        fm, _ = parse_frontmatter(content)
+        assert fm == {
+            "type": "Reference",
+            "stale_after": "2026-01-01T00:00:00Z",
+            "other": "2026-01-01 00:00:00+00:00",
+            "day": "2026-01-01",
+        }
 
     def test_non_dict_yaml_returns_none(self) -> None:
         content = "---\n- item1\n- item2\n---\n# Body\n"
@@ -152,6 +167,62 @@ class TestExtractMarkdownLinks:
         src.touch()
         links = extract_markdown_links("[Missing](missing.md)", src, tmp_path)
         assert links[0].broken
+
+    def test_extract_markdown_links_angle_brackets_parent_dir_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        target = tmp_path / "ADR — Architecture" / "ADR-033 — retour, blocages.md"
+        target.parent.mkdir()
+        target.touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = "[a](<../ADR — Architecture/ADR-033 — retour, blocages.md>)"
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False]
+
+    def test_extract_markdown_links_angle_brackets_fragment_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "Fiches").mkdir()
+        (tmp_path / "Fiches" / "AA-095 — Runner.md").touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = (
+            "[a](<../Fiches/AA-095 — Runner.md#Questions>)\n"
+            '[b](<../Fiches/AA-095 — Runner.md> "titre")'
+        )
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False, False]
+
+    def test_extract_markdown_links_percent_encoded_fragment_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "Fiches").mkdir()
+        (tmp_path / "Fiches" / "AA-095 — Runner.md").touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = "[a](../Fiches/AA-095%20%E2%80%94%20Runner.md#Questions)"
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False]
+
+    def test_extract_markdown_links_adr033_forms_missing_broken(
+        self, tmp_path: Path
+    ) -> None:
+        src = tmp_path / "Optimizer" / "Absents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = (
+            "[a](<../ADR — X/ADR-999 — absent.md>)\n"
+            "[b](<../Fiches/AA-999 — absent.md#Questions>)\n"
+            "[c](../Fiches/AA-999%20%E2%80%94%20absent.md)\n"
+            "[d](../Fiches/AA-999%20%E2%80%94%20absent.md#Questions)\n"
+            '[e](<../Fiches/AA-999 — absent.md> "titre")'
+        )
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [True] * 5
 
     def test_anchor_link_ignored(self, tmp_path: Path) -> None:
         src = tmp_path / "src.md"
