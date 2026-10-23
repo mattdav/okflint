@@ -435,32 +435,44 @@ status: draft
 **Fix**: use `draft`, `stable`, or `deprecated`, or declare a
 `status_values` vocabulary in the manifest if the base uses its own.
 
-### `S204` — `stale_after` incorrectly formatted
+### `S204` — timestamp key not an ISO 8601 date-time with offset
 
 **Severity**: warning (configurable, `warn` by default via
-`hygiene.okf_v02_shapes`) · **Out-of-spec**
+`hygiene.okf_v02_shapes`) · **Source**: OKF v0.2 §5 as amended by
+[OKF PR #6](https://github.com/GoogleCloudPlatform/open-knowledge-format/pull/6)
 
-`stale_after`, when present, must be `YYYY-MM-DD`. Does not double-report if
-`stale_after` is already listed in `profile.date_fields` (already covered by
-`S102`). Only fires on a base whose resolved `okf_version` is `"0.2"`.
+`stale_after`, `sources[].last_modified` and `usage_window.from`/`to`, when
+present, must be an ISO 8601 date-time with an explicit offset
+(`2026-01-01T00:00:00Z`, `…+02:00`; a space instead of `T` is accepted). A
+date-time without offset, or any other malformed value, triggers `S204`.
+A bare date (`2026-01-01`) is a pre-amendment form: it does not trigger
+`S204` and is reported by `S208` instead. Does not double-report
+`stale_after` if it is already listed in `profile.date_fields` (already
+covered by `S102`). Only fires on a base whose resolved `okf_version` is
+`"0.2"`.
 
 ```yaml
 # ❌ S204
 ---
 type: Reference
-stale_after: 01/06/2026
+stale_after: 2026-01-01T00:00:00
+sources:
+  - resource: spec.md
+    last_modified: 01/06/2026
 ---
 ```
 
-**Fix**: reformat as `YYYY-MM-DD`.
+**Fix**: write the value as an ISO 8601 date-time with offset.
 
-### `S205` — `generated.at` / `verified[].at` not ISO 8601 datetime
+### `S205` — `generated.at` / `verified[].at` not ISO 8601 datetime with offset
 
 **Severity**: warning (configurable, `warn` by default via
 `hygiene.okf_v02_shapes`) · **Out-of-spec**
 
 Unlike `S102`'s date-only fields, `generated.at` and each `verified[].at`
-must carry a full ISO 8601 datetime (a date alone does not qualify). `verified`
+must carry a full ISO 8601 date-time with an explicit offset (a date alone,
+or a date-time without offset, does not qualify; a space instead of `T` is
+accepted). `verified`
 may be a bare mapping (see below) — its single entry is checked the same way.
 Only fires on a base whose resolved `okf_version` is `"0.2"`.
 
@@ -550,8 +562,11 @@ computation: /computations/refresh.md
 `hygiene.legacy_forms`) · **Out-of-spec**
 
 Flags OKF v0.1 forms that v0.2 superseded ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md)
-§2): a `timestamp` field used instead of `generated.at`, and a `# Citations`
-body heading used instead of the `sources` field. The `timestamp` check is
+§2): a `timestamp` field used instead of `generated.at`, a `# Citations`
+body heading used instead of the `sources` field, and a bare date in
+`stale_after`, `sources[].last_modified` or `usage_window.from`/`to` (the
+amended §5 requires a date-time with offset; see `S204`). The bare-date
+check is skipped for a `stale_after` listed in `profile.date_fields`. The `timestamp` check is
 neutralised if `timestamp` is declared (`required` or `optional`) in the
 concept's profile type — a producer may legitimately keep the field under a
 different meaning. The `# Citations` check has no such override. Only fires
@@ -592,9 +607,11 @@ list with the `sources` field.
 `hygiene.stale_content`) · **Out-of-spec**
 
 Flags a concept whose `stale_after` date has been reached or passed as of
-the evaluation date ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §6). The
-evaluation date is recorded in the diagnostic message so the verdict stays
-reproducible after the fact. Malformed `stale_after` values are left to
+the evaluation instant ([SPEC-002](../docs/specs/SPEC-002_okf-v0.2.md) §6).
+Instants are compared in UTC: a bare date is the start of that day, a
+date-time with offset is converted. The evaluation instant is recorded in
+the diagnostic message so the verdict stays reproducible after the fact.
+Malformed or offset-less `stale_after` values are left to
 `S204`/`S102`, not re-reported here. Only fires on a base whose resolved
 `okf_version` is `"0.2"`.
 
@@ -658,12 +675,12 @@ verified: '{"by": "human:matthieu", "at": "2026-10-02"}'
 | `R201` | Hygiene | warning | recommended reserved file missing |
 | `F201` | Hygiene | warning | field outside declared schema |
 | `S203` | Hygiene | warning | `status` outside draft\|stable\|deprecated (v0.2) |
-| `S204` | Hygiene | warning | `stale_after` incorrectly formatted (v0.2) |
-| `S205` | Hygiene | warning | `generated.at`/`verified[].at` not ISO datetime (v0.2) |
+| `S204` | Hygiene | warning | timestamp key not an ISO date-time with offset (v0.2) |
+| `S205` | Hygiene | warning | `generated.at`/`verified[].at` not ISO datetime with offset (v0.2) |
 | `S206` | Hygiene | warning | `generated.by`/`verified[].by` outside actor convention (v0.2) |
 | `S207` | Hygiene | warning | `Attested Computation` contract shape (v0.2) |
-| `S208` | Hygiene | warning | legacy v0.1 forms: `timestamp`, `# Citations` (v0.2) |
-| `S209` | Hygiene | warning | `stale_after` reached or passed (v0.2) |
+| `S208` | Hygiene | warning | legacy forms: `timestamp`, `# Citations`, bare date timestamps (v0.2) |
+| `S209` | Hygiene | warning | `stale_after` instant reached or passed (v0.2) |
 | `S210` | Hygiene | warning | `generated`/`verified` present but not a structure (v0.2) |
 
 ---
