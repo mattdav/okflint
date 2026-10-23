@@ -114,6 +114,24 @@ def _to_json_safe(obj: Any) -> Any:
 
 
 @beartype
+def read_markdown(path: Path, errors: str = "strict") -> str:
+    """Read a markdown file as UTF-8, dropping a leading byte-order mark.
+
+    Args:
+        path: Path of the file to read.
+        errors: Codec error handler (``"strict"`` or ``"replace"``).
+
+    Returns:
+        File content without a leading BOM.
+
+    Raises:
+        UnicodeDecodeError: If the file is not valid UTF-8 and ``errors``
+            is ``"strict"``.
+    """
+    return path.read_text(encoding="utf-8-sig", errors=errors)
+
+
+@beartype
 def parse_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
     """Extract the YAML frontmatter from a markdown file.
 
@@ -132,7 +150,8 @@ def parse_frontmatter(content: str) -> tuple[dict[str, Any] | None, str]:
             return None, content
         body = content[match.end() :]
         return _to_json_safe(fm), body
-    except yaml.YAMLError:
+    except (yaml.YAMLError, ValueError):
+        # PyYAML raises ValueError, not YAMLError, for impossible dates (2026-02-30).
         return None, content
 
 

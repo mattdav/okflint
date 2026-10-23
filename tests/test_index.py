@@ -82,6 +82,18 @@ class TestGenerateIndexes:
         assert "[sub/](sub/index.md)" in indexes[root / "index.md"]
         assert "[B](b.md)" in indexes[root / "sub" / "index.md"]
 
+    def test_non_utf8_file_falls_back_to_filename(
+        self,
+        minimal_manifest: tuple[Path, Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        (root / "latin1.md").write_bytes(b"---\ntype: X\n---\n\xe9\n")
+        manifest = load_manifest(manifest_path)
+
+        indexes = generate_indexes(manifest)
+
+        assert "[latin1](latin1.md)" in indexes[root / "index.md"]
+
     def test_respects_exclude_patterns(self, tmp_path: Path) -> None:
         import yaml
 

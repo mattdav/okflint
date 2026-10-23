@@ -1408,6 +1408,46 @@ class TestValidateFile:
         diags = validate_file(f, m, base_index)
         assert "F001" in _codes(diags)
 
+    def test_utf8_bom_file_does_not_trigger_f001(
+        self,
+        minimal_manifest: tuple[Path, Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = root / "bom.md"
+        f.write_bytes(b"\xef\xbb\xbf---\ntype: Reference\n---\n# Title\n")
+        diags = validate_file(f, m, base_index)
+        assert "F001" not in _codes(diags)
+
+    def test_non_utf8_file_returns_f001_without_crash(
+        self,
+        minimal_manifest: tuple[Path, Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        m = load_manifest(manifest_path)
+        base_index = build_file_index([r.path for r in m.base.roots])
+        f = root / "latin1.md"
+        f.write_bytes("---\ntype: Reference\n---\n# Caf\xe9\n".encode("latin-1"))
+        diags = validate_file(f, m, base_index)
+        assert _codes(diags) == ["F001"]
+        assert "UTF-8" in diags[0].message
+
+    def test_run_validate_continues_after_non_utf8_file(
+        self,
+        minimal_manifest: tuple[Path, Path],
+        make_md: Callable[[Path, str], Path],
+    ) -> None:
+        manifest_path, root = minimal_manifest
+        (root / "a_latin1.md").write_bytes(b"---\ntype: X\n---\n\xe9\n")
+        make_md(root / "b_bare.md", "# No frontmatter\n")
+        diags, code = run_validate(manifest_path, [root])
+        assert code == 1
+        assert sorted(d.file for d in diags if d.code == "F001") == [
+            "a_latin1.md",
+            "b_bare.md",
+        ]
+
     def test_s202_fires_end_to_end_via_manifest_split_block(
         self,
         tmp_path: Path,

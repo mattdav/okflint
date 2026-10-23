@@ -57,6 +57,9 @@ clause (§11) and to the structural constraints of reserved files (§8, §9, §1
 Every non-reserved `.md` file must begin with a YAML frontmatter block delimited
 by `---`, and that block must be parsable.
 
+A file that is not valid UTF-8 also triggers `F001`: the diagnostic names the
+file and validation continues with the other files.
+
 ```markdown
 <!-- ❌ F001: no frontmatter -->
 # My concept

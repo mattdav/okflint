@@ -30,6 +30,7 @@ from okflint.scanner import (
     extract_markdown_links,
     extract_wikilinks,
     parse_frontmatter,
+    read_markdown,
 )
 
 # ISO date pattern YYYY-MM-DD
@@ -84,6 +85,25 @@ class Diagnostic:
 # ---------------------------------------------------------------------------
 # Stage 1 — OKF core (always active)
 # ---------------------------------------------------------------------------
+
+
+@beartype
+def undecodable_diagnostic(path: str) -> Diagnostic:
+    """Build the F001 diagnostic for a file that is not valid UTF-8.
+
+    Args:
+        path: Relative file path (for messages).
+
+    Returns:
+        F001 Diagnostic.
+    """
+    return Diagnostic(
+        code="F001",
+        tier="core",
+        severity="error",
+        file=path,
+        message="file is not valid UTF-8, frontmatter unparsable",
+    )
 
 
 @beartype
@@ -1128,8 +1148,6 @@ def validate_file(
     Returns:
         List of Diagnostic (empty if conformant).
     """
-    content = file_path.read_text(encoding="utf-8")
-
     # Determine the applicable root
     applicable_root = manifest.base.roots[0].path
     for root_cfg in manifest.base.roots:
@@ -1141,6 +1159,11 @@ def validate_file(
             continue
 
     rel = str(file_path.relative_to(applicable_root))
+
+    try:
+        content = read_markdown(file_path)
+    except UnicodeDecodeError:
+        return [undecodable_diagnostic(rel)]
 
     # Reserved files: specific handling, no concept check
     is_root = any(file_path.parent == r.path for r in manifest.base.roots)
