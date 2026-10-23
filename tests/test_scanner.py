@@ -168,6 +168,62 @@ class TestExtractMarkdownLinks:
         links = extract_markdown_links("[Missing](missing.md)", src, tmp_path)
         assert links[0].broken
 
+    def test_extract_markdown_links_angle_brackets_parent_dir_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        target = tmp_path / "ADR — Architecture" / "ADR-033 — retour, blocages.md"
+        target.parent.mkdir()
+        target.touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = "[a](<../ADR — Architecture/ADR-033 — retour, blocages.md>)"
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False]
+
+    def test_extract_markdown_links_angle_brackets_fragment_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "Fiches").mkdir()
+        (tmp_path / "Fiches" / "AA-095 — Runner.md").touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = (
+            "[a](<../Fiches/AA-095 — Runner.md#Questions>)\n"
+            '[b](<../Fiches/AA-095 — Runner.md> "titre")'
+        )
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False, False]
+
+    def test_extract_markdown_links_percent_encoded_fragment_resolved(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "Fiches").mkdir()
+        (tmp_path / "Fiches" / "AA-095 — Runner.md").touch()
+        src = tmp_path / "Optimizer" / "Presents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = "[a](../Fiches/AA-095%20%E2%80%94%20Runner.md#Questions)"
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [False]
+
+    def test_extract_markdown_links_adr033_forms_missing_broken(
+        self, tmp_path: Path
+    ) -> None:
+        src = tmp_path / "Optimizer" / "Absents.md"
+        src.parent.mkdir()
+        src.touch()
+        content = (
+            "[a](<../ADR — X/ADR-999 — absent.md>)\n"
+            "[b](<../Fiches/AA-999 — absent.md#Questions>)\n"
+            "[c](../Fiches/AA-999%20%E2%80%94%20absent.md)\n"
+            "[d](../Fiches/AA-999%20%E2%80%94%20absent.md#Questions)\n"
+            '[e](<../Fiches/AA-999 — absent.md> "titre")'
+        )
+        links = extract_markdown_links(content, src, tmp_path)
+        assert [link.broken for link in links] == [True] * 5
+
     def test_anchor_link_ignored(self, tmp_path: Path) -> None:
         src = tmp_path / "src.md"
         src.touch()
