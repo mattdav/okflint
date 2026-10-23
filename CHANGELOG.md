@@ -18,6 +18,20 @@ Do not manually edit the generated sections.
 
 ---
 
+## v0.5.1 (2026-10-23)
+
+### Fix
+
+- **validate**: contrôle S102 aussi quand le type n'est pas déclaré
+- **validate**: applique l'amendement ISO 8601 d'OKF v0.2 aux timestamps
+- **index**: lit l'index.md existant sans BOM pour le diff
+- **audit**: marque non conforme un fichier non décodable
+- **scanner**: garde les dates du frontmatter telles qu'écrites (#10)
+- treat impossible calendar dates in frontmatter as unparsable (#10)
+- report non-UTF-8 markdown files as F001 instead of crashing (#9)
+- strip UTF-8 BOM before frontmatter match (#8)
+- **scanner**: résout les liens markdown selon CommonMark (chevrons, %-encodage, parenthèses, titre)
+
 ## v0.5.0 (2026-10-03)
 
 ### Feat
